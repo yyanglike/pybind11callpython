@@ -1526,6 +1526,40 @@ shared_ptr<ScriptValue> ScriptInterpreter::evaluateBinaryOperation(
                 return ScriptValue::createBoolean(left->toDouble() > right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
                 py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GT));
+                if (result.is_none()) {
+                    throw py::error_already_set();
+                }
+                return ScriptValue::fromPythonObject(result);
+            }
+        } else if (op == "<=") {
+            if (left->isNumber() && right->isNumber()) {
+                return ScriptValue::createBoolean(left->toDouble() <= right->toDouble());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LE));
+                if (result.is_none()) {
+                    throw py::error_already_set();
+                }
+                return ScriptValue::fromPythonObject(result);
+            }
+        } else if (op == ">=") {
+            if (left->isNumber() && right->isNumber()) {
+                return ScriptValue::createBoolean(left->toDouble() >= right->toDouble());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GE));
+                if (result.is_none()) {
+                    throw py::error_already_set();
+                }
+                return ScriptValue::fromPythonObject(result);
+            }
+        } else if (op == "&&") {
+            return ScriptValue::createBoolean(left->toBoolean() && right->toBoolean());
+        } else if (op == "||") {
             return ScriptValue::createBoolean(left->toBoolean() || right->toBoolean());
         }
         
