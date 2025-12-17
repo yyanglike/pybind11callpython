@@ -950,32 +950,205 @@ any ScriptInterpreter::visitUnaryExpression(PyScriptParser::UnaryExpressionConte
     return any(postfixValue);
 }
 
-// ========== 基础表达式Visitor方法 ==========
+// ========== 后缀表达式Visitor方法 ==========
 
-any ScriptInterpreter::visitMemberAccessPrimary(PyScriptParser::MemberAccessPrimaryContext *ctx) {
-    auto objAny = visit(ctx->primaryExpression());
-    shared_ptr<ScriptValue> objValue;
+any ScriptInterpreter::visitPostfixExpression(PyScriptParser::PostfixExpressionContext *ctx) {
+    std::cerr << "DEBUG_POSTFIX: visitPostfixExpression called" << std::endl;
+    
+    // 首先处理基本表达式
+    auto primaryCtx = ctx->primaryExpression();
+    auto primaryAny = visit(primaryCtx);
+    shared_ptr<ScriptValue> currentValue;
     try {
-        objValue = any_cast<shared_ptr<ScriptValue>>(objAny);
+        currentValue = any_cast<shared_ptr<ScriptValue>>(primaryAny);
     } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate object expression for member access", ctx);
-        return any();
-    }
-    string memberName = ctx->IDENTIFIER()->getText();
-    
-    if (!objValue) {
-        reportError("Cannot access member of null object", ctx);
+        reportError("Cannot evaluate primary expression in postfix expression", ctx);
         return any();
     }
     
-    auto member = getMember(objValue, memberName);
-    if (!member) {
-        reportError("Object has no member: " + memberName, ctx);
+    if (!currentValue) {
+        reportError("Cannot evaluate primary expression in postfix expression", ctx);
         return any();
     }
     
-    return any(member);
+    std::cerr << "DEBUG_POSTFIX: initial value type=" << static_cast<int>(currentValue->getType())
+              << ", value=" << currentValue->toString() << std::endl;
+    
+    // 处理所有后缀操作符
+    for (auto opCtx : ctx->postfixOperator()) {
+        std::cerr << "DEBUG_POSTFIX: processing postfix operator" << std::endl;
+        
+        if (auto funcCallCtx = dynamic_cast<PyScriptParser::FunctionCallPostfixContext*>(opCtx)) {
+            // 函数调用
+            std::cerr << "DEBUG_POSTFIX: function call postfix" << std::endl;
+            auto funcValue = currentValue;
+            
+            // 收集参数
+            vector<shared_ptr<ScriptValue>> args;
+            if (funcCallCtx->argumentList()) {
+                auto argList = funcCallCtx->argumentList()->expression();
+                std::cerr << "DEBUG_POSTFIX: argument count=" << argList.size() << std::endl;
+                for (size_t i = 0; i < argList.size(); ++i) {
+                    auto arg = argList[i];
+                    auto argValue = evaluateExpression(arg);
+                    if (argValue) {
+                        args.push_back(argValue);
+                        std::cerr << "DEBUG_POSTFIX: arg[" << i << "] type=" << static_cast<int>(argValue->getType())
+                                  << ", value=" << argValue->toString() << std::endl;
+                    } else {
+                        reportError("Cannot evaluate argument", funcCallCtx);
+                        return any();
+                    }
+                }
+            }
+            
+            try {
+                if (funcValue->isPythonObject()) {
+                    py::object pyFunc = funcValue->getPythonObject();
+                    std::cerr << "DEBUG_POSTFIX: pyFunc type=" << py::str(pyFunc.get_type()).cast<std::string>() << std::endl;
+                    
+                    // 直接调用Python函数
+                    py::tuple pyArgs(args.size());
+                    for (size_t i = 0; i < args.size(); ++i) {
+                        pyArgs[i] = args[i]->toPythonObject();
+                        std::cerr << "DEBUG_POSTFIX: pyArgs[" << i << "]=" << py::str(pyArgs[i]).cast<std::string>() << std::endl;
+                    }
+                    
+                    py::object result = pyFunc(*pyArgs);
+                    std::cerr << "DEBUG_POSTFIX: result type=" << py::str(result.get_type()).cast<std::string>() 
+                              << ", result=" << py::str(result).cast<std::string>() << std::endl;
+                    currentValue = ScriptValue::fromPythonObject(result);
+                } else {
+                    reportError("Cannot call non-function type", funcCallCtx);
+                    return any();
+                }
+            } catch (const py::error_already_set& e) {
+                std::cerr << "DEBUG_POSTFIX: Python error=" << e.what() << std::endl;
+                reportError("Python function call error: " + string(e.what()), funcCallCtx);
+                return any();
+            } catch (const exception& e) {
+                std::cerr << "DEBUG_POSTFIX: Exception=" << e.what() << std::endl;
+                reportError("Function call error: " + string(e.what()), funcCallCtx);
+                return any();
+            }
+        } else if (auto memberAccessCtx = dynamic_cast<PyScriptParser::MemberAccessPostfixContext*>(opCtx)) {
+            // 成员访问
+            std::cerr << "DEBUG_POSTFIX: member access postfix" << std::endl;
+            string memberName = memberAccessCtx->IDENTIFIER()->getText();
+            
+            if (!currentValue) {
+                reportError("Cannot access member of null object", memberAccessCtx);
+                return any();
+            }
+            
+            auto member = getMember(currentValue, memberName);
+            if (!member) {
+                reportError("Object has no member: " + memberName, memberAccessCtx);
+                return any();
+            }
+            
+            currentValue = member;
+        } else if (auto subscriptCtx = dynamic_cast<PyScriptParser::SubscriptPostfixContext*>(opCtx)) {
+            // 下标访问
+            std::cerr << "DEBUG_POSTFIX: subscript postfix" << std::endl;
+            auto indexValue = evaluateExpression(subscriptCtx->expression());
+            
+            if (!currentValue || !indexValue) {
+                reportError("Cannot evaluate subscript expression", subscriptCtx);
+                return any();
+            }
+            
+            if (currentValue->isPythonObject()) {
+                py::object pyObj = currentValue->getPythonObject();
+                
+                try {
+                    py::object pyIndex = indexValue->toPythonObject();
+                    py::object result = pyObj[pyIndex];
+                    currentValue = ScriptValue::fromPythonObject(result);
+                } catch (const py::error_already_set& e) {
+                    reportError("Python subscript error: " + string(e.what()), subscriptCtx);
+                    return any();
+                }
+            } else if (currentValue->isList()) {
+                auto& list = currentValue->getList();
+                
+                // 索引必须是整数
+                if (!indexValue->isInteger()) {
+                    reportError("List index must be an integer", subscriptCtx);
+                    return any();
+                }
+                
+                long long index = indexValue->getInteger();
+                
+                if (index < 0 || index >= static_cast<long long>(list.size())) {
+                    reportError("List index out of bounds: " + to_string(index) + 
+                               " (list size: " + to_string(list.size()) + ")", subscriptCtx);
+                    return any();
+                }
+                
+                currentValue = list[index];
+            } else if (currentValue->isDictionary()) {
+                auto& dict = currentValue->getDictionary();
+                
+                // 索引必须是字符串
+                if (!indexValue->isString()) {
+                    reportError("Dictionary key must be a string", subscriptCtx);
+                    return any();
+                }
+                
+                string key = indexValue->getString();
+                
+                auto it = dict.find(key);
+                if (it == dict.end()) {
+                    reportError("Dictionary key not found: " + key, subscriptCtx);
+                    return any();
+                }
+                
+                currentValue = it->second;
+            } else {
+                reportError("Subscript not supported for this type", subscriptCtx);
+                return any();
+            }
+        } else {
+            reportError("Unknown postfix operator", opCtx);
+            return any();
+        }
+        
+        if (!currentValue) {
+            reportError("Postfix operator evaluation returned null", opCtx);
+            return any();
+        }
+        
+        std::cerr << "DEBUG_POSTFIX: after operator, value type=" << static_cast<int>(currentValue->getType())
+                  << ", value=" << currentValue->toString() << std::endl;
+    }
+    
+    std::cerr << "DEBUG_POSTFIX: returning value" << std::endl;
+    return any(currentValue);
 }
+
+any ScriptInterpreter::visitFunctionCallPostfix(PyScriptParser::FunctionCallPostfixContext *ctx) {
+    // 这个函数不会被直接调用，因为我们在visitPostfixExpression中处理了所有postfixOperator
+    // 但为了满足接口要求，我们仍然实现它
+    std::cerr << "DEBUG_POSTFIX: visitFunctionCallPostfix called (should not happen)" << std::endl;
+    return any();
+}
+
+any ScriptInterpreter::visitMemberAccessPostfix(PyScriptParser::MemberAccessPostfixContext *ctx) {
+    // 这个函数不会被直接调用，因为我们在visitPostfixExpression中处理了所有postfixOperator
+    // 但为了满足接口要求，我们仍然实现它
+    std::cerr << "DEBUG_POSTFIX: visitMemberAccessPostfix called (should not happen)" << std::endl;
+    return any();
+}
+
+any ScriptInterpreter::visitSubscriptPostfix(PyScriptParser::SubscriptPostfixContext *ctx) {
+    // 这个函数不会被直接调用，因为我们在visitPostfixExpression中处理了所有postfixOperator
+    // 但为了满足接口要求，我们仍然实现它
+    std::cerr << "DEBUG_POSTFIX: visitSubscriptPostfix called (should not happen)" << std::endl;
+    return any();
+}
+
+// ========== 基础表达式Visitor方法 ==========
 
 any ScriptInterpreter::visitIdentifierPrimary(PyScriptParser::IdentifierPrimaryContext *ctx) {
     string name = ctx->IDENTIFIER()->getText();
@@ -1161,145 +1334,6 @@ any ScriptInterpreter::visitNewInstancePrimary(PyScriptParser::NewInstancePrimar
 
 any ScriptInterpreter::visitLiteralPrimary(PyScriptParser::LiteralPrimaryContext *ctx) {
     return visit(ctx->literal());
-}
-
-any ScriptInterpreter::visitFunctionCallPrimary(PyScriptParser::FunctionCallPrimaryContext *ctx) {
-    std::cerr << "DEBUG_FUNC_CALL: visitFunctionCallPrimary called" << std::endl;
-    auto funcAny = visit(ctx->primaryExpression());
-    shared_ptr<ScriptValue> funcValue;
-    try {
-        funcValue = any_cast<shared_ptr<ScriptValue>>(funcAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate function expression", ctx);
-        return any();
-    }
-    
-    if (!funcValue) {
-        reportError("Cannot call null function", ctx);
-        return any();
-    }
-    
-    std::cerr << "DEBUG_FUNC_CALL: funcValue type=" << static_cast<int>(funcValue->getType()) 
-              << ", isPythonObject=" << funcValue->isPythonObject() << std::endl;
-    
-    // 收集参数
-    vector<shared_ptr<ScriptValue>> args;
-    if (ctx->argumentList()) {
-        auto argList = ctx->argumentList()->expression();
-        std::cerr << "DEBUG_FUNC_CALL: argument count=" << argList.size() << std::endl;
-        for (size_t i = 0; i < argList.size(); ++i) {
-            auto arg = argList[i];
-            auto argValue = evaluateExpression(arg);
-            if (argValue) {
-                args.push_back(argValue);
-                std::cerr << "DEBUG_FUNC_CALL: arg[" << i << "] type=" << static_cast<int>(argValue->getType())
-                          << ", value=" << argValue->toString() << std::endl;
-            } else {
-                reportError("Cannot evaluate argument", ctx);
-                return any();
-            }
-        }
-    }
-    
-    try {
-        if (funcValue->isPythonObject()) {
-            py::object pyFunc = funcValue->getPythonObject();
-            std::cerr << "DEBUG_FUNC_CALL: pyFunc type=" << py::str(pyFunc.get_type()).cast<std::string>() << std::endl;
-            
-            // 直接调用Python函数
-            py::tuple pyArgs(args.size());
-            for (size_t i = 0; i < args.size(); ++i) {
-                pyArgs[i] = args[i]->toPythonObject();
-                std::cerr << "DEBUG_FUNC_CALL: pyArgs[" << i << "]=" << py::str(pyArgs[i]).cast<std::string>() << std::endl;
-            }
-            
-            py::object result = pyFunc(*pyArgs);
-            std::cerr << "DEBUG_FUNC_CALL: result type=" << py::str(result.get_type()).cast<std::string>() 
-                      << ", result=" << py::str(result).cast<std::string>() << std::endl;
-            return any(ScriptValue::fromPythonObject(result));
-        } else {
-            reportError("Cannot call non-function type", ctx);
-            return any();
-        }
-    } catch (const py::error_already_set& e) {
-        std::cerr << "DEBUG_FUNC_CALL: Python error=" << e.what() << std::endl;
-        reportError("Python function call error: " + string(e.what()), ctx);
-        return any();
-    } catch (const exception& e) {
-        std::cerr << "DEBUG_FUNC_CALL: Exception=" << e.what() << std::endl;
-        reportError("Function call error: " + string(e.what()), ctx);
-        return any();
-    }
-}
-
-any ScriptInterpreter::visitSubscriptPrimary(PyScriptParser::SubscriptPrimaryContext *ctx) {
-    auto objAny = visit(ctx->primaryExpression());
-    shared_ptr<ScriptValue> objValue;
-    try {
-        objValue = any_cast<shared_ptr<ScriptValue>>(objAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate object in subscript expression", ctx);
-        return any();
-    }
-    
-    auto indexValue = evaluateExpression(ctx->expression());
-    
-    if (!objValue || !indexValue) {
-        reportError("Cannot evaluate subscript expression", ctx);
-        return any();
-    }
-    
-    if (objValue->isPythonObject()) {
-        py::object pyObj = objValue->getPythonObject();
-        
-        try {
-            py::object pyIndex = indexValue->toPythonObject();
-            py::object result = pyObj[pyIndex];
-            return any(ScriptValue::fromPythonObject(result));
-        } catch (const py::error_already_set& e) {
-            reportError("Python subscript error: " + string(e.what()), ctx);
-            return any();
-        }
-    } else if (objValue->isList()) {
-        auto& list = objValue->getList();
-        
-        // 索引必须是整数
-        if (!indexValue->isInteger()) {
-            reportError("List index must be an integer", ctx);
-            return any();
-        }
-        
-        long long index = indexValue->getInteger();
-        
-        if (index < 0 || index >= static_cast<long long>(list.size())) {
-            reportError("List index out of bounds: " + to_string(index) + 
-                       " (list size: " + to_string(list.size()) + ")", ctx);
-            return any();
-        }
-        
-        return any(list[index]);
-    } else if (objValue->isDictionary()) {
-        auto& dict = objValue->getDictionary();
-        
-        // 索引必须是字符串
-        if (!indexValue->isString()) {
-            reportError("Dictionary key must be a string", ctx);
-            return any();
-        }
-        
-        string key = indexValue->getString();
-        
-        auto it = dict.find(key);
-        if (it == dict.end()) {
-            reportError("Dictionary key not found: " + key, ctx);
-            return any();
-        }
-        
-        return any(it->second);
-    }
-    
-    reportError("Subscript not supported for this type", ctx);
-    return any();
 }
 
 // ========== 字面量Visitor方法 ==========
@@ -1492,40 +1526,6 @@ shared_ptr<ScriptValue> ScriptInterpreter::evaluateBinaryOperation(
                 return ScriptValue::createBoolean(left->toDouble() > right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
                 py::object lhs = left->toPythonObject();
-                py::object rhs = right->toPythonObject();
-                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GT));
-                if (result.is_none()) {
-                    throw py::error_already_set();
-                }
-                return ScriptValue::fromPythonObject(result);
-            }
-        } else if (op == "<=") {
-            if (left->isNumber() && right->isNumber()) {
-                return ScriptValue::createBoolean(left->toDouble() <= right->toDouble());
-            } else if (left->isPythonObject() || right->isPythonObject()) {
-                py::object lhs = left->toPythonObject();
-                py::object rhs = right->toPythonObject();
-                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LE));
-                if (result.is_none()) {
-                    throw py::error_already_set();
-                }
-                return ScriptValue::fromPythonObject(result);
-            }
-        } else if (op == ">=") {
-            if (left->isNumber() && right->isNumber()) {
-                return ScriptValue::createBoolean(left->toDouble() >= right->toDouble());
-            } else if (left->isPythonObject() || right->isPythonObject()) {
-                py::object lhs = left->toPythonObject();
-                py::object rhs = right->toPythonObject();
-                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GE));
-                if (result.is_none()) {
-                    throw py::error_already_set();
-                }
-                return ScriptValue::fromPythonObject(result);
-            }
-        } else if (op == "&&") {
-            return ScriptValue::createBoolean(left->toBoolean() && right->toBoolean());
-        } else if (op == "||") {
             return ScriptValue::createBoolean(left->toBoolean() || right->toBoolean());
         }
         
