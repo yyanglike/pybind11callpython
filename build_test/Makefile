@@ -273,6 +273,32 @@ test_simple/fast:
 .PHONY : test_simple/fast
 
 #=============================================================================
+# Target rules for targets named test_subscript_assignment
+
+# Build rule for target.
+test_subscript_assignment: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_subscript_assignment
+.PHONY : test_subscript_assignment
+
+# fast build rule for target.
+test_subscript_assignment/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/build
+.PHONY : test_subscript_assignment/fast
+
+#=============================================================================
+# Target rules for targets named test_complex_syntax
+
+# Build rule for target.
+test_complex_syntax: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_complex_syntax
+.PHONY : test_complex_syntax
+
+# fast build rule for target.
+test_complex_syntax/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/build
+.PHONY : test_complex_syntax/fast
+
+#=============================================================================
 # Target rules for targets named antlr4_shared
 
 # Build rule for target.
@@ -384,6 +410,8 @@ antlr/generated/antlr/PyScriptBaseListener.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
 .PHONY : antlr/generated/antlr/PyScriptBaseListener.cpp.o
 
 antlr/generated/antlr/PyScriptBaseListener.i: antlr/generated/antlr/PyScriptBaseListener.cpp.i
@@ -394,6 +422,8 @@ antlr/generated/antlr/PyScriptBaseListener.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i
 .PHONY : antlr/generated/antlr/PyScriptBaseListener.cpp.i
 
 antlr/generated/antlr/PyScriptBaseListener.s: antlr/generated/antlr/PyScriptBaseListener.cpp.s
@@ -404,6 +434,8 @@ antlr/generated/antlr/PyScriptBaseListener.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s
 .PHONY : antlr/generated/antlr/PyScriptBaseListener.cpp.s
 
 antlr/generated/antlr/PyScriptBaseVisitor.o: antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
@@ -414,6 +446,8 @@ antlr/generated/antlr/PyScriptBaseVisitor.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
 .PHONY : antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
 
 antlr/generated/antlr/PyScriptBaseVisitor.i: antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
@@ -424,6 +458,8 @@ antlr/generated/antlr/PyScriptBaseVisitor.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
 .PHONY : antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
 
 antlr/generated/antlr/PyScriptBaseVisitor.s: antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
@@ -434,6 +470,8 @@ antlr/generated/antlr/PyScriptBaseVisitor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
 .PHONY : antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
 
 antlr/generated/antlr/PyScriptLexer.o: antlr/generated/antlr/PyScriptLexer.cpp.o
@@ -444,6 +482,8 @@ antlr/generated/antlr/PyScriptLexer.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptLexer.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptLexer.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptLexer.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptLexer.cpp.o
 .PHONY : antlr/generated/antlr/PyScriptLexer.cpp.o
 
 antlr/generated/antlr/PyScriptLexer.i: antlr/generated/antlr/PyScriptLexer.cpp.i
@@ -454,6 +494,8 @@ antlr/generated/antlr/PyScriptLexer.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptLexer.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptLexer.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptLexer.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptLexer.cpp.i
 .PHONY : antlr/generated/antlr/PyScriptLexer.cpp.i
 
 antlr/generated/antlr/PyScriptLexer.s: antlr/generated/antlr/PyScriptLexer.cpp.s
@@ -464,6 +506,8 @@ antlr/generated/antlr/PyScriptLexer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptLexer.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptLexer.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptLexer.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptLexer.cpp.s
 .PHONY : antlr/generated/antlr/PyScriptLexer.cpp.s
 
 antlr/generated/antlr/PyScriptListener.o: antlr/generated/antlr/PyScriptListener.cpp.o
@@ -474,6 +518,8 @@ antlr/generated/antlr/PyScriptListener.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptListener.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptListener.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 .PHONY : antlr/generated/antlr/PyScriptListener.cpp.o
 
 antlr/generated/antlr/PyScriptListener.i: antlr/generated/antlr/PyScriptListener.cpp.i
@@ -484,6 +530,8 @@ antlr/generated/antlr/PyScriptListener.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptListener.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptListener.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptListener.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptListener.cpp.i
 .PHONY : antlr/generated/antlr/PyScriptListener.cpp.i
 
 antlr/generated/antlr/PyScriptListener.s: antlr/generated/antlr/PyScriptListener.cpp.s
@@ -494,6 +542,8 @@ antlr/generated/antlr/PyScriptListener.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptListener.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptListener.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptListener.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptListener.cpp.s
 .PHONY : antlr/generated/antlr/PyScriptListener.cpp.s
 
 antlr/generated/antlr/PyScriptParser.o: antlr/generated/antlr/PyScriptParser.cpp.o
@@ -504,6 +554,8 @@ antlr/generated/antlr/PyScriptParser.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptParser.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptParser.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptParser.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptParser.cpp.o
 .PHONY : antlr/generated/antlr/PyScriptParser.cpp.o
 
 antlr/generated/antlr/PyScriptParser.i: antlr/generated/antlr/PyScriptParser.cpp.i
@@ -514,6 +566,8 @@ antlr/generated/antlr/PyScriptParser.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptParser.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptParser.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptParser.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptParser.cpp.i
 .PHONY : antlr/generated/antlr/PyScriptParser.cpp.i
 
 antlr/generated/antlr/PyScriptParser.s: antlr/generated/antlr/PyScriptParser.cpp.s
@@ -524,6 +578,8 @@ antlr/generated/antlr/PyScriptParser.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptParser.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptParser.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptParser.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptParser.cpp.s
 .PHONY : antlr/generated/antlr/PyScriptParser.cpp.s
 
 antlr/generated/antlr/PyScriptVisitor.o: antlr/generated/antlr/PyScriptVisitor.cpp.o
@@ -534,6 +590,8 @@ antlr/generated/antlr/PyScriptVisitor.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o
 .PHONY : antlr/generated/antlr/PyScriptVisitor.cpp.o
 
 antlr/generated/antlr/PyScriptVisitor.i: antlr/generated/antlr/PyScriptVisitor.cpp.i
@@ -544,6 +602,8 @@ antlr/generated/antlr/PyScriptVisitor.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i
 .PHONY : antlr/generated/antlr/PyScriptVisitor.cpp.i
 
 antlr/generated/antlr/PyScriptVisitor.s: antlr/generated/antlr/PyScriptVisitor.cpp.s
@@ -554,6 +614,8 @@ antlr/generated/antlr/PyScriptVisitor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s
 .PHONY : antlr/generated/antlr/PyScriptVisitor.cpp.s
 
 src/dynamic_python_caller.o: src/dynamic_python_caller.cpp.o
@@ -567,6 +629,8 @@ src/dynamic_python_caller.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/dynamic_python_caller.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/dynamic_python_caller.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/dynamic_python_caller.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/dynamic_python_caller.cpp.o
 .PHONY : src/dynamic_python_caller.cpp.o
 
 src/dynamic_python_caller.i: src/dynamic_python_caller.cpp.i
@@ -580,6 +644,8 @@ src/dynamic_python_caller.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/dynamic_python_caller.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/dynamic_python_caller.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/dynamic_python_caller.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/dynamic_python_caller.cpp.i
 .PHONY : src/dynamic_python_caller.cpp.i
 
 src/dynamic_python_caller.s: src/dynamic_python_caller.cpp.s
@@ -593,6 +659,8 @@ src/dynamic_python_caller.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/dynamic_python_caller.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/dynamic_python_caller.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/dynamic_python_caller.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/dynamic_python_caller.cpp.s
 .PHONY : src/dynamic_python_caller.cpp.s
 
 src/main.o: src/main.cpp.o
@@ -627,6 +695,8 @@ src/script_interpreter.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/script_interpreter.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/script_interpreter.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/script_interpreter.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/script_interpreter.cpp.o
 .PHONY : src/script_interpreter.cpp.o
 
 src/script_interpreter.i: src/script_interpreter.cpp.i
@@ -637,6 +707,8 @@ src/script_interpreter.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/script_interpreter.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/script_interpreter.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/script_interpreter.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/script_interpreter.cpp.i
 .PHONY : src/script_interpreter.cpp.i
 
 src/script_interpreter.s: src/script_interpreter.cpp.s
@@ -647,6 +719,8 @@ src/script_interpreter.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/script_interpreter.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/script_interpreter.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/script_interpreter.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/script_interpreter.cpp.s
 .PHONY : src/script_interpreter.cpp.s
 
 src/script_value.o: src/script_value.cpp.o
@@ -657,6 +731,8 @@ src/script_value.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/script_value.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/script_value.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/script_value.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/script_value.cpp.o
 .PHONY : src/script_value.cpp.o
 
 src/script_value.i: src/script_value.cpp.i
@@ -667,6 +743,8 @@ src/script_value.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/script_value.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/script_value.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/script_value.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/script_value.cpp.i
 .PHONY : src/script_value.cpp.i
 
 src/script_value.s: src/script_value.cpp.s
@@ -677,6 +755,8 @@ src/script_value.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_script_interpreter.dir/build.make CMakeFiles/test_script_interpreter.dir/src/script_value.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/script_value.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/src/script_value.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/src/script_value.cpp.s
 .PHONY : src/script_value.cpp.s
 
 src/stock_data_processor.o: src/stock_data_processor.cpp.o
@@ -750,6 +830,30 @@ test_complex_scenario.s: test_complex_scenario.cpp.s
 test_complex_scenario.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_scenario.dir/build.make CMakeFiles/test_complex_scenario.dir/test_complex_scenario.cpp.s
 .PHONY : test_complex_scenario.cpp.s
+
+test_complex_syntax.o: test_complex_syntax.cpp.o
+.PHONY : test_complex_syntax.o
+
+# target to build an object file
+test_complex_syntax.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/test_complex_syntax.cpp.o
+.PHONY : test_complex_syntax.cpp.o
+
+test_complex_syntax.i: test_complex_syntax.cpp.i
+.PHONY : test_complex_syntax.i
+
+# target to preprocess a source file
+test_complex_syntax.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/test_complex_syntax.cpp.i
+.PHONY : test_complex_syntax.cpp.i
+
+test_complex_syntax.s: test_complex_syntax.cpp.s
+.PHONY : test_complex_syntax.s
+
+# target to generate assembly for a file
+test_complex_syntax.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_complex_syntax.dir/build.make CMakeFiles/test_complex_syntax.dir/test_complex_syntax.cpp.s
+.PHONY : test_complex_syntax.cpp.s
 
 test_dynamic_call.o: test_dynamic_call.cpp.o
 .PHONY : test_dynamic_call.o
@@ -847,6 +951,30 @@ test_simple.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/test_simple.cpp.s
 .PHONY : test_simple.cpp.s
 
+test_subscript_assignment.o: test_subscript_assignment.cpp.o
+.PHONY : test_subscript_assignment.o
+
+# target to build an object file
+test_subscript_assignment.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/test_subscript_assignment.cpp.o
+.PHONY : test_subscript_assignment.cpp.o
+
+test_subscript_assignment.i: test_subscript_assignment.cpp.i
+.PHONY : test_subscript_assignment.i
+
+# target to preprocess a source file
+test_subscript_assignment.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/test_subscript_assignment.cpp.i
+.PHONY : test_subscript_assignment.cpp.i
+
+test_subscript_assignment.s: test_subscript_assignment.cpp.s
+.PHONY : test_subscript_assignment.s
+
+# target to generate assembly for a file
+test_subscript_assignment.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_subscript_assignment.dir/build.make CMakeFiles/test_subscript_assignment.dir/test_subscript_assignment.cpp.s
+.PHONY : test_subscript_assignment.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -872,10 +1000,12 @@ help:
 	@echo "... stock_data_app"
 	@echo "... test_class_handling"
 	@echo "... test_complex_scenario"
+	@echo "... test_complex_syntax"
 	@echo "... test_dynamic_call"
 	@echo "... test_module_enum"
 	@echo "... test_script_interpreter"
 	@echo "... test_simple"
+	@echo "... test_subscript_assignment"
 	@echo "... antlr/generated/antlr/PyScriptBaseListener.o"
 	@echo "... antlr/generated/antlr/PyScriptBaseListener.i"
 	@echo "... antlr/generated/antlr/PyScriptBaseListener.s"
@@ -915,6 +1045,9 @@ help:
 	@echo "... test_complex_scenario.o"
 	@echo "... test_complex_scenario.i"
 	@echo "... test_complex_scenario.s"
+	@echo "... test_complex_syntax.o"
+	@echo "... test_complex_syntax.i"
+	@echo "... test_complex_syntax.s"
 	@echo "... test_dynamic_call.o"
 	@echo "... test_dynamic_call.i"
 	@echo "... test_dynamic_call.s"
@@ -927,6 +1060,9 @@ help:
 	@echo "... test_simple.o"
 	@echo "... test_simple.i"
 	@echo "... test_simple.s"
+	@echo "... test_subscript_assignment.o"
+	@echo "... test_subscript_assignment.i"
+	@echo "... test_subscript_assignment.s"
 .PHONY : help
 
 

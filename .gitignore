@@ -3,3 +3,7 @@ node_modules/
 build/
 build_test/
 
+antlr/*
+build_test/*
+build_test/**/*
+build_test/_deps/

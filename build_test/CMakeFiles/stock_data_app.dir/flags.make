@@ -6,7 +6,7 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/Users/yangyi/company/python/pybind11callpython/include -I/Users/yangyi/company/python/pybind11callpython/antlr/generated -I/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr -I/Users/yangyi/company/python/pybind11callpython/build_test/_deps/antlr4-src/runtime/Cpp/runtime/src -isystem /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/include/python3.14 -isystem /Users/yangyi/company/python/pybind11callpython/pybind11/include
 
-CXX_FLAGSarm64 = -O3 -DNDEBUG -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=26.1
+CXX_FLAGSarm64 = -O3 -DNDEBUG -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk
 
-CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=26.1
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk
 

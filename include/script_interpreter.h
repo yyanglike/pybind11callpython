@@ -40,24 +40,18 @@ public:
 
     // Visitor接口实现
     std::any visitProgram(PyScriptParser::ProgramContext *ctx) override;
-    std::any visitImportStmt(PyScriptParser::ImportStmtContext *ctx) override;
-    std::any visitAssignStmt(PyScriptParser::AssignStmtContext *ctx) override;
-    std::any visitExprStmt(PyScriptParser::ExprStmtContext *ctx) override;
-    std::any visitIfStmt(PyScriptParser::IfStmtContext *ctx) override;
-    std::any visitWhileStmt(PyScriptParser::WhileStmtContext *ctx) override;
-    std::any visitReturnStmt(PyScriptParser::ReturnStmtContext *ctx) override;
-    
+    std::any visitStatement(PyScriptParser::StatementContext *ctx) override;
     std::any visitImportStatement(PyScriptParser::ImportStatementContext *ctx) override;
-    std::any visitBinaryAssignment(PyScriptParser::BinaryAssignmentContext *ctx) override;
-    std::any visitAttributeAssignment(PyScriptParser::AttributeAssignmentContext *ctx) override;
-    std::any visitSubscriptAssignment(PyScriptParser::SubscriptAssignmentContext *ctx) override;
-    std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) override;
+    std::any visitFunctionDefinition(PyScriptParser::FunctionDefinitionContext *ctx) override;
+    std::any visitParameterList(PyScriptParser::ParameterListContext *ctx) override;
     std::any visitIfStatement(PyScriptParser::IfStatementContext *ctx) override;
     std::any visitWhileStatement(PyScriptParser::WhileStatementContext *ctx) override;
     std::any visitReturnStatement(PyScriptParser::ReturnStatementContext *ctx) override;
     std::any visitBlock(PyScriptParser::BlockContext *ctx) override;
+    std::any visitAssignment(PyScriptParser::AssignmentContext *ctx) override;
+    std::any visitAssignmentOperator(PyScriptParser::AssignmentOperatorContext *ctx) override;
+    std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) override;
     std::any visitExpression(PyScriptParser::ExpressionContext *ctx) override;
-    
     std::any visitTernaryExpression(PyScriptParser::TernaryExpressionContext *ctx) override;
     std::any visitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) override;
     std::any visitLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *ctx) override;
@@ -66,26 +60,32 @@ public:
     std::any visitAdditiveExpression(PyScriptParser::AdditiveExpressionContext *ctx) override;
     std::any visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) override;
     std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) override;
-    
-    std::any visitMemberAccessPrimary(PyScriptParser::MemberAccessPrimaryContext *ctx) override;
-    std::any visitIdentifierPrimary(PyScriptParser::IdentifierPrimaryContext *ctx) override;
-    std::any visitParenPrimary(PyScriptParser::ParenPrimaryContext *ctx) override;
-    std::any visitNewInstancePrimary(PyScriptParser::NewInstancePrimaryContext *ctx) override;
-    std::any visitLiteralPrimary(PyScriptParser::LiteralPrimaryContext *ctx) override;
-    std::any visitFunctionCallPrimary(PyScriptParser::FunctionCallPrimaryContext *ctx) override;
-    std::any visitSubscriptPrimary(PyScriptParser::SubscriptPrimaryContext *ctx) override;
-    
-    std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
-    std::any visitIntegerLiteral(PyScriptParser::IntegerLiteralContext *ctx) override;
-    std::any visitFloatLiteral(PyScriptParser::FloatLiteralContext *ctx) override;
-    std::any visitStringLiteral(PyScriptParser::StringLiteralContext *ctx) override;
-    std::any visitBooleanLiteral(PyScriptParser::BooleanLiteralContext *ctx) override;
-    std::any visitNullLiteral(PyScriptParser::NullLiteralContext *ctx) override;
+    std::any visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) override;
+    std::any visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) override;
+    std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) override;
+    std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) override;
+    std::any visitPrimaryExpression(PyScriptParser::PrimaryExpressionContext *ctx) override;
+    std::any visitNewExpression(PyScriptParser::NewExpressionContext *ctx) override;
+    std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override;
     std::any visitListLiteral(PyScriptParser::ListLiteralContext *ctx) override;
     std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override;
+    std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override;
+    std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
     std::any visitExpressionList(PyScriptParser::ExpressionListContext *ctx) override;
-    std::any visitKeyValuePairList(PyScriptParser::KeyValuePairListContext *ctx) override;
+    std::any visitDictItemList(PyScriptParser::DictItemListContext *ctx) override;
     std::any visitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) override;
+    std::any visitDictUnpack(PyScriptParser::DictUnpackContext *ctx) override;
+    std::any visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) override;
+    std::any visitForStatement(PyScriptParser::ForStatementContext *ctx) override;
+    std::any visitForControl(PyScriptParser::ForControlContext *ctx) override;
+    std::any visitForInit(PyScriptParser::ForInitContext *ctx) override;
+    std::any visitForUpdate(PyScriptParser::ForUpdateContext *ctx) override;
+    std::any visitListComprehension(PyScriptParser::ListComprehensionContext *ctx) override;
+
+    // 新增的Visitor方法，用于新的语法规则
+    std::any visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) override;
+    std::any visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *ctx) override;
+    std::any visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) override;
 
 private:
     // 变量环境
@@ -106,6 +106,9 @@ private:
     
     // 当前是否在Python解释器控制下
     bool python_initialized_;
+    
+    // 是否正在定义函数（用于避免在函数定义体中报错）
+    bool defining_function_;
     
     // 辅助方法
     void reportError(const std::string& message);

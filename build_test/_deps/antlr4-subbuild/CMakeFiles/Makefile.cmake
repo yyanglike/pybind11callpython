@@ -10,10 +10,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.31.2/CMakeSystem.cmake"
   "CMakeLists.txt"
   "antlr4-populate-prefix/tmp/antlr4-populate-mkdirs.cmake"
-  "/opt/homebrew/share/cmake/Modules/CMakeDetermineSystem.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeInitializeConfigs.cmake"
-  "/opt/homebrew/share/cmake/Modules/CMakeSystem.cmake.in"
   "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake"
   "/opt/homebrew/share/cmake/Modules/ExternalProject.cmake"
@@ -38,7 +36,6 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
-  "CMakeFiles/3.31.2/CMakeSystem.cmake"
   "antlr4-populate-prefix/tmp/antlr4-populate-mkdirs.cmake"
   "antlr4-populate-prefix/tmp/antlr4-populate-gitclone.cmake"
   "antlr4-populate-prefix/src/antlr4-populate-stamp/antlr4-populate-gitinfo.txt"

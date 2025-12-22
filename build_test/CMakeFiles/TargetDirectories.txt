@@ -5,6 +5,8 @@
 /Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/test_script_interpreter.dir
 /Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/test_complex_scenario.dir
 /Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/test_simple.dir
+/Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/test_subscript_assignment.dir
+/Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/test_complex_syntax.dir
 /Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/package.dir
 /Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/package_source.dir
 /Users/yangyi/company/python/pybind11callpython/build_test/CMakeFiles/edit_cache.dir

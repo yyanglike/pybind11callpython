@@ -1,5 +1,5 @@
 
-// Generated from antlr/PyScript.g4 by ANTLR 4.10.1
+// Generated from PyScript.g4 by ANTLR 4.10.1
 
 #pragma once
 
@@ -19,38 +19,17 @@ public:
   virtual void enterProgram(PyScriptParser::ProgramContext * /*ctx*/) override { }
   virtual void exitProgram(PyScriptParser::ProgramContext * /*ctx*/) override { }
 
-  virtual void enterImportStmt(PyScriptParser::ImportStmtContext * /*ctx*/) override { }
-  virtual void exitImportStmt(PyScriptParser::ImportStmtContext * /*ctx*/) override { }
-
-  virtual void enterAssignStmt(PyScriptParser::AssignStmtContext * /*ctx*/) override { }
-  virtual void exitAssignStmt(PyScriptParser::AssignStmtContext * /*ctx*/) override { }
-
-  virtual void enterExprStmt(PyScriptParser::ExprStmtContext * /*ctx*/) override { }
-  virtual void exitExprStmt(PyScriptParser::ExprStmtContext * /*ctx*/) override { }
-
-  virtual void enterIfStmt(PyScriptParser::IfStmtContext * /*ctx*/) override { }
-  virtual void exitIfStmt(PyScriptParser::IfStmtContext * /*ctx*/) override { }
-
-  virtual void enterWhileStmt(PyScriptParser::WhileStmtContext * /*ctx*/) override { }
-  virtual void exitWhileStmt(PyScriptParser::WhileStmtContext * /*ctx*/) override { }
-
-  virtual void enterReturnStmt(PyScriptParser::ReturnStmtContext * /*ctx*/) override { }
-  virtual void exitReturnStmt(PyScriptParser::ReturnStmtContext * /*ctx*/) override { }
+  virtual void enterStatement(PyScriptParser::StatementContext * /*ctx*/) override { }
+  virtual void exitStatement(PyScriptParser::StatementContext * /*ctx*/) override { }
 
   virtual void enterImportStatement(PyScriptParser::ImportStatementContext * /*ctx*/) override { }
   virtual void exitImportStatement(PyScriptParser::ImportStatementContext * /*ctx*/) override { }
 
-  virtual void enterBinaryAssignment(PyScriptParser::BinaryAssignmentContext * /*ctx*/) override { }
-  virtual void exitBinaryAssignment(PyScriptParser::BinaryAssignmentContext * /*ctx*/) override { }
+  virtual void enterFunctionDefinition(PyScriptParser::FunctionDefinitionContext * /*ctx*/) override { }
+  virtual void exitFunctionDefinition(PyScriptParser::FunctionDefinitionContext * /*ctx*/) override { }
 
-  virtual void enterAttributeAssignment(PyScriptParser::AttributeAssignmentContext * /*ctx*/) override { }
-  virtual void exitAttributeAssignment(PyScriptParser::AttributeAssignmentContext * /*ctx*/) override { }
-
-  virtual void enterSubscriptAssignment(PyScriptParser::SubscriptAssignmentContext * /*ctx*/) override { }
-  virtual void exitSubscriptAssignment(PyScriptParser::SubscriptAssignmentContext * /*ctx*/) override { }
-
-  virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
-  virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
+  virtual void enterParameterList(PyScriptParser::ParameterListContext * /*ctx*/) override { }
+  virtual void exitParameterList(PyScriptParser::ParameterListContext * /*ctx*/) override { }
 
   virtual void enterIfStatement(PyScriptParser::IfStatementContext * /*ctx*/) override { }
   virtual void exitIfStatement(PyScriptParser::IfStatementContext * /*ctx*/) override { }
@@ -58,11 +37,32 @@ public:
   virtual void enterWhileStatement(PyScriptParser::WhileStatementContext * /*ctx*/) override { }
   virtual void exitWhileStatement(PyScriptParser::WhileStatementContext * /*ctx*/) override { }
 
+  virtual void enterForStatement(PyScriptParser::ForStatementContext * /*ctx*/) override { }
+  virtual void exitForStatement(PyScriptParser::ForStatementContext * /*ctx*/) override { }
+
+  virtual void enterForControl(PyScriptParser::ForControlContext * /*ctx*/) override { }
+  virtual void exitForControl(PyScriptParser::ForControlContext * /*ctx*/) override { }
+
+  virtual void enterForInit(PyScriptParser::ForInitContext * /*ctx*/) override { }
+  virtual void exitForInit(PyScriptParser::ForInitContext * /*ctx*/) override { }
+
+  virtual void enterForUpdate(PyScriptParser::ForUpdateContext * /*ctx*/) override { }
+  virtual void exitForUpdate(PyScriptParser::ForUpdateContext * /*ctx*/) override { }
+
   virtual void enterReturnStatement(PyScriptParser::ReturnStatementContext * /*ctx*/) override { }
   virtual void exitReturnStatement(PyScriptParser::ReturnStatementContext * /*ctx*/) override { }
 
   virtual void enterBlock(PyScriptParser::BlockContext * /*ctx*/) override { }
   virtual void exitBlock(PyScriptParser::BlockContext * /*ctx*/) override { }
+
+  virtual void enterAssignment(PyScriptParser::AssignmentContext * /*ctx*/) override { }
+  virtual void exitAssignment(PyScriptParser::AssignmentContext * /*ctx*/) override { }
+
+  virtual void enterAssignmentOperator(PyScriptParser::AssignmentOperatorContext * /*ctx*/) override { }
+  virtual void exitAssignmentOperator(PyScriptParser::AssignmentOperatorContext * /*ctx*/) override { }
+
+  virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
+  virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
 
   virtual void enterExpression(PyScriptParser::ExpressionContext * /*ctx*/) override { }
   virtual void exitExpression(PyScriptParser::ExpressionContext * /*ctx*/) override { }
@@ -91,47 +91,35 @@ public:
   virtual void enterUnaryExpression(PyScriptParser::UnaryExpressionContext * /*ctx*/) override { }
   virtual void exitUnaryExpression(PyScriptParser::UnaryExpressionContext * /*ctx*/) override { }
 
-  virtual void enterLiteralPrimary(PyScriptParser::LiteralPrimaryContext * /*ctx*/) override { }
-  virtual void exitLiteralPrimary(PyScriptParser::LiteralPrimaryContext * /*ctx*/) override { }
+  virtual void enterCallOrPrimary(PyScriptParser::CallOrPrimaryContext * /*ctx*/) override { }
+  virtual void exitCallOrPrimary(PyScriptParser::CallOrPrimaryContext * /*ctx*/) override { }
 
-  virtual void enterIdentifierPrimary(PyScriptParser::IdentifierPrimaryContext * /*ctx*/) override { }
-  virtual void exitIdentifierPrimary(PyScriptParser::IdentifierPrimaryContext * /*ctx*/) override { }
+  virtual void enterAttributeAccessOp(PyScriptParser::AttributeAccessOpContext * /*ctx*/) override { }
+  virtual void exitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext * /*ctx*/) override { }
 
-  virtual void enterParenPrimary(PyScriptParser::ParenPrimaryContext * /*ctx*/) override { }
-  virtual void exitParenPrimary(PyScriptParser::ParenPrimaryContext * /*ctx*/) override { }
+  virtual void enterSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext * /*ctx*/) override { }
+  virtual void exitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext * /*ctx*/) override { }
 
-  virtual void enterNewInstancePrimary(PyScriptParser::NewInstancePrimaryContext * /*ctx*/) override { }
-  virtual void exitNewInstancePrimary(PyScriptParser::NewInstancePrimaryContext * /*ctx*/) override { }
+  virtual void enterFunctionCallOp(PyScriptParser::FunctionCallOpContext * /*ctx*/) override { }
+  virtual void exitFunctionCallOp(PyScriptParser::FunctionCallOpContext * /*ctx*/) override { }
 
-  virtual void enterPostfixExpression(PyScriptParser::PostfixExpressionContext * /*ctx*/) override { }
-  virtual void exitPostfixExpression(PyScriptParser::PostfixExpressionContext * /*ctx*/) override { }
+  virtual void enterAttributeAccess(PyScriptParser::AttributeAccessContext * /*ctx*/) override { }
+  virtual void exitAttributeAccess(PyScriptParser::AttributeAccessContext * /*ctx*/) override { }
 
-  virtual void enterFunctionCallPostfix(PyScriptParser::FunctionCallPostfixContext * /*ctx*/) override { }
-  virtual void exitFunctionCallPostfix(PyScriptParser::FunctionCallPostfixContext * /*ctx*/) override { }
+  virtual void enterSubscriptAccess(PyScriptParser::SubscriptAccessContext * /*ctx*/) override { }
+  virtual void exitSubscriptAccess(PyScriptParser::SubscriptAccessContext * /*ctx*/) override { }
 
-  virtual void enterMemberAccessPostfix(PyScriptParser::MemberAccessPostfixContext * /*ctx*/) override { }
-  virtual void exitMemberAccessPostfix(PyScriptParser::MemberAccessPostfixContext * /*ctx*/) override { }
+  virtual void enterFunctionCall(PyScriptParser::FunctionCallContext * /*ctx*/) override { }
+  virtual void exitFunctionCall(PyScriptParser::FunctionCallContext * /*ctx*/) override { }
 
-  virtual void enterSubscriptPostfix(PyScriptParser::SubscriptPostfixContext * /*ctx*/) override { }
-  virtual void exitSubscriptPostfix(PyScriptParser::SubscriptPostfixContext * /*ctx*/) override { }
+  virtual void enterPrimaryExpression(PyScriptParser::PrimaryExpressionContext * /*ctx*/) override { }
+  virtual void exitPrimaryExpression(PyScriptParser::PrimaryExpressionContext * /*ctx*/) override { }
 
-  virtual void enterArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
-  virtual void exitArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
+  virtual void enterNewExpression(PyScriptParser::NewExpressionContext * /*ctx*/) override { }
+  virtual void exitNewExpression(PyScriptParser::NewExpressionContext * /*ctx*/) override { }
 
-  virtual void enterIntegerLiteral(PyScriptParser::IntegerLiteralContext * /*ctx*/) override { }
-  virtual void exitIntegerLiteral(PyScriptParser::IntegerLiteralContext * /*ctx*/) override { }
-
-  virtual void enterFloatLiteral(PyScriptParser::FloatLiteralContext * /*ctx*/) override { }
-  virtual void exitFloatLiteral(PyScriptParser::FloatLiteralContext * /*ctx*/) override { }
-
-  virtual void enterStringLiteral(PyScriptParser::StringLiteralContext * /*ctx*/) override { }
-  virtual void exitStringLiteral(PyScriptParser::StringLiteralContext * /*ctx*/) override { }
-
-  virtual void enterBooleanLiteral(PyScriptParser::BooleanLiteralContext * /*ctx*/) override { }
-  virtual void exitBooleanLiteral(PyScriptParser::BooleanLiteralContext * /*ctx*/) override { }
-
-  virtual void enterNullLiteral(PyScriptParser::NullLiteralContext * /*ctx*/) override { }
-  virtual void exitNullLiteral(PyScriptParser::NullLiteralContext * /*ctx*/) override { }
+  virtual void enterLiteral(PyScriptParser::LiteralContext * /*ctx*/) override { }
+  virtual void exitLiteral(PyScriptParser::LiteralContext * /*ctx*/) override { }
 
   virtual void enterListLiteral(PyScriptParser::ListLiteralContext * /*ctx*/) override { }
   virtual void exitListLiteral(PyScriptParser::ListLiteralContext * /*ctx*/) override { }
@@ -139,14 +127,29 @@ public:
   virtual void enterDictLiteral(PyScriptParser::DictLiteralContext * /*ctx*/) override { }
   virtual void exitDictLiteral(PyScriptParser::DictLiteralContext * /*ctx*/) override { }
 
+  virtual void enterListComprehension(PyScriptParser::ListComprehensionContext * /*ctx*/) override { }
+  virtual void exitListComprehension(PyScriptParser::ListComprehensionContext * /*ctx*/) override { }
+
+  virtual void enterLambdaExpression(PyScriptParser::LambdaExpressionContext * /*ctx*/) override { }
+  virtual void exitLambdaExpression(PyScriptParser::LambdaExpressionContext * /*ctx*/) override { }
+
+  virtual void enterDottedName(PyScriptParser::DottedNameContext * /*ctx*/) override { }
+  virtual void exitDottedName(PyScriptParser::DottedNameContext * /*ctx*/) override { }
+
+  virtual void enterArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
+  virtual void exitArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
+
   virtual void enterExpressionList(PyScriptParser::ExpressionListContext * /*ctx*/) override { }
   virtual void exitExpressionList(PyScriptParser::ExpressionListContext * /*ctx*/) override { }
 
-  virtual void enterKeyValuePairList(PyScriptParser::KeyValuePairListContext * /*ctx*/) override { }
-  virtual void exitKeyValuePairList(PyScriptParser::KeyValuePairListContext * /*ctx*/) override { }
+  virtual void enterDictItemList(PyScriptParser::DictItemListContext * /*ctx*/) override { }
+  virtual void exitDictItemList(PyScriptParser::DictItemListContext * /*ctx*/) override { }
 
   virtual void enterKeyValuePair(PyScriptParser::KeyValuePairContext * /*ctx*/) override { }
   virtual void exitKeyValuePair(PyScriptParser::KeyValuePairContext * /*ctx*/) override { }
+
+  virtual void enterDictUnpack(PyScriptParser::DictUnpackContext * /*ctx*/) override { }
+  virtual void exitDictUnpack(PyScriptParser::DictUnpackContext * /*ctx*/) override { }
 
 
   virtual void enterEveryRule(antlr4::ParserRuleContext * /*ctx*/) override { }

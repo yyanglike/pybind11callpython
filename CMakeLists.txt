@@ -146,8 +146,48 @@ target_link_libraries(test_simple
     antlr4_static
 )
 
+# 下标赋值测试程序
+add_executable(test_subscript_assignment
+    test_subscript_assignment.cpp
+    src/script_interpreter.cpp
+    src/script_value.cpp
+    src/dynamic_python_caller.cpp
+    antlr/generated/antlr/PyScriptLexer.cpp
+    antlr/generated/antlr/PyScriptParser.cpp
+    antlr/generated/antlr/PyScriptBaseVisitor.cpp
+    antlr/generated/antlr/PyScriptVisitor.cpp
+    antlr/generated/antlr/PyScriptBaseListener.cpp
+    antlr/generated/antlr/PyScriptListener.cpp
+)
+
+target_link_libraries(test_subscript_assignment
+    ${Python3_LIBRARIES}
+    pybind11::embed
+    antlr4_static
+)
+
+# 复杂语法测试程序
+add_executable(test_complex_syntax
+    test_complex_syntax.cpp
+    src/script_interpreter.cpp
+    src/script_value.cpp
+    src/dynamic_python_caller.cpp
+    antlr/generated/antlr/PyScriptLexer.cpp
+    antlr/generated/antlr/PyScriptParser.cpp
+    antlr/generated/antlr/PyScriptBaseVisitor.cpp
+    antlr/generated/antlr/PyScriptVisitor.cpp
+    antlr/generated/antlr/PyScriptBaseListener.cpp
+    antlr/generated/antlr/PyScriptListener.cpp
+)
+
+target_link_libraries(test_complex_syntax
+    ${Python3_LIBRARIES}
+    pybind11::embed
+    antlr4_static
+)
+
 if(APPLE)
-    set_target_properties(test_dynamic_call test_module_enum test_class_handling test_script_interpreter test_complex_scenario test_simple PROPERTIES
+    set_target_properties(test_dynamic_call test_module_enum test_class_handling test_script_interpreter test_complex_scenario test_simple test_subscript_assignment test_complex_syntax PROPERTIES
         BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH "@executable_path/../lib"
     )

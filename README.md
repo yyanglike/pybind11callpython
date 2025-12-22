@@ -528,5 +528,7 @@ Stock Data System Development Team
 
 
 cd antlr && java -jar /usr/local/lib/antlr-4.10.1-complete.jar -Dlanguage=Cpp -visitor -o generated PyScript.g4 2>&1
+cd /Users/yangyi/company/python/pybind11callpython/antlr && antlr4 -Dlanguage=Cpp -visitor -o generated/antlr PyScript.g4 2>&1
+
 
 pybind11callpython % antlr4 -Dlanguage=Cpp -visitor -o antlr/generated antlr/PyScript.g4 2>&1

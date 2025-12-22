@@ -1,150 +1,315 @@
 grammar PyScript;
 
-// 程序由多个语句组成
-program: statement+ EOF;
+/* =======================
+ * Program
+ * ======================= */
 
-// 语句可以是导入、赋值、表达式等
+program
+    : statement+ EOF
+    ;
+
+/* =======================
+ * Statements
+ * ======================= */
+
 statement
-    : importStatement                     # importStmt
-    | assignment                          # assignStmt
-    | expressionStatement                 # exprStmt
-    | ifStatement                         # ifStmt
-    | whileStatement                      # whileStmt
-    | returnStatement                     # returnStmt
+    : importStatement
+    | functionDefinition
+    | assignment
+    | ifStatement
+    | whileStatement
+    | forStatement
+    | returnStatement
+    | expressionStatement
     ;
 
-// 导入语句
-importStatement: 'import' IDENTIFIER ('.' IDENTIFIER)* ('as' IDENTIFIER)? ';'?;
+/* =======================
+ * Import
+ * ======================= */
 
-// 赋值语句（包括普通赋值、属性赋值、下标赋值）
+importStatement
+    : 'import' dottedName ('as' IDENTIFIER)? ';'?
+    ;
+
+/* =======================
+ * Function Definition
+ * ======================= */
+
+functionDefinition
+    : 'def' IDENTIFIER '(' parameterList? ')' block
+    ;
+
+parameterList
+    : IDENTIFIER (',' IDENTIFIER)*
+    ;
+
+/* =======================
+ * Control Flow
+ * ======================= */
+
+ifStatement
+    : 'if' '(' expression ')' block ('else' block)?
+    ;
+
+whileStatement
+    : 'while' '(' expression ')' block
+    ;
+
+forStatement
+    : 'for' '(' forControl ')' block
+    ;
+
+forControl
+    : forInit? ';' expression? ';' forUpdate?
+    ;
+
+forInit
+    : assignment
+    ;
+
+forUpdate
+    : assignment
+    ;
+
+returnStatement
+    : 'return' expression? ';'?
+    ;
+
+block
+    : '{' statement* '}'
+    ;
+
+/* =======================
+ * Assignment
+ * ======================= */
+
 assignment
-    : IDENTIFIER ('=' | '+=' | '-=' | '*=' | '/=' | '%=') ternaryExpression  # binaryAssignment
-    | primaryExpression '.' IDENTIFIER '=' ternaryExpression                          # attributeAssignment
-    | primaryExpression '[' expression ']' '=' ternaryExpression                      # subscriptAssignment
+    : IDENTIFIER assignmentOperator expression ';'?
+    | attributeAccess '=' expression ';'?
+    | subscriptAccess '=' expression ';'?
     ;
 
-// 表达式语句
-expressionStatement: expression ';'?;
+assignmentOperator
+    : '=' | '+=' | '-=' | '*=' | '/=' | '%='
+    ;
 
-// if语句 - 修改：block必须用大括号
-ifStatement: 'if' '(' expression ')' block ('else' block)?;
+/* =======================
+ * Expression Statement
+ * ======================= */
 
-// while循环
-whileStatement: 'while' '(' expression ')' block;
+expressionStatement
+    : expression ';'?
+    ;
 
-// return语句
-returnStatement: 'return' expression? ';'?;
+/* =======================
+ * Expressions
+ * ======================= */
 
-// 代码块 - 修改：只允许大括号包围的块，不允许单条语句
-block: '{' statement* '}';
+expression
+    : assignment
+    | ternaryExpression
+    ;
 
-// 表达式（顶层，包括赋值）
-expression: ternaryExpression | assignment;
+/* --- Ternary / Python Conditional Expression --- */
 
-// 三元条件表达式
 ternaryExpression
-    : logicalOrExpression ('?' expression ':' ternaryExpression)?
+    : logicalOrExpression ('if' logicalOrExpression 'else' ternaryExpression)?
+    | logicalOrExpression ('?' expression ':' ternaryExpression)?
     ;
 
-// 逻辑或表达式
+/* --- Logical --- */
+
 logicalOrExpression
     : logicalAndExpression ('||' logicalAndExpression)*
     ;
 
-// 逻辑与表达式
 logicalAndExpression
     : equalityExpression ('&&' equalityExpression)*
     ;
 
-// 相等性表达式
+/* --- Equality --- */
+
 equalityExpression
     : relationalExpression (('==' | '!=') relationalExpression)*
     ;
 
-// 关系表达式
+/* --- Relational --- */
+
 relationalExpression
     : additiveExpression (('<' | '>' | '<=' | '>=') additiveExpression)*
     ;
 
-// 加减表达式
+/* --- Arithmetic --- */
+
 additiveExpression
     : multiplicativeExpression (('+' | '-') multiplicativeExpression)*
     ;
 
-// 乘除取模表达式
 multiplicativeExpression
     : unaryExpression (('*' | '/' | '%') unaryExpression)*
     ;
 
-// 一元表达式
+/* --- Unary --- */
+
 unaryExpression
-    : ('!' | '-')? postfixExpression
+    : ('!' | '-')? callOrPrimary
     ;
 
-// 基础表达式
+/* =======================
+ * Call / Access
+ * ======================= */
+
+callOrPrimary
+    : primaryExpression (postfixOp)*
+    ;
+
+postfixOp
+    : '.' IDENTIFIER                 # attributeAccessOp
+    | '[' expression ']'             # subscriptAccessOp
+    | '(' argumentList? ')'          # functionCallOp
+    ;
+
+// 辅助规则用于赋值目标
+attributeAccess
+    : primaryExpression '.' IDENTIFIER
+    ;
+
+subscriptAccess
+    : primaryExpression '[' expression ']'
+    ;
+
+functionCall
+    : (dottedName | attributeAccess | subscriptAccess | '(' expression ')') '(' argumentList? ')'
+    ;
+
+/* =======================
+ * Primary Expressions
+ * ======================= */
+
 primaryExpression
-    : literal                                   # literalPrimary
-    | IDENTIFIER                                # identifierPrimary
-    | '(' expression ')'                        # parenPrimary
-    | 'new' IDENTIFIER ('.' IDENTIFIER)* '(' argumentList? ')'  # newInstancePrimary
+    : literal
+    | dottedName
+    | '(' expression ')'
+    | listLiteral
+    | dictLiteral
+    | newExpression
+    | lambdaExpression
+    | listComprehension
     ;
 
-// 后缀表达式（函数调用、成员访问、下标）
-postfixExpression
-    : primaryExpression (postfixOperator)*
+/* --- new --- */
+
+newExpression
+    : 'new' dottedName '(' argumentList? ')'
     ;
 
-postfixOperator
-    : '(' argumentList? ')'                     # functionCallPostfix
-    | '.' IDENTIFIER                            # memberAccessPostfix
-    | '[' expression ']'                        # subscriptPostfix
-    ;
+/* =======================
+ * Literals
+ * ======================= */
 
-// 参数列表
-argumentList: expression (',' expression)*;
-
-// 字面量
 literal
-    : INTEGER          # integerLiteral
-    | FLOAT            # floatLiteral
-    | STRING           # stringLiteral
-    | BOOL             # booleanLiteral
-    | NULL_LIT         # nullLiteral
-    | '[' expressionList? ']'   # listLiteral
-    | '{' keyValuePairList? '}' # dictLiteral
+    : INTEGER
+    | FLOAT
+    | STRING
+    | BOOL
+    | NULL_LIT
     ;
 
-// 表达式列表
-expressionList: expression (',' expression)*;
+listLiteral
+    : '[' expressionList? ']'
+    ;
 
-// 键值对列表
-keyValuePairList: keyValuePair (',' keyValuePair)*;
-keyValuePair: expression ':' expression;
+dictLiteral
+    : '{' dictItemList? '}'
+    ;
 
-// 词法规则
+/* =======================
+ * Comprehensions
+ * ======================= */
 
-// 标识符
-IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
+listComprehension
+    : '[' expression 'for' IDENTIFIER 'in' expression ']'
+    ;
 
-// 整数
-INTEGER: [0-9]+;
+/* =======================
+ * Helpers
+ * ======================= */
 
-// 浮点数
-FLOAT: [0-9]+ '.' [0-9]* | '.' [0-9]+;
+lambdaExpression
+    : 'lambda' ( IDENTIFIER (',' IDENTIFIER)* )? ':' expression
+    ;
 
-// 字符串
-STRING: '"' (~["\\\r\n] | '\\' .)* '"'
-      | '\'' (~['\\\r\n] | '\\' .)* '\'';
+dottedName
+    : IDENTIFIER ('.' IDENTIFIER)*
+    ;
 
-// 布尔值
-BOOL: 'true' | 'false';
+argumentList
+    : expression (',' expression)*
+    ;
 
-// 空值
-NULL_LIT: 'null';
+expressionList
+    : expression (',' expression)*
+    ;
 
-// 空白字符
-WS: [ \t\r\n]+ -> skip;
+dictItemList
+    : dictItem (',' dictItem)*
+    ;
 
-// 注释
-COMMENT: '//' ~[\r\n]* -> skip;
-MULTILINE_COMMENT: '/*' .*? '*/' -> skip;
+dictItem
+    : expression ':' expression  # keyValuePair
+    | '**' expression            # dictUnpack
+    ;
+
+/* =======================
+ * Lexer
+ * ======================= */
+
+// 关键字必须放在IDENTIFIER之前，以确保优先匹配
+RETURN : 'return';
+IF : 'if';
+ELSE : 'else';
+WHILE : 'while';
+FOR : 'for';
+DEF : 'def';
+IMPORT : 'import';
+AS : 'as';
+NEW : 'new';
+LAMBDA : 'lambda';
+
+IDENTIFIER
+    : [a-zA-Z_][a-zA-Z0-9_]*
+    ;
+
+INTEGER
+    : [0-9]+
+    ;
+
+FLOAT
+    : [0-9]+ '.' [0-9]*
+    | '.' [0-9]+
+    ;
+
+STRING
+    : '"' (~["\\\r\n] | '\\' .)* '"'
+    | '\'' (~['\\\r\n] | '\\' .)* '\''
+    ;
+
+BOOL
+    : 'true' | 'false'
+    ;
+
+NULL_LIT
+    : 'null'
+    ;
+
+WS
+    : [ \t\r\n]+ -> skip
+    ;
+
+COMMENT
+    : '//' ~[\r\n]* -> skip
+    ;
+
+MULTILINE_COMMENT
+    : '/*' .*? '*/' -> skip
+    ;

@@ -21,35 +21,35 @@ public:
    */
     virtual std::any visitProgram(PyScriptParser::ProgramContext *context) = 0;
 
-    virtual std::any visitImportStmt(PyScriptParser::ImportStmtContext *context) = 0;
-
-    virtual std::any visitAssignStmt(PyScriptParser::AssignStmtContext *context) = 0;
-
-    virtual std::any visitExprStmt(PyScriptParser::ExprStmtContext *context) = 0;
-
-    virtual std::any visitIfStmt(PyScriptParser::IfStmtContext *context) = 0;
-
-    virtual std::any visitWhileStmt(PyScriptParser::WhileStmtContext *context) = 0;
-
-    virtual std::any visitReturnStmt(PyScriptParser::ReturnStmtContext *context) = 0;
+    virtual std::any visitStatement(PyScriptParser::StatementContext *context) = 0;
 
     virtual std::any visitImportStatement(PyScriptParser::ImportStatementContext *context) = 0;
 
-    virtual std::any visitBinaryAssignment(PyScriptParser::BinaryAssignmentContext *context) = 0;
+    virtual std::any visitFunctionDefinition(PyScriptParser::FunctionDefinitionContext *context) = 0;
 
-    virtual std::any visitAttributeAssignment(PyScriptParser::AttributeAssignmentContext *context) = 0;
-
-    virtual std::any visitSubscriptAssignment(PyScriptParser::SubscriptAssignmentContext *context) = 0;
-
-    virtual std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *context) = 0;
+    virtual std::any visitParameterList(PyScriptParser::ParameterListContext *context) = 0;
 
     virtual std::any visitIfStatement(PyScriptParser::IfStatementContext *context) = 0;
 
     virtual std::any visitWhileStatement(PyScriptParser::WhileStatementContext *context) = 0;
 
+    virtual std::any visitForStatement(PyScriptParser::ForStatementContext *context) = 0;
+
+    virtual std::any visitForControl(PyScriptParser::ForControlContext *context) = 0;
+
+    virtual std::any visitForInit(PyScriptParser::ForInitContext *context) = 0;
+
+    virtual std::any visitForUpdate(PyScriptParser::ForUpdateContext *context) = 0;
+
     virtual std::any visitReturnStatement(PyScriptParser::ReturnStatementContext *context) = 0;
 
     virtual std::any visitBlock(PyScriptParser::BlockContext *context) = 0;
+
+    virtual std::any visitAssignment(PyScriptParser::AssignmentContext *context) = 0;
+
+    virtual std::any visitAssignmentOperator(PyScriptParser::AssignmentOperatorContext *context) = 0;
+
+    virtual std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *context) = 0;
 
     virtual std::any visitExpression(PyScriptParser::ExpressionContext *context) = 0;
 
@@ -69,43 +69,45 @@ public:
 
     virtual std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *context) = 0;
 
-    virtual std::any visitLiteralPrimary(PyScriptParser::LiteralPrimaryContext *context) = 0;
+    virtual std::any visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *context) = 0;
 
-    virtual std::any visitIdentifierPrimary(PyScriptParser::IdentifierPrimaryContext *context) = 0;
+    virtual std::any visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *context) = 0;
 
-    virtual std::any visitParenPrimary(PyScriptParser::ParenPrimaryContext *context) = 0;
+    virtual std::any visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *context) = 0;
 
-    virtual std::any visitNewInstancePrimary(PyScriptParser::NewInstancePrimaryContext *context) = 0;
+    virtual std::any visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *context) = 0;
 
-    virtual std::any visitPostfixExpression(PyScriptParser::PostfixExpressionContext *context) = 0;
+    virtual std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *context) = 0;
 
-    virtual std::any visitFunctionCallPostfix(PyScriptParser::FunctionCallPostfixContext *context) = 0;
+    virtual std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *context) = 0;
 
-    virtual std::any visitMemberAccessPostfix(PyScriptParser::MemberAccessPostfixContext *context) = 0;
+    virtual std::any visitFunctionCall(PyScriptParser::FunctionCallContext *context) = 0;
 
-    virtual std::any visitSubscriptPostfix(PyScriptParser::SubscriptPostfixContext *context) = 0;
+    virtual std::any visitPrimaryExpression(PyScriptParser::PrimaryExpressionContext *context) = 0;
 
-    virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *context) = 0;
+    virtual std::any visitNewExpression(PyScriptParser::NewExpressionContext *context) = 0;
 
-    virtual std::any visitIntegerLiteral(PyScriptParser::IntegerLiteralContext *context) = 0;
-
-    virtual std::any visitFloatLiteral(PyScriptParser::FloatLiteralContext *context) = 0;
-
-    virtual std::any visitStringLiteral(PyScriptParser::StringLiteralContext *context) = 0;
-
-    virtual std::any visitBooleanLiteral(PyScriptParser::BooleanLiteralContext *context) = 0;
-
-    virtual std::any visitNullLiteral(PyScriptParser::NullLiteralContext *context) = 0;
+    virtual std::any visitLiteral(PyScriptParser::LiteralContext *context) = 0;
 
     virtual std::any visitListLiteral(PyScriptParser::ListLiteralContext *context) = 0;
 
     virtual std::any visitDictLiteral(PyScriptParser::DictLiteralContext *context) = 0;
 
+    virtual std::any visitListComprehension(PyScriptParser::ListComprehensionContext *context) = 0;
+
+    virtual std::any visitLambdaExpression(PyScriptParser::LambdaExpressionContext *context) = 0;
+
+    virtual std::any visitDottedName(PyScriptParser::DottedNameContext *context) = 0;
+
+    virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *context) = 0;
+
     virtual std::any visitExpressionList(PyScriptParser::ExpressionListContext *context) = 0;
 
-    virtual std::any visitKeyValuePairList(PyScriptParser::KeyValuePairListContext *context) = 0;
+    virtual std::any visitDictItemList(PyScriptParser::DictItemListContext *context) = 0;
 
     virtual std::any visitKeyValuePair(PyScriptParser::KeyValuePairContext *context) = 0;
+
+    virtual std::any visitDictUnpack(PyScriptParser::DictUnpackContext *context) = 0;
 
 
 };

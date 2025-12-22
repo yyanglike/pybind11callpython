@@ -4786,7 +4786,6 @@ CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptParser.cpp.
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdarg.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
-  /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptListener.h \
   /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptParser.h \
   /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptVisitor.h \
   _deps/antlr4-src/runtime/Cpp/runtime/src/ANTLRErrorListener.h \
