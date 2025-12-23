@@ -830,6 +830,7 @@ CMakeFiles/test_dynamic_call.dir/src/dynamic_python_caller.cpp.o: /Users/yangyi/
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
   /Users/yangyi/company/python/pybind11callpython/include/dynamic_python_caller.h \
+  /Users/yangyi/company/python/pybind11callpython/include/logger.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/cast.h \
@@ -2165,6 +2166,8 @@ CMakeFiles/test_dynamic_call.dir/test_dynamic_call.cpp.o: /Users/yangyi/company/
 /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h:
 
 /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h:
+
+/Users/yangyi/company/python/pybind11callpython/include/logger.h:
 
 /Users/yangyi/company/python/pybind11callpython/include/dynamic_python_caller.h:
 

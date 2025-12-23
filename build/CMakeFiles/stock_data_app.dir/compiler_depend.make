@@ -855,6 +855,7 @@ CMakeFiles/stock_data_app.dir/src/main.cpp.o: /Users/yangyi/company/python/pybin
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdarg.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
+  /Users/yangyi/company/python/pybind11callpython/include/logger.h \
   /Users/yangyi/company/python/pybind11callpython/include/stock_data_processor.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h \
@@ -1878,6 +1879,7 @@ CMakeFiles/stock_data_app.dir/src/stock_data_processor.cpp.o: /Users/yangyi/comp
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdarg.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
+  /Users/yangyi/company/python/pybind11callpython/include/logger.h \
   /Users/yangyi/company/python/pybind11callpython/include/stock_data_processor.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h \
@@ -2256,6 +2258,8 @@ CMakeFiles/stock_data_app.dir/src/stock_data_processor.cpp.o: /Users/yangyi/comp
 /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h:
 
 /Users/yangyi/company/python/pybind11callpython/include/stock_data_processor.h:
+
+/Users/yangyi/company/python/pybind11callpython/include/logger.h:
 
 /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h:
 

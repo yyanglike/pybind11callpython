@@ -28,7 +28,7 @@ statement
  * ======================= */
 
 importStatement
-    : 'import' dottedName ('as' IDENTIFIER)? ';'?
+    : IMPORT dottedName (AS IDENTIFIER)? SEMI?
     ;
 
 /* =======================
@@ -36,11 +36,11 @@ importStatement
  * ======================= */
 
 functionDefinition
-    : 'def' IDENTIFIER '(' parameterList? ')' block
+    : DEF IDENTIFIER LPAREN parameterList? RPAREN block
     ;
 
 parameterList
-    : IDENTIFIER (',' IDENTIFIER)*
+    : IDENTIFIER (COMMA IDENTIFIER)*
     ;
 
 /* =======================
@@ -48,19 +48,19 @@ parameterList
  * ======================= */
 
 ifStatement
-    : 'if' '(' expression ')' block ('else' block)?
+    : IF LPAREN expression RPAREN block (ELSE block)?
     ;
 
 whileStatement
-    : 'while' '(' expression ')' block
+    : WHILE LPAREN expression RPAREN block
     ;
 
 forStatement
-    : 'for' '(' forControl ')' block
+    : FOR LPAREN forControl RPAREN block
     ;
 
 forControl
-    : forInit? ';' expression? ';' forUpdate?
+    : forInit? SEMI expression? SEMI forUpdate?
     ;
 
 forInit
@@ -72,11 +72,11 @@ forUpdate
     ;
 
 returnStatement
-    : 'return' expression? ';'?
+    : RETURN expression? SEMI?
     ;
 
 block
-    : '{' statement* '}'
+    : LBRACE statement* RBRACE
     ;
 
 /* =======================
@@ -84,13 +84,13 @@ block
  * ======================= */
 
 assignment
-    : IDENTIFIER assignmentOperator expression ';'?
-    | attributeAccess '=' expression ';'?
-    | subscriptAccess '=' expression ';'?
+    : IDENTIFIER assignmentOperator expression SEMI?
+    | attributeAccess ASSIGN expression SEMI?
+    | subscriptAccess ASSIGN expression SEMI?
     ;
 
 assignmentOperator
-    : '=' | '+=' | '-=' | '*=' | '/=' | '%='
+    : ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN
     ;
 
 /* =======================
@@ -98,7 +98,7 @@ assignmentOperator
  * ======================= */
 
 expressionStatement
-    : expression ';'?
+    : expression SEMI?
     ;
 
 /* =======================
@@ -113,46 +113,46 @@ expression
 /* --- Ternary / Python Conditional Expression --- */
 
 ternaryExpression
-    : logicalOrExpression ('if' logicalOrExpression 'else' ternaryExpression)?
-    | logicalOrExpression ('?' expression ':' ternaryExpression)?
+    : logicalOrExpression (IF logicalOrExpression ELSE ternaryExpression)?
+    | logicalOrExpression (QUESTION expression COLON ternaryExpression)?
     ;
 
 /* --- Logical --- */
 
 logicalOrExpression
-    : logicalAndExpression ('||' logicalAndExpression)*
+    : logicalAndExpression (OR logicalAndExpression)*
     ;
 
 logicalAndExpression
-    : equalityExpression ('&&' equalityExpression)*
+    : equalityExpression (AND equalityExpression)*
     ;
 
 /* --- Equality --- */
 
 equalityExpression
-    : relationalExpression (('==' | '!=') relationalExpression)*
+    : relationalExpression ((EQ | NE) relationalExpression)*
     ;
 
 /* --- Relational --- */
 
 relationalExpression
-    : additiveExpression (('<' | '>' | '<=' | '>=') additiveExpression)*
+    : additiveExpression ((LT | GT | LE | GE) additiveExpression)*
     ;
 
 /* --- Arithmetic --- */
 
 additiveExpression
-    : multiplicativeExpression (('+' | '-') multiplicativeExpression)*
+    : multiplicativeExpression ((PLUS | MINUS) multiplicativeExpression)*
     ;
 
 multiplicativeExpression
-    : unaryExpression (('*' | '/' | '%') unaryExpression)*
+    : unaryExpression ((MUL | DIV | MOD) unaryExpression)*
     ;
 
 /* --- Unary --- */
 
 unaryExpression
-    : ('!' | '-')? callOrPrimary
+    : (NOT | MINUS)? callOrPrimary
     ;
 
 /* =======================
@@ -164,22 +164,22 @@ callOrPrimary
     ;
 
 postfixOp
-    : '.' IDENTIFIER                 # attributeAccessOp
-    | '[' expression ']'             # subscriptAccessOp
-    | '(' argumentList? ')'          # functionCallOp
+    : DOT IDENTIFIER                 # attributeAccessOp
+    | LBRACK expression RBRACK       # subscriptAccessOp
+    | LPAREN argumentList? RPAREN    # functionCallOp
     ;
 
 // 辅助规则用于赋值目标
 attributeAccess
-    : primaryExpression '.' IDENTIFIER
+    : primaryExpression DOT IDENTIFIER
     ;
 
 subscriptAccess
-    : primaryExpression '[' expression ']'
+    : primaryExpression LBRACK expression RBRACK
     ;
 
 functionCall
-    : (dottedName | attributeAccess | subscriptAccess | '(' expression ')') '(' argumentList? ')'
+    : (dottedName | attributeAccess | subscriptAccess | LPAREN expression RPAREN) LPAREN argumentList? RPAREN
     ;
 
 /* =======================
@@ -189,7 +189,7 @@ functionCall
 primaryExpression
     : literal
     | dottedName
-    | '(' expression ')'
+    | LPAREN expression RPAREN
     | listLiteral
     | dictLiteral
     | newExpression
@@ -200,7 +200,7 @@ primaryExpression
 /* --- new --- */
 
 newExpression
-    : 'new' dottedName '(' argumentList? ')'
+    : NEW dottedName LPAREN argumentList? RPAREN
     ;
 
 /* =======================
@@ -216,11 +216,11 @@ literal
     ;
 
 listLiteral
-    : '[' expressionList? ']'
+    : LBRACK expressionList? RBRACK
     ;
 
 dictLiteral
-    : '{' dictItemList? '}'
+    : LBRACE dictItemList? RBRACE
     ;
 
 /* =======================
@@ -228,7 +228,7 @@ dictLiteral
  * ======================= */
 
 listComprehension
-    : '[' expression 'for' IDENTIFIER 'in' expression ']'
+    : LBRACK expression FOR IDENTIFIER IN expression RBRACK
     ;
 
 /* =======================
@@ -236,33 +236,71 @@ listComprehension
  * ======================= */
 
 lambdaExpression
-    : 'lambda' ( IDENTIFIER (',' IDENTIFIER)* )? ':' expression
+    : LAMBDA ( IDENTIFIER (COMMA IDENTIFIER)* )? COLON expression
     ;
 
 dottedName
-    : IDENTIFIER ('.' IDENTIFIER)*
+    : IDENTIFIER (DOT IDENTIFIER)*
     ;
 
 argumentList
-    : expression (',' expression)*
+    : expression (COMMA expression)*
     ;
 
 expressionList
-    : expression (',' expression)*
+    : expression (COMMA expression)*
     ;
 
 dictItemList
-    : dictItem (',' dictItem)*
+    : dictItem (COMMA dictItem)*
     ;
 
 dictItem
-    : expression ':' expression  # keyValuePair
-    | '**' expression            # dictUnpack
+    : expression COLON expression  # keyValuePair
+    | DOUBLE_STAR expression       # dictUnpack
     ;
 
 /* =======================
  * Lexer
  * ======================= */
+
+// 首先定义操作符和标点符号
+SEMI: ';';
+COMMA: ',';
+DOT: '.';
+LPAREN: '(';
+RPAREN: ')';
+LBRACE: '{';
+RBRACE: '}';
+LBRACK: '[';
+RBRACK: ']';
+
+ASSIGN: '=';
+PLUS_ASSIGN: '+=';
+MINUS_ASSIGN: '-=';
+MUL_ASSIGN: '*=';
+DIV_ASSIGN: '/=';
+MOD_ASSIGN: '%=';
+
+EQ: '==';
+NE: '!=';
+LT: '<';
+LE: '<=';
+GT: '>';
+GE: '>=';
+
+PLUS: '+';
+MINUS: '-';
+MUL: '*';
+DIV: '/';
+MOD: '%';
+
+NOT: '!';
+AND: '&&';
+OR: '||';
+QUESTION: '?';
+COLON: ':';
+DOUBLE_STAR: '**';
 
 // 关键字必须放在IDENTIFIER之前，以确保优先匹配
 RETURN : 'return';
@@ -275,6 +313,7 @@ IMPORT : 'import';
 AS : 'as';
 NEW : 'new';
 LAMBDA : 'lambda';
+IN : 'in';
 
 IDENTIFIER
     : [a-zA-Z_][a-zA-Z0-9_]*
@@ -307,7 +346,7 @@ WS
     ;
 
 COMMENT
-    : '//' ~[\r\n]* -> skip
+    : ('//' | '#') ~[\r\n]* -> skip
     ;
 
 MULTILINE_COMMENT

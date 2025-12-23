@@ -1,5 +1,5 @@
 
-// Generated from PyScript.g4 by ANTLR 4.10.1
+// Generated from antlr/PyScript.g4 by ANTLR 4.10.1
 
 #pragma once
 
@@ -28,6 +28,9 @@ public:
 
   virtual void enterParameterList(PyScriptParser::ParameterListContext *ctx) = 0;
   virtual void exitParameterList(PyScriptParser::ParameterListContext *ctx) = 0;
+
+  virtual void enterParameter(PyScriptParser::ParameterContext *ctx) = 0;
+  virtual void exitParameter(PyScriptParser::ParameterContext *ctx) = 0;
 
   virtual void enterIfStatement(PyScriptParser::IfStatementContext *ctx) = 0;
   virtual void exitIfStatement(PyScriptParser::IfStatementContext *ctx) = 0;
@@ -86,6 +89,9 @@ public:
   virtual void enterMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) = 0;
   virtual void exitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) = 0;
 
+  virtual void enterPowerExpression(PyScriptParser::PowerExpressionContext *ctx) = 0;
+  virtual void exitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) = 0;
+
   virtual void enterUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) = 0;
   virtual void exitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) = 0;
 
@@ -136,6 +142,9 @@ public:
 
   virtual void enterArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
   virtual void exitArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
+
+  virtual void enterArgument(PyScriptParser::ArgumentContext *ctx) = 0;
+  virtual void exitArgument(PyScriptParser::ArgumentContext *ctx) = 0;
 
   virtual void enterExpressionList(PyScriptParser::ExpressionListContext *ctx) = 0;
   virtual void exitExpressionList(PyScriptParser::ExpressionListContext *ctx) = 0;

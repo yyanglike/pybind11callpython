@@ -100,10 +100,24 @@ CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.s"
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/script_interpreter.cpp -o CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.s
 
+CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/script_value.cpp
+CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/script_value.cpp
+
+CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/src/script_value.cpp > CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.i
+
+CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/script_value.cpp -o CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.s
+
 CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
 CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/dynamic_python_caller.cpp
 CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o"
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/dynamic_python_caller.cpp
 
 CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.i: cmake_force
@@ -114,120 +128,202 @@ CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.s: cmake_forc
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.s"
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/dynamic_python_caller.cpp -o CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.s
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptLexer.cpp
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptLexer.cpp
+CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/python_bridge.cpp
+CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/python_bridge.cpp
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptLexer.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.i
+CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/src/python_bridge.cpp > CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.i
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptLexer.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.s
+CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/python_bridge.cpp -o CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.s
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptParser.cpp
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptParser.cpp
+CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/error_handler.cpp
+CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/error_handler.cpp
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptParser.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.i
+CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/src/error_handler.cpp > CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.i
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptParser.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.s
+CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/error_handler.cpp -o CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.s
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseVisitor.cpp
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseVisitor.cpp
+CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/variable_manager.cpp
+CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/variable_manager.cpp
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseVisitor.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.i
+CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/src/variable_manager.cpp > CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.i
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseVisitor.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.s
+CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/variable_manager.cpp -o CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.s
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptVisitor.cpp
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptVisitor.cpp
+CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/expression_evaluator.cpp
+CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/expression_evaluator.cpp
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptVisitor.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.i
+CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/src/expression_evaluator.cpp > CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.i
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptVisitor.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.s
+CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/expression_evaluator.cpp -o CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.s
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseListener.cpp
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseListener.cpp
+CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o: /Users/yangyi/company/python/pybind11callpython/src/ast_visitor.cpp
+CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o -MF CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o -c /Users/yangyi/company/python/pybind11callpython/src/ast_visitor.cpp
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseListener.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.i
+CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/src/ast_visitor.cpp > CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.i
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptBaseListener.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.s
+CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/src/ast_visitor.cpp -o CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.s
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptListener.cpp
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptListener.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptLexer.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptLexer.cpp
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptListener.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.i
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptLexer.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.i
 
-CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/PyScriptListener.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.s
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptLexer.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.s
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptParser.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptParser.cpp
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptParser.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.i
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptParser.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.s
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseVisitor.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseVisitor.cpp
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseVisitor.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.i
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseVisitor.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.s
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptVisitor.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptVisitor.cpp
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptVisitor.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.i
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptVisitor.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.s
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseListener.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseListener.cpp
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseListener.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.i
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptBaseListener.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.s
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o: CMakeFiles/test_complex_scenario.dir/flags.make
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o: /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptListener.cpp
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o: CMakeFiles/test_complex_scenario.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o -MF CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o.d -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o -c /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptListener.cpp
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptListener.cpp > CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.i
+
+CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptListener.cpp -o CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.s
 
 # Object files for target test_complex_scenario
 test_complex_scenario_OBJECTS = \
 "CMakeFiles/test_complex_scenario.dir/test_complex_scenario.cpp.o" \
 "CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o" \
 "CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o" \
-"CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o" \
-"CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o" \
-"CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o" \
-"CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o" \
-"CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o" \
-"CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o"
+"CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o" \
+"CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o"
 
 # External object files for target test_complex_scenario
 test_complex_scenario_EXTERNAL_OBJECTS =
 
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/test_complex_scenario.cpp.o
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/script_value.cpp.o
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/dynamic_python_caller.cpp.o
-test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptLexer.cpp.o
-test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptParser.cpp.o
-test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseVisitor.cpp.o
-test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptVisitor.cpp.o
-test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptBaseListener.cpp.o
-test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/PyScriptListener.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/python_bridge.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/error_handler.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/variable_manager.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/expression_evaluator.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/src/ast_visitor.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptLexer.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptParser.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseVisitor.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptVisitor.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
+test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/build.make
 test_complex_scenario: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
 test_complex_scenario: /Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.a
 test_complex_scenario: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable test_complex_scenario"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX executable test_complex_scenario"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_complex_scenario.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

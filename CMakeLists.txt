@@ -92,6 +92,11 @@ add_executable(test_script_interpreter
     src/script_interpreter.cpp
     src/script_value.cpp
     src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
     antlr/generated/antlr/PyScriptLexer.cpp
     antlr/generated/antlr/PyScriptParser.cpp
     antlr/generated/antlr/PyScriptBaseVisitor.cpp
@@ -112,6 +117,11 @@ add_executable(test_complex_scenario
     src/script_interpreter.cpp
     src/script_value.cpp
     src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
     antlr/generated/antlr/PyScriptLexer.cpp
     antlr/generated/antlr/PyScriptParser.cpp
     antlr/generated/antlr/PyScriptBaseVisitor.cpp
@@ -132,6 +142,11 @@ add_executable(test_simple
     src/script_interpreter.cpp
     src/script_value.cpp
     src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
     antlr/generated/antlr/PyScriptLexer.cpp
     antlr/generated/antlr/PyScriptParser.cpp
     antlr/generated/antlr/PyScriptBaseVisitor.cpp
@@ -152,11 +167,16 @@ add_executable(test_subscript_assignment
     src/script_interpreter.cpp
     src/script_value.cpp
     src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
     antlr/generated/antlr/PyScriptLexer.cpp
     antlr/generated/antlr/PyScriptParser.cpp
     antlr/generated/antlr/PyScriptBaseVisitor.cpp
     antlr/generated/antlr/PyScriptVisitor.cpp
-    antlr/generated/antlr/PyScriptBaseListener.cpp
+    antlr/generated/antlr/PyScriptBaseVisitor.cpp
     antlr/generated/antlr/PyScriptListener.cpp
 )
 
@@ -172,6 +192,11 @@ add_executable(test_complex_syntax
     src/script_interpreter.cpp
     src/script_value.cpp
     src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
     antlr/generated/antlr/PyScriptLexer.cpp
     antlr/generated/antlr/PyScriptParser.cpp
     antlr/generated/antlr/PyScriptBaseVisitor.cpp
@@ -186,8 +211,59 @@ target_link_libraries(test_complex_syntax
     antlr4_static
 )
 
+# 属性赋值测试程序
+add_executable(test_attribute_assignment
+    test_attribute_assignment.cpp
+    src/script_interpreter.cpp
+    src/script_value.cpp
+    src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
+    antlr/generated/antlr/PyScriptLexer.cpp
+    antlr/generated/antlr/PyScriptParser.cpp
+    antlr/generated/antlr/PyScriptBaseVisitor.cpp
+    antlr/generated/antlr/PyScriptVisitor.cpp
+    antlr/generated/antlr/PyScriptBaseListener.cpp
+    antlr/generated/antlr/PyScriptListener.cpp
+)
+
+target_link_libraries(test_attribute_assignment
+    ${Python3_LIBRARIES}
+    pybind11::embed
+    antlr4_static
+    gtest_main
+)
+
+# 增强功能测试程序
+add_executable(test_enhanced_features
+    test_enhanced_features.cpp
+    src/script_interpreter.cpp
+    src/script_value.cpp
+    src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
+    antlr/generated/antlr/PyScriptLexer.cpp
+    antlr/generated/antlr/PyScriptParser.cpp
+    antlr/generated/antlr/PyScriptBaseVisitor.cpp
+    antlr/generated/antlr/PyScriptVisitor.cpp
+    antlr/generated/antlr/PyScriptBaseListener.cpp
+    antlr/generated/antlr/PyScriptListener.cpp
+)
+
+target_link_libraries(test_enhanced_features
+    ${Python3_LIBRARIES}
+    pybind11::embed
+    antlr4_static
+)
+
 if(APPLE)
-    set_target_properties(test_dynamic_call test_module_enum test_class_handling test_script_interpreter test_complex_scenario test_simple test_subscript_assignment test_complex_syntax PROPERTIES
+    set_target_properties(test_dynamic_call test_module_enum test_class_handling test_script_interpreter test_complex_scenario test_simple test_subscript_assignment test_complex_syntax test_enhanced_features PROPERTIES
         BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH "@executable_path/../lib"
     )

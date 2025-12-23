@@ -532,3 +532,8 @@ cd /Users/yangyi/company/python/pybind11callpython/antlr && antlr4 -Dlanguage=Cp
 
 
 pybind11callpython % antlr4 -Dlanguage=Cpp -visitor -o antlr/generated antlr/PyScript.g4 2>&1
+
+
+cmake --build build -- -j8
+
+./build/test_attribute_assignment --gtest_color=yes --gtest_output=xml:build/test_attribute_assignment.xml

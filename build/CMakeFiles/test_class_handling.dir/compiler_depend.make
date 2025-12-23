@@ -830,6 +830,7 @@ CMakeFiles/test_class_handling.dir/src/dynamic_python_caller.cpp.o: /Users/yangy
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
   /Users/yangyi/company/python/pybind11callpython/include/dynamic_python_caller.h \
+  /Users/yangyi/company/python/pybind11callpython/include/logger.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/cast.h \
@@ -1818,6 +1819,7 @@ CMakeFiles/test_class_handling.dir/test_class_handling.cpp.o: /Users/yangyi/comp
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
   /Users/yangyi/company/python/pybind11callpython/include/dynamic_python_caller.h \
+  /Users/yangyi/company/python/pybind11callpython/include/logger.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/cast.h \
@@ -2167,6 +2169,8 @@ CMakeFiles/test_class_handling.dir/test_class_handling.cpp.o: /Users/yangyi/comp
 /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/buffer_info.h:
 
 /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/attr.h:
+
+/Users/yangyi/company/python/pybind11callpython/include/logger.h:
 
 /Users/yangyi/company/python/pybind11callpython/include/dynamic_python_caller.h:
 

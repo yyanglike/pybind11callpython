@@ -1,4 +1,5 @@
 #include "stock_data_processor.h"
+#include "logger.h"
 #include <iostream>
 #include <pybind11/embed.h>
 #include <filesystem>
@@ -23,9 +24,11 @@ namespace py = pybind11;
 // 全局中断标志
 std::atomic<bool> g_interrupted(false);
 
+// 本地静态日志器
+static Logger s_logger;
 // 信号处理器（不立即退出，只设置标志）
 void signalHandler(int sig) {
-    std::cout << "\n\n接收到中断信号，正在优雅退出..." << std::endl;
+    s_logger.info("\n\n接收到中断信号，正在优雅退出...");
     g_interrupted = true;
 }
 
@@ -79,14 +82,14 @@ public:
         // 打开锁文件
         lock_fd = open(lock_file.c_str(), O_CREAT | O_RDWR, 0666);
         if (lock_fd == -1) {
-            std::cerr << "无法创建锁文件: " << lock_file << std::endl;
+            s_logger.error(std::string("无法创建锁文件: ") + lock_file);
             return;
         }
         
         // 尝试获取排他锁（非阻塞）
         if (flock(lock_fd, LOCK_EX | LOCK_NB) == -1) {
             // 获取锁失败，可能是另一个实例正在运行
-            std::cerr << "错误：程序已经在运行中（PID: " << readPidFromFile(lock_file) << "），请等待或终止其他实例" << std::endl;
+            s_logger.error(std::string("错误：程序已经在运行中（PID: ") + std::to_string(readPidFromFile(lock_file)) + "），请等待或终止其他实例");
             close(lock_fd);
             lock_fd = -1;
             return;
@@ -94,7 +97,7 @@ public:
         
         // 获取锁成功，写入当前PID
         if (!writePidToFile()) {
-            std::cerr << "警告：无法将PID写入锁文件" << std::endl;
+            s_logger.warn("警告：无法将PID写入锁文件");
             // 但继续运行，因为我们已经有锁了
         }
     }
@@ -155,7 +158,7 @@ std::string getPythonBasePrefix(const std::filesystem::path& projectRoot) {
                 return output;
             }
         } catch (const std::exception& e) {
-            std::cerr << "Warning: Failed to get base prefix from local venv Python: " << e.what() << std::endl;
+            s_logger.warn(std::string("Warning: Failed to get base prefix from local venv Python: ") + e.what());
         }
     }
     
@@ -177,7 +180,7 @@ std::string getPythonBasePrefix(const std::filesystem::path& projectRoot) {
                 return output;
             }
         } catch (const std::exception& e) {
-            std::cerr << "Warning: Failed to get base prefix from project venv Python: " << e.what() << std::endl;
+            s_logger.warn(std::string("Warning: Failed to get base prefix from project venv Python: ") + e.what());
         }
     }
     
@@ -190,7 +193,7 @@ std::string getPythonBasePrefix(const std::filesystem::path& projectRoot) {
             return output;
         }
     } catch (const std::exception& e) {
-        std::cerr << "Warning: Failed to get base prefix from system Python: " << e.what() << std::endl;
+        s_logger.warn(std::string("Warning: Failed to get base prefix from system Python: ") + e.what());
     }
     
     // 回退到默认值（根据平台）
@@ -224,7 +227,7 @@ int main(int argc, char* argv[]) {
     // 进程锁防止程序重复运行
     ProcessLock lock("/tmp/stock_data_app.lock");
     if (!lock.isLocked()) {
-        std::cerr << "错误：程序已经在运行中，请等待其他实例完成" << std::endl;
+        s_logger.error("错误：程序已经在运行中，请等待其他实例完成");
         return 1;
     }
     
@@ -265,7 +268,7 @@ int main(int argc, char* argv[]) {
                 pythonVersion = output;
             }
         } catch (const std::exception& e) {
-            std::cerr << "Warning: Failed to get Python version: " << e.what() << std::endl;
+            s_logger.warn(std::string("Warning: Failed to get Python version: ") + e.what());
         }
     }
     
@@ -402,7 +405,7 @@ int main(int argc, char* argv[]) {
         }
         
         if (!success) {
-            std::cerr << "\n错误：获取股票数据失败！" << std::endl;
+            s_logger.error("\n错误：获取股票数据失败！");
             return 1;
         }
         
@@ -483,7 +486,7 @@ int main(int argc, char* argv[]) {
         return 0;
         
     } catch (const std::exception& e) {
-        std::cerr << "\n致命错误: " << e.what() << std::endl;
+        s_logger.error(std::string("\n致命错误: ") + e.what());
         return 1;
     }
 }

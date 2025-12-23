@@ -138,14 +138,14 @@ bool StockDataProcessor::fetchAllStockDataImpl(int lookbackDays, ProgressCallbac
         return success;
         
     } catch (const py::error_already_set& e) {
-        // 输出详细错误信息到stderr以便调试
-        std::cerr << "\n[ERROR] Python错误: " << e.what() << std::endl;
+            // 输出详细错误信息到日志以便调试
+        logger_.error(std::string("[ERROR] Python错误: ") + e.what());
         // 获取Python错误详细信息
         try {
             py::module_ traceback = py::module_::import("traceback");
             py::object formatted_exc = traceback.attr("format_exc")();
             std::string error_details = formatted_exc.cast<std::string>();
-            std::cerr << error_details << std::endl;
+            logger_.error(error_details);
         } catch (...) {
             // 忽略获取详细错误的错误
         }
@@ -153,7 +153,7 @@ bool StockDataProcessor::fetchAllStockDataImpl(int lookbackDays, ProgressCallbac
         isRunning_ = false;
         return false;
     } catch (const std::exception& e) {
-        std::cerr << "\n[ERROR] C++错误: " << e.what() << std::endl;
+        logger_.error(std::string("[ERROR] C++错误: ") + e.what());
         if (callback) callback(1, 1, std::string("C++错误: ") + e.what());
         isRunning_ = false;
         return false;
@@ -330,13 +330,13 @@ std::vector<StockData> StockDataProcessor::getStockData(const std::string& stock
 bool StockDataProcessor::exportToCSV(const std::string& stockCode, const std::string& filename) const {
     auto it = stockDataMap_.find(stockCode);
     if (it == stockDataMap_.end()) {
-        std::cerr << "未找到股票代码: " << stockCode << std::endl;
+        logger_.error(std::string("未找到股票代码: ") + stockCode);
         return false;
     }
     
     std::ofstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "无法打开文件: " << filename << std::endl;
+        logger_.error(std::string("无法打开文件: ") + filename);
         return false;
     }
     

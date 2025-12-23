@@ -12,15 +12,15 @@
 class  PyScriptLexer : public antlr4::Lexer {
 public:
   enum {
-    T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
-    T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
-    T__14 = 15, T__15 = 16, T__16 = 17, T__17 = 18, T__18 = 19, T__19 = 20, 
-    T__20 = 21, T__21 = 22, T__22 = 23, T__23 = 24, T__24 = 25, T__25 = 26, 
-    T__26 = 27, T__27 = 28, T__28 = 29, T__29 = 30, T__30 = 31, T__31 = 32, 
-    T__32 = 33, RETURN = 34, IF = 35, ELSE = 36, WHILE = 37, FOR = 38, DEF = 39, 
-    IMPORT = 40, AS = 41, NEW = 42, LAMBDA = 43, IDENTIFIER = 44, INTEGER = 45, 
-    FLOAT = 46, STRING = 47, BOOL = 48, NULL_LIT = 49, WS = 50, COMMENT = 51, 
-    MULTILINE_COMMENT = 52
+    SEMI = 1, COMMA = 2, DOT = 3, LPAREN = 4, RPAREN = 5, LBRACE = 6, RBRACE = 7, 
+    LBRACK = 8, RBRACK = 9, ASSIGN = 10, PLUS_ASSIGN = 11, MINUS_ASSIGN = 12, 
+    MUL_ASSIGN = 13, DIV_ASSIGN = 14, MOD_ASSIGN = 15, EQ = 16, NE = 17, 
+    LT = 18, LE = 19, GT = 20, GE = 21, PLUS = 22, MINUS = 23, MUL = 24, 
+    DIV = 25, MOD = 26, NOT = 27, AND = 28, OR = 29, QUESTION = 30, COLON = 31, 
+    DOUBLE_STAR = 32, RETURN = 33, IF = 34, ELSE = 35, WHILE = 36, FOR = 37, 
+    DEF = 38, IMPORT = 39, AS = 40, NEW = 41, LAMBDA = 42, IN = 43, IDENTIFIER = 44, 
+    INTEGER = 45, FLOAT = 46, STRING = 47, BOOL = 48, NULL_LIT = 49, WS = 50, 
+    COMMENT = 51, MULTILINE_COMMENT = 52
   };
 
   explicit PyScriptLexer(antlr4::CharStream *input);

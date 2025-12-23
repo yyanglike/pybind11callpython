@@ -35,6 +35,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitParameter(PyScriptParser::ParameterContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitIfStatement(PyScriptParser::IfStatementContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -111,6 +115,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -176,6 +184,10 @@ public:
   }
 
   virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override {
     return visitChildren(ctx);
   }
 
