@@ -96,6 +96,9 @@ public:
     void setList(const std::vector<std::shared_ptr<ScriptValue>>& val);
     void setDictionary(const std::unordered_map<std::string, std::shared_ptr<ScriptValue>>& val);
 
+    // 成员操作（用于对象属性赋值）
+    void setMember(const std::string& name, std::shared_ptr<ScriptValue> val);
+
     // 列表操作
     void append(std::shared_ptr<ScriptValue> val);
     std::shared_ptr<ScriptValue> getAt(size_t index) const;

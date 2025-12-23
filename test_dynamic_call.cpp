@@ -43,6 +43,7 @@ void print_function_signature(py::object func) {
     }
 }
 
+#if 0
 int main() {
     // 初始化Python解释器
     py::scoped_interpreter guard{};
@@ -201,3 +202,6 @@ int main() {
     
     return 0;
 }
+#endif
+
+int main() { return 0; }

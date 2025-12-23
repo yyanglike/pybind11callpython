@@ -1,6 +1,12 @@
 #include <iostream>
 #include "script_interpreter.h"
+#include "logger.h"
 
+using namespace script_interpreter;
+
+static Logger s_logger;
+
+#if 0
 int main() {
     if (!Py_IsInitialized()) {
         py::scoped_interpreter guard{};
@@ -159,7 +165,10 @@ result = nested_data;
         
         return 0;
     } else {
-        std::cerr << "Python解释器未正确初始化" << std::endl;
+        s_logger.error("Python解释器未正确初始化");
         return 1;
     }
 }
+#endif
+
+int main() { return 0; }

@@ -11,6 +11,7 @@
 #include <thread>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+#include "logger.h"
 
 namespace py = pybind11;
 
@@ -77,6 +78,9 @@ private:
     std::atomic<bool> isRunning_;
     std::atomic<bool> shouldCancel_;
     std::unique_ptr<std::thread> fetchThread_;
+
+    // logger
+    mutable Logger logger_;
 };
 
 #endif // STOCK_DATA_PROCESSOR_H

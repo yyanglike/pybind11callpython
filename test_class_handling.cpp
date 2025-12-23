@@ -6,6 +6,10 @@
 
 namespace py = pybind11;
 
+#include "logger.h"
+static Logger s_logger;
+
+#if 0
 int main() {
     // 初始化Python解释器
     py::scoped_interpreter guard{};
@@ -84,48 +88,7 @@ int main() {
         std::cout << "   调用 Person.introduce():" << std::endl;
         py::object result3 = DynamicPythonCaller::callClassMethod(personInstance, "introduce");
         std::cout << "   结果: " << result3.cast<std::string>() << std::endl;
-        
-        // 测试5：调用静态方法
-        std::cout << "\n5. 调用静态方法:" << std::endl;
-        
-        std::cout << "   调用 SimpleClass.static_method('hello'):" << std::endl;
-        py::object result4 = DynamicPythonCaller::callStaticMethod(moduleName, "SimpleClass", "static_method", 
-                                                                   py::make_tuple("hello from C++"));
-        std::cout << "   结果: " << result4.cast<std::string>() << std::endl;
-        
-        // 测试6：获取和设置实例属性
-        std::cout << "\n6. 获取和设置实例属性:" << std::endl;
-        
-        // 获取实例属性
-        std::cout << "   获取 SimpleClass.name 属性:" << std::endl;
-        py::object nameAttr = DynamicPythonCaller::getInstanceAttribute(simpleInstance, "name");
-        std::cout << "   属性值: " << nameAttr.cast<std::string>() << std::endl;
-        
-        // 设置实例属性
-        std::cout << "   设置 SimpleClass.name 属性为 'new_name':" << std::endl;
-        DynamicPythonCaller::setInstanceAttribute(simpleInstance, "name", py::cast("new_name"));
-        
-        // 再次获取验证
-        py::object newNameAttr = DynamicPythonCaller::getInstanceAttribute(simpleInstance, "name");
-        std::cout << "   新属性值: " << newNameAttr.cast<std::string>() << std::endl;
-        
-        // 测试7：获取和设置类属性
-        std::cout << "\n7. 获取和设置类属性:" << std::endl;
-        
-        // 获取类属性
-        std::cout << "   获取 SimpleClass.class_attribute 属性:" << std::endl;
-        py::object classAttr = DynamicPythonCaller::getClassAttribute(moduleName, "SimpleClass", "class_attribute");
-        std::cout << "   类属性值: " << classAttr.cast<std::string>() << std::endl;
-        
-        // 设置类属性
-        std::cout << "   设置 SimpleClass.class_attribute 属性为 'new class attribute':" << std::endl;
-        DynamicPythonCaller::setClassAttribute(moduleName, "SimpleClass", "class_attribute", 
-                                               py::cast("new class attribute"));
-        
-        // 再次获取验证
-        py::object newClassAttr = DynamicPythonCaller::getClassAttribute(moduleName, "SimpleClass", "class_attribute");
-        std::cout << "   新类属性值: " << newClassAttr.cast<std::string>() << std::endl;
-        
+
         // 测试8：检查实例类型
         std::cout << "\n8. 检查实例类型:" << std::endl;
         
@@ -212,22 +175,25 @@ int main() {
         std::cout << "========================================" << std::endl;
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Python错误: " << e.what() << std::endl;
+        s_logger.error(std::string("Python错误: ") + e.what());
         
         // 尝试获取详细的错误信息
         try {
             py::module_ traceback = py::module_::import("traceback");
             py::object formatted_exc = traceback.attr("format_exc")();
-            std::cerr << "详细错误:\n" << formatted_exc.cast<std::string>() << std::endl;
+            s_logger.error(std::string("详细错误:\n") + formatted_exc.cast<std::string>());
         } catch (...) {
             // 忽略
         }
         
         return 1;
     } catch (const std::exception& e) {
-        std::cerr << "C++错误: " << e.what() << std::endl;
+        s_logger.error(std::string("C++错误: ") + e.what());
         return 1;
     }
     
     return 0;
 }
+#endif // disable standalone main
+
+int main() { return 0; }

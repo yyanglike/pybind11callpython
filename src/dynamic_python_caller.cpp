@@ -1,6 +1,9 @@
 #include "dynamic_python_caller.h"
 #include <iostream>
 
+// Static logger for static helper methods
+static Logger s_logger;
+
 DynamicPythonCaller::DynamicPythonCaller(const std::string& moduleName, const std::string& functionName)
     : moduleName_(moduleName), functionName_(functionName) {
     if (!moduleName.empty() && !functionName.empty()) {
@@ -27,7 +30,7 @@ void DynamicPythonCaller::importAndGetFunction() {
         py::module_ module = py::module_::import(moduleName_.c_str());
         function_ = module.attr(functionName_.c_str());
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error importing module/function: " << moduleName_ << "." << functionName_ << std::endl;
+        logger_.error(std::string("Error importing module/function: ") + moduleName_ + "." + functionName_);
         function_ = py::none();
     }
 }
@@ -208,7 +211,7 @@ std::vector<std::string> DynamicPythonCaller::listModuleFunctions(const std::str
         std::sort(functions.begin(), functions.end());
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error listing module functions: " << e.what() << std::endl;
+        s_logger.error(std::string("Error listing module functions: ") + e.what());
     }
     
     return functions;
@@ -244,7 +247,7 @@ std::map<std::string, py::object> DynamicPythonCaller::getModuleFunctionMap(cons
         }
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error getting module function map: " << e.what() << std::endl;
+        s_logger.error(std::string("Error getting module function map: ") + e.what());
     }
     
     return functionMap;
@@ -309,7 +312,7 @@ std::map<std::string, std::any> DynamicPythonCaller::getModuleInfo(const std::st
         }
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error getting module info: " << e.what() << std::endl;
+        s_logger.error(std::string("Error getting module info: ") + e.what());
     }
     
     return info;
@@ -436,7 +439,7 @@ std::vector<std::string> DynamicPythonCaller::listModuleClasses(const std::strin
         std::sort(classes.begin(), classes.end());
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error listing module classes: " << e.what() << std::endl;
+        s_logger.error(std::string("Error listing module classes: ") + e.what());
     }
     
     return classes;
@@ -472,7 +475,7 @@ std::map<std::string, py::object> DynamicPythonCaller::getModuleClassMap(const s
         }
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error getting module class map: " << e.what() << std::endl;
+        s_logger.error(std::string("Error getting module class map: ") + e.what());
     }
     
     return classMap;
@@ -729,7 +732,7 @@ std::vector<std::string> DynamicPythonCaller::getClassMembers(py::object classOb
         std::sort(members.begin(), members.end());
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error getting class members: " << e.what() << std::endl;
+        s_logger.error(std::string("Error getting class members: ") + e.what());
     }
     
     return members;
@@ -745,7 +748,7 @@ std::vector<std::string> DynamicPythonCaller::getClassMethods(const std::string&
         return getClassMembers(classObj, "methods", includeInherited);
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error getting class methods: " << e.what() << std::endl;
+        s_logger.error(std::string("Error getting class methods: ") + e.what());
         return {};
     }
 }
@@ -760,7 +763,7 @@ std::vector<std::string> DynamicPythonCaller::getClassAttributes(const std::stri
         return getClassMembers(classObj, "attributes", includeInherited);
         
     } catch (const py::error_already_set& e) {
-        std::cerr << "Error getting class attributes: " << e.what() << std::endl;
+        s_logger.error(std::string("Error getting class attributes: ") + e.what());
         return {};
     }
 }

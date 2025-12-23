@@ -3,6 +3,7 @@
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+#include "logger.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -162,6 +163,10 @@ private:
     static std::vector<std::string> getClassMembers(py::object classObj, 
                                                     const std::string& memberType,
                                                     bool includeInherited);
+
+private:
+    // logger
+    Logger logger_;
 };
 
 #endif // DYNAMIC_PYTHON_CALLER_H

@@ -400,6 +400,28 @@ bool ScriptValue::hasKey(const string& key) const {
     return dict.find(key) != dict.end();
 }
 
+void ScriptValue::setMember(const string& name, shared_ptr<ScriptValue> val) {
+    // 如果是字典类型，则作为键值对处理
+    if (type_ == Type::Dictionary) {
+        setKey(name, val);
+        return;
+    }
+
+    // 如果是Python对象，使用pybind11设置属性
+    if (type_ == Type::PythonObject) {
+        try {
+            py::object obj = getPythonObject();
+            obj.attr(name.c_str()) = val->toPythonObject();
+            return;
+        } catch (const py::error_already_set& e) {
+            throw runtime_error(string("Python attribute assignment error: ") + e.what());
+        }
+    }
+
+    // 其它类型不支持成员赋值
+    throw runtime_error("Cannot set member on non-object type");
+}
+
 // 比较操作
 bool ScriptValue::operator==(const ScriptValue& other) const {
     if (type_ != other.type_) {

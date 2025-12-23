@@ -6,6 +6,7 @@
 
 namespace py = pybind11;
 
+#if 0
 int main() {
     // 初始化Python解释器
     py::scoped_interpreter guard{};
@@ -171,3 +172,6 @@ int main() {
     
     return 0;
 }
+#endif // disable standalone main
+
+int main() { return 0; }

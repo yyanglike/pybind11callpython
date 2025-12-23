@@ -50,6 +50,21 @@ class ComplexData:
         
         return merged
 
+    # Compatibility wrapper expected by tests
+    def process_complex(self, config):
+        """Compatibility wrapper: apply simple transformations described by config and return result."""
+        try:
+            input_data = config.get("input_data", []) if isinstance(config, dict) else []
+            result = list(input_data)
+            for t in config.get("transformations", []) if isinstance(config, dict) else []:
+                if t.get("type") == "scale" and "factor" in t:
+                    result = [x * t["factor"] for x in result]
+                if t.get("type") == "offset" and "value" in t:
+                    result = [x + t["value"] for x in result]
+            return {"processed": result}
+        except Exception as e:
+            return {"error": str(e)}
+
 # 数学计算类
 class MathOperations:
     def __init__(self, base_value=0):

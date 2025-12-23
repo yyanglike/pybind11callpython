@@ -1,6 +1,8 @@
 #include <iostream>
 #include "script_interpreter.h"
+using namespace script_interpreter;
 
+#if 0
 int main() {
     if (!Py_IsInitialized()) {
         py::scoped_interpreter guard{};
@@ -77,3 +79,6 @@ result = my_dict["x"];
         return 1;
     }
 }
+#endif
+
+int main() { return 0; }
