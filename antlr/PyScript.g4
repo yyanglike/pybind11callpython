@@ -36,7 +36,7 @@ importStatement
  * ======================= */
 
 functionDefinition
-    : DEF IDENTIFIER LPAREN parameterList? RPAREN block
+    : DEF IDENTIFIER LPAREN parameterList? RPAREN COLON block
     ;
 
 parameterList
@@ -54,15 +54,15 @@ parameter
  * ======================= */
 
 ifStatement
-    : IF LPAREN expression RPAREN block (ELSE block)?
+    : IF LPAREN expression RPAREN COLON block (ELSE COLON block)?
     ;
 
 whileStatement
-    : WHILE LPAREN expression RPAREN block
+    : WHILE LPAREN expression RPAREN COLON block
     ;
 
 forStatement
-    : FOR LPAREN forControl RPAREN block
+    : FOR LPAREN forControl RPAREN COLON block
     ;
 
 forControl
@@ -295,10 +295,10 @@ COMMA: ',';
 DOT: '.';
 LPAREN: '(';
 RPAREN: ')';
-LBRACE: '{';
-RBRACE: '}';
 LBRACK: '[';
 RBRACK: ']';
+LBRACE: '{';
+RBRACE: '}';
 
 ASSIGN: '=';
 PLUS_ASSIGN: '+=';
@@ -366,8 +366,13 @@ NULL_LIT
     : 'null'
     ;
 
+// 空白符
 WS
-    : [ \t\r\n]+ -> skip
+    : [ \t]+ -> skip
+    ;
+
+NEWLINE
+    : ( '\r'? '\n' | '\r' ) -> skip
     ;
 
 COMMENT
