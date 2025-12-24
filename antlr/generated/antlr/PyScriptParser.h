@@ -29,14 +29,15 @@ public:
     RuleForStatement = 8, RuleForControl = 9, RuleForInit = 10, RuleForUpdate = 11, 
     RuleReturnStatement = 12, RuleBlock = 13, RuleAssignment = 14, RuleAssignmentOperator = 15, 
     RuleExpressionStatement = 16, RuleExpression = 17, RuleTernaryExpression = 18, 
-    RuleLogicalOrExpression = 19, RuleLogicalAndExpression = 20, RuleEqualityExpression = 21, 
-    RuleRelationalExpression = 22, RuleAdditiveExpression = 23, RuleMultiplicativeExpression = 24, 
-    RulePowerExpression = 25, RuleUnaryExpression = 26, RuleCallOrPrimary = 27, 
-    RulePostfixOp = 28, RuleAttributeAccess = 29, RuleSubscriptAccess = 30, 
-    RuleFunctionCall = 31, RulePrimaryExpression = 32, RuleNewExpression = 33, 
-    RuleLiteral = 34, RuleListLiteral = 35, RuleDictLiteral = 36, RuleListComprehension = 37, 
-    RuleLambdaExpression = 38, RuleDottedName = 39, RuleArgumentList = 40, 
-    RuleArgument = 41, RuleExpressionList = 42, RuleDictItemList = 43, RuleDictItem = 44
+    RuleNonAssignmentExpression = 19, RuleLogicalOrExpression = 20, RuleLogicalAndExpression = 21, 
+    RuleEqualityExpression = 22, RuleRelationalExpression = 23, RuleAdditiveExpression = 24, 
+    RuleMultiplicativeExpression = 25, RuleUnaryExpression = 26, RulePowerExpression = 27, 
+    RuleCallOrPrimary = 28, RulePostfixOp = 29, RuleAttributeAccess = 30, 
+    RuleSubscriptAccess = 31, RuleFunctionCall = 32, RulePrimaryExpression = 33, 
+    RuleNewExpression = 34, RuleLiteral = 35, RuleListLiteral = 36, RuleDictLiteral = 37, 
+    RuleListComprehension = 38, RuleLambdaExpression = 39, RuleDottedName = 40, 
+    RuleArgumentList = 41, RuleArgument = 42, RuleExpressionList = 43, RuleDictItemList = 44, 
+    RuleDictItem = 45
   };
 
   explicit PyScriptParser(antlr4::TokenStream *input);
@@ -75,14 +76,15 @@ public:
   class ExpressionStatementContext;
   class ExpressionContext;
   class TernaryExpressionContext;
+  class NonAssignmentExpressionContext;
   class LogicalOrExpressionContext;
   class LogicalAndExpressionContext;
   class EqualityExpressionContext;
   class RelationalExpressionContext;
   class AdditiveExpressionContext;
   class MultiplicativeExpressionContext;
-  class PowerExpressionContext;
   class UnaryExpressionContext;
+  class PowerExpressionContext;
   class CallOrPrimaryContext;
   class PostfixOpContext;
   class AttributeAccessContext;
@@ -455,6 +457,21 @@ public:
 
   TernaryExpressionContext* ternaryExpression();
 
+  class  NonAssignmentExpressionContext : public antlr4::ParserRuleContext {
+  public:
+    NonAssignmentExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    TernaryExpressionContext *ternaryExpression();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  NonAssignmentExpressionContext* nonAssignmentExpression();
+
   class  LogicalOrExpressionContext : public antlr4::ParserRuleContext {
   public:
     LogicalOrExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -559,8 +576,8 @@ public:
   public:
     MultiplicativeExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    std::vector<PowerExpressionContext *> powerExpression();
-    PowerExpressionContext* powerExpression(size_t i);
+    std::vector<UnaryExpressionContext *> unaryExpression();
+    UnaryExpressionContext* unaryExpression(size_t i);
     std::vector<antlr4::tree::TerminalNode *> MUL();
     antlr4::tree::TerminalNode* MUL(size_t i);
     std::vector<antlr4::tree::TerminalNode *> DIV();
@@ -577,28 +594,11 @@ public:
 
   MultiplicativeExpressionContext* multiplicativeExpression();
 
-  class  PowerExpressionContext : public antlr4::ParserRuleContext {
-  public:
-    PowerExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    UnaryExpressionContext *unaryExpression();
-    antlr4::tree::TerminalNode *DOUBLE_STAR();
-    PowerExpressionContext *powerExpression();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-
-    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-   
-  };
-
-  PowerExpressionContext* powerExpression();
-
   class  UnaryExpressionContext : public antlr4::ParserRuleContext {
   public:
     UnaryExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    CallOrPrimaryContext *callOrPrimary();
+    PowerExpressionContext *powerExpression();
     antlr4::tree::TerminalNode *NOT();
     antlr4::tree::TerminalNode *MINUS();
 
@@ -610,6 +610,23 @@ public:
   };
 
   UnaryExpressionContext* unaryExpression();
+
+  class  PowerExpressionContext : public antlr4::ParserRuleContext {
+  public:
+    PowerExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    CallOrPrimaryContext *callOrPrimary();
+    antlr4::tree::TerminalNode *DOUBLE_STAR();
+    PowerExpressionContext *powerExpression();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  PowerExpressionContext* powerExpression();
 
   class  CallOrPrimaryContext : public antlr4::ParserRuleContext {
   public:
@@ -916,18 +933,62 @@ public:
   class  ArgumentContext : public antlr4::ParserRuleContext {
   public:
     ArgumentContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    ExpressionContext *expression();
-    antlr4::tree::TerminalNode *IDENTIFIER();
-    antlr4::tree::TerminalNode *ASSIGN();
-    antlr4::tree::TerminalNode *MUL();
-    antlr4::tree::TerminalNode *DOUBLE_STAR();
+   
+    ArgumentContext() = default;
+    void copyFrom(ArgumentContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
 
+    virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  PositionalArgumentContext : public ArgumentContext {
+  public:
+    PositionalArgumentContext(ArgumentContext *ctx);
+
+    NonAssignmentExpressionContext *nonAssignmentExpression();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-   
+  };
+
+  class  StarArgumentContext : public ArgumentContext {
+  public:
+    StarArgumentContext(ArgumentContext *ctx);
+
+    antlr4::tree::TerminalNode *MUL();
+    ExpressionContext *expression();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  KeywordArgumentContext : public ArgumentContext {
+  public:
+    KeywordArgumentContext(ArgumentContext *ctx);
+
+    antlr4::tree::TerminalNode *IDENTIFIER();
+    antlr4::tree::TerminalNode *ASSIGN();
+    ExpressionContext *expression();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  DoubleStarArgumentContext : public ArgumentContext {
+  public:
+    DoubleStarArgumentContext(ArgumentContext *ctx);
+
+    antlr4::tree::TerminalNode *DOUBLE_STAR();
+    ExpressionContext *expression();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
 
   ArgumentContext* argument();

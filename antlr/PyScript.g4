@@ -40,7 +40,13 @@ functionDefinition
     ;
 
 parameterList
-    : IDENTIFIER (COMMA IDENTIFIER)*
+    : parameter (COMMA parameter)*
+    ;
+
+parameter
+    : IDENTIFIER (ASSIGN expression)?
+    | MUL IDENTIFIER?
+    | DOUBLE_STAR IDENTIFIER
     ;
 
 /* =======================
@@ -117,6 +123,12 @@ ternaryExpression
     | logicalOrExpression (QUESTION expression COLON ternaryExpression)?
     ;
 
+/* --- Non-assignment expression for positional arguments --- */
+
+nonAssignmentExpression
+    : ternaryExpression
+    ;
+
 /* --- Logical --- */
 
 logicalOrExpression
@@ -152,7 +164,13 @@ multiplicativeExpression
 /* --- Unary --- */
 
 unaryExpression
-    : (NOT | MINUS)? callOrPrimary
+    : (NOT | MINUS)? powerExpression
+    ;
+
+/* --- Power (right associative) --- */
+
+powerExpression
+    : callOrPrimary (DOUBLE_STAR powerExpression)?
     ;
 
 /* =======================
@@ -244,7 +262,14 @@ dottedName
     ;
 
 argumentList
-    : expression (COMMA expression)*
+    : argument (COMMA argument)*
+    ;
+
+argument
+    : IDENTIFIER ASSIGN expression           # keywordArgument  
+    | nonAssignmentExpression                # positionalArgument
+    | MUL expression                         # starArgument
+    | DOUBLE_STAR expression                 # doubleStarArgument
     ;
 
 expressionList

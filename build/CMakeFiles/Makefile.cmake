@@ -126,6 +126,8 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/test_complex_syntax.dir/DependInfo.cmake"
   "CMakeFiles/test_attribute_assignment.dir/DependInfo.cmake"
   "CMakeFiles/test_enhanced_features.dir/DependInfo.cmake"
+  "CMakeFiles/run_python_script.dir/DependInfo.cmake"
+  "CMakeFiles/run_pys_script.dir/DependInfo.cmake"
   "_deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/DependInfo.cmake"
   "_deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/DependInfo.cmake"
   "_deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/DependInfo.cmake"

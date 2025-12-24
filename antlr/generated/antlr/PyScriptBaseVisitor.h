@@ -91,6 +91,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -115,11 +119,11 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override {
+  virtual std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) override {
+  virtual std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -187,7 +191,19 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override {
+  virtual std::any visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStarArgument(PyScriptParser::StarArgumentContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) override {
     return visitChildren(ctx);
   }
 

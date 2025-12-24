@@ -7,8 +7,9 @@
 #include "script_value.h"
 #include "logger.h"
 #include <atomic>
-#include <iostream>
 #include <pybind11/eval.h>
+
+static Logger s_logger;
 
 namespace script_interpreter {
 
@@ -26,9 +27,9 @@ void PythonBridge::configurePythonPath() {
         // 将当前目录下的python目录添加到Python路径
         py::str python_path = "../python";
         sys.attr("path").attr("insert")(0, python_path);
-        std::cout << "[PythonBridge] Python path configured: " << python_path.cast<std::string>() << std::endl;
+        s_logger.info(std::string("[PythonBridge] Python path configured: ") + python_path.cast<std::string>() );
     } catch (const std::exception& e) {
-        std::cerr << "[PythonBridge] Failed to configure Python path: " << e.what() << std::endl;
+        s_logger.error(std::string("[PythonBridge] Failed to configure Python path: ") + e.what());
     }
 }
 
@@ -93,7 +94,7 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
                 });
                 return ScriptValue::fromPythonObject(lambda_func);
             } catch (const py::error_already_set& e) {
-                std::cerr << "[PythonBridge] Error creating toString lambda: " << e.what() << std::endl;
+                s_logger.error(std::string("[PythonBridge] Error creating toString lambda: ") + e.what());
                 return nullptr;
             }
         }
@@ -129,7 +130,7 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
             }
             return nullptr;
         } catch (const std::exception& e) {
-            std::cerr << "[PythonBridge] Error accessing dictionary member: " << e.what() << std::endl;
+            s_logger.error(std::string("[PythonBridge] Error accessing dictionary member: ") + e.what());
             return nullptr;
         }
     }
@@ -145,7 +146,7 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
             });
             return ScriptValue::fromPythonObject(lambda_func);
         } catch (const py::error_already_set& e) {
-            std::cerr << "[PythonBridge] Error creating toString lambda for non-Python object: " << e.what() << std::endl;
+            s_logger.error(std::string("[PythonBridge] Error creating toString lambda for non-Python object: ") + e.what());
             return nullptr;
         }
     }

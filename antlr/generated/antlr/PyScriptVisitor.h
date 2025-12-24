@@ -57,6 +57,8 @@ public:
 
     virtual std::any visitTernaryExpression(PyScriptParser::TernaryExpressionContext *context) = 0;
 
+    virtual std::any visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *context) = 0;
+
     virtual std::any visitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *context) = 0;
 
     virtual std::any visitLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *context) = 0;
@@ -69,9 +71,9 @@ public:
 
     virtual std::any visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *context) = 0;
 
-    virtual std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *context) = 0;
-
     virtual std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *context) = 0;
+
+    virtual std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *context) = 0;
 
     virtual std::any visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *context) = 0;
 
@@ -105,7 +107,13 @@ public:
 
     virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *context) = 0;
 
-    virtual std::any visitArgument(PyScriptParser::ArgumentContext *context) = 0;
+    virtual std::any visitKeywordArgument(PyScriptParser::KeywordArgumentContext *context) = 0;
+
+    virtual std::any visitPositionalArgument(PyScriptParser::PositionalArgumentContext *context) = 0;
+
+    virtual std::any visitStarArgument(PyScriptParser::StarArgumentContext *context) = 0;
+
+    virtual std::any visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *context) = 0;
 
     virtual std::any visitExpressionList(PyScriptParser::ExpressionListContext *context) = 0;
 

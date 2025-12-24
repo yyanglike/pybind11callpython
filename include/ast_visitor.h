@@ -90,9 +90,6 @@ public:
     std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override;
     std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override;
     std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
-    std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override;
-    std::any visitParameter(PyScriptParser::ParameterContext *ctx) override;
-    std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override;
     std::any visitExpressionList(PyScriptParser::ExpressionListContext *ctx) override; 
     std::any visitDictItemList(PyScriptParser::DictItemListContext *ctx) override;
     std::any visitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) override;
@@ -106,6 +103,19 @@ public:
     std::any visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) override;
     std::any visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *ctx) override;
     std::any visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) override;
+    
+    // 新增的参数和参数相关方法
+    std::any visitParameter(PyScriptParser::ParameterContext *ctx) override;
+    std::any visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) override;
+    std::any visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) override;
+    std::any visitStarArgument(PyScriptParser::StarArgumentContext *ctx) override;
+    std::any visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) override;
+    
+    // 新增的非赋值表达式方法
+    std::any visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) override;
+    
+    // 新增的幂表达式方法
+    std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override;
     
     /**
      * @brief 设置定义函数标志

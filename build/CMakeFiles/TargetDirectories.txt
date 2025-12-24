@@ -9,6 +9,8 @@
 /Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/test_complex_syntax.dir
 /Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/test_attribute_assignment.dir
 /Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/test_enhanced_features.dir
+/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/run_python_script.dir
+/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/run_pys_script.dir
 /Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/package.dir
 /Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/package_source.dir
 /Users/yangyi/company/python/pybind11callpython/build/CMakeFiles/edit_cache.dir

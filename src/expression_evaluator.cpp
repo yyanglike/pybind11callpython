@@ -78,6 +78,29 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() * right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
+        } else if (op == "**") {
+            if (left->isNumber() && right->isNumber()) {
+                // Try to compute integer power if both are integers and exponent non-negative
+                if (left->isInteger() && right->isInteger() && right->getInteger() >= 0) {
+                    long long base = left->getInteger();
+                    long long exp = right->getInteger();
+                    long long result = 1;
+                    for (long long i = 0; i < exp; ++i) {
+                        result *= base;
+                    }
+                    return ScriptValue::createInteger(result);
+                } else {
+                    // Fallback to floating point pow
+                    double result = pow(left->toDouble(), right->toDouble());
+                    // If both are integers but exponent negative, result is double anyway
+                    return ScriptValue::createDouble(result);
+                }
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                // Use Python's built-in pow function
+                py::object pow_func = py::module_::import("builtins").attr("pow");
+                py::object result = pow_func(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
         } else if (op == "/") {
             if (left->isNumber() && right->isNumber()) {
                 double divisor = right->toDouble();

@@ -73,6 +73,9 @@ public:
   virtual void enterTernaryExpression(PyScriptParser::TernaryExpressionContext * /*ctx*/) override { }
   virtual void exitTernaryExpression(PyScriptParser::TernaryExpressionContext * /*ctx*/) override { }
 
+  virtual void enterNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext * /*ctx*/) override { }
+  virtual void exitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext * /*ctx*/) override { }
+
   virtual void enterLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext * /*ctx*/) override { }
   virtual void exitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext * /*ctx*/) override { }
 
@@ -91,11 +94,11 @@ public:
   virtual void enterMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext * /*ctx*/) override { }
   virtual void exitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext * /*ctx*/) override { }
 
-  virtual void enterPowerExpression(PyScriptParser::PowerExpressionContext * /*ctx*/) override { }
-  virtual void exitPowerExpression(PyScriptParser::PowerExpressionContext * /*ctx*/) override { }
-
   virtual void enterUnaryExpression(PyScriptParser::UnaryExpressionContext * /*ctx*/) override { }
   virtual void exitUnaryExpression(PyScriptParser::UnaryExpressionContext * /*ctx*/) override { }
+
+  virtual void enterPowerExpression(PyScriptParser::PowerExpressionContext * /*ctx*/) override { }
+  virtual void exitPowerExpression(PyScriptParser::PowerExpressionContext * /*ctx*/) override { }
 
   virtual void enterCallOrPrimary(PyScriptParser::CallOrPrimaryContext * /*ctx*/) override { }
   virtual void exitCallOrPrimary(PyScriptParser::CallOrPrimaryContext * /*ctx*/) override { }
@@ -145,8 +148,17 @@ public:
   virtual void enterArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
   virtual void exitArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
 
-  virtual void enterArgument(PyScriptParser::ArgumentContext * /*ctx*/) override { }
-  virtual void exitArgument(PyScriptParser::ArgumentContext * /*ctx*/) override { }
+  virtual void enterKeywordArgument(PyScriptParser::KeywordArgumentContext * /*ctx*/) override { }
+  virtual void exitKeywordArgument(PyScriptParser::KeywordArgumentContext * /*ctx*/) override { }
+
+  virtual void enterPositionalArgument(PyScriptParser::PositionalArgumentContext * /*ctx*/) override { }
+  virtual void exitPositionalArgument(PyScriptParser::PositionalArgumentContext * /*ctx*/) override { }
+
+  virtual void enterStarArgument(PyScriptParser::StarArgumentContext * /*ctx*/) override { }
+  virtual void exitStarArgument(PyScriptParser::StarArgumentContext * /*ctx*/) override { }
+
+  virtual void enterDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext * /*ctx*/) override { }
+  virtual void exitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext * /*ctx*/) override { }
 
   virtual void enterExpressionList(PyScriptParser::ExpressionListContext * /*ctx*/) override { }
   virtual void exitExpressionList(PyScriptParser::ExpressionListContext * /*ctx*/) override { }

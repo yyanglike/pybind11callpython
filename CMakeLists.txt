@@ -262,8 +262,46 @@ target_link_libraries(test_enhanced_features
     antlr4_static
 )
 
+# Simple runner to execute arbitrary Python scripts from command line
+add_executable(run_python_script
+    src/run_python_script.cpp
+    src/python_bridge.cpp
+    src/script_value.cpp
+    src/dynamic_python_caller.cpp
+)
+
+target_link_libraries(run_python_script
+    ${Python3_LIBRARIES}
+    pybind11::embed
+)
+
+# Runner for .pys scripts (uses ScriptInterpreter)
+add_executable(run_pys_script
+    src/run_pys_script.cpp
+    src/script_interpreter.cpp
+    src/script_value.cpp
+    src/dynamic_python_caller.cpp
+    src/python_bridge.cpp
+    src/error_handler.cpp
+    src/variable_manager.cpp
+    src/expression_evaluator.cpp
+    src/ast_visitor.cpp
+    antlr/generated/antlr/PyScriptLexer.cpp
+    antlr/generated/antlr/PyScriptParser.cpp
+    antlr/generated/antlr/PyScriptBaseVisitor.cpp
+    antlr/generated/antlr/PyScriptVisitor.cpp
+    antlr/generated/antlr/PyScriptBaseListener.cpp
+    antlr/generated/antlr/PyScriptListener.cpp
+)
+
+target_link_libraries(run_pys_script
+    ${Python3_LIBRARIES}
+    pybind11::embed
+    antlr4_static
+)
+
 if(APPLE)
-    set_target_properties(test_dynamic_call test_module_enum test_class_handling test_script_interpreter test_complex_scenario test_simple test_subscript_assignment test_complex_syntax test_enhanced_features PROPERTIES
+    set_target_properties(test_dynamic_call test_module_enum test_class_handling test_script_interpreter test_complex_scenario test_simple test_subscript_assignment test_complex_syntax test_enhanced_features run_python_script PROPERTIES
         BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH "@executable_path/../lib"
     )

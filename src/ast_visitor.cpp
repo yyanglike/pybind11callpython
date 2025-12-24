@@ -1016,13 +1016,13 @@ any AstVisitor::visitAdditiveExpression(PyScriptParser::AdditiveExpressionContex
 }
 
 any AstVisitor::visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) {
-    auto powerExprs = ctx->powerExpression();
-    if (powerExprs.size() == 1) {
-        return this->visit(powerExprs[0]);
+    auto unaryExprs = ctx->unaryExpression();
+    if (unaryExprs.size() == 1) {
+        return this->visit(unaryExprs[0]);
     }
     
     // 处理乘除取模运算
-    auto leftAny = visit(powerExprs[0]);
+    auto leftAny = visit(unaryExprs[0]);
     shared_ptr<ScriptValue> left;
     try {
         left = any_cast<shared_ptr<ScriptValue>>(leftAny);
@@ -1035,8 +1035,8 @@ any AstVisitor::visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpr
         return any();
     }
     
-    for (size_t i = 1; i < powerExprs.size(); ++i) {
-        auto rightAny = visit(powerExprs[i]);
+    for (size_t i = 1; i < unaryExprs.size(); ++i) {
+        auto rightAny = visit(unaryExprs[i]);
         shared_ptr<ScriptValue> right;
         try {
             right = any_cast<shared_ptr<ScriptValue>>(rightAny);
@@ -1064,17 +1064,17 @@ any AstVisitor::visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpr
 }
 
 any AstVisitor::visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) {
-    auto callOrPrimaryCtx = ctx->callOrPrimary();
-    auto callOrPrimaryAny = this->visit(callOrPrimaryCtx);
-    shared_ptr<ScriptValue> callOrPrimaryValue;
+    auto powerExprCtx = ctx->powerExpression();
+    auto powerExprAny = this->visit(powerExprCtx);
+    shared_ptr<ScriptValue> powerExprValue;
     try {
-        callOrPrimaryValue = any_cast<shared_ptr<ScriptValue>>(callOrPrimaryAny);
+        powerExprValue = any_cast<shared_ptr<ScriptValue>>(powerExprAny);
     } catch (const bad_any_cast&) {
         reportError("Cannot evaluate expression in unary expression", ctx);
         return any();
     }
     
-    if (!callOrPrimaryValue) {
+    if (!powerExprValue) {
         reportError("Cannot evaluate expression in unary expression", ctx);
         return any();
     }
@@ -1082,7 +1082,7 @@ any AstVisitor::visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx
     // 检查是否有前缀操作符
     if (ctx->children.size() > 1) {
         string op = ctx->children[0]->getText();
-        auto result = expression_evaluator_.evaluateUnaryOperation(op, callOrPrimaryValue);
+        auto result = expression_evaluator_.evaluateUnaryOperation(op, powerExprValue);
         if (!result) {
             reportError("Unsupported unary operator: " + op, ctx);
             return any();
@@ -1090,7 +1090,7 @@ any AstVisitor::visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx
         return any(result);
     }
     
-    return any(callOrPrimaryValue);
+    return any(powerExprValue);
 }
 
 any AstVisitor::visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) {
@@ -1209,38 +1209,33 @@ any AstVisitor::visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) {
             auto argList = funcCallOp->argumentList();
             if (argList) {
                 for (auto* a : argList->argument()) {
-                    if (a->IDENTIFIER() && a->ASSIGN()) {
-                        auto val = evaluateExpression(a->expression());
+                    // Try to cast to each alternative
+                    if (auto* keywordArg = dynamic_cast<PyScriptParser::KeywordArgumentContext*>(a)) {
+                        auto val = evaluateExpression(keywordArg->expression());
                         if (!val) { reportError("Cannot evaluate keyword argument", postfixOp); return any(); }
-                        keywords[a->IDENTIFIER()->getText()] = val;
-                        logger_.debug(std::string("Keyword arg: ") + a->IDENTIFIER()->getText());
-                    } else if (a->MUL()) {
-                        auto val = evaluateExpression(a->expression());
+                        keywords[keywordArg->IDENTIFIER()->getText()] = val;
+                        logger_.debug(std::string("Keyword arg: ") + keywordArg->IDENTIFIER()->getText());
+                    } else if (auto* starArg = dynamic_cast<PyScriptParser::StarArgumentContext*>(a)) {
+                        auto val = evaluateExpression(starArg->expression());
                         if (!val) { reportError("Cannot evaluate * argument", postfixOp); return any(); }
                         starPos.push_back(val);
                         logger_.debug("Star positional arg detected (inline)");
-                    } else if (a->DOUBLE_STAR()) {
-                        auto val = evaluateExpression(a->expression());
+                    } else if (auto* doubleStarArg = dynamic_cast<PyScriptParser::DoubleStarArgumentContext*>(a)) {
+                        auto val = evaluateExpression(doubleStarArg->expression());
                         if (!val) { reportError("Cannot evaluate ** argument", postfixOp); return any(); }
                         starKw.push_back(val);
                         logger_.debug("Star keyword arg detected (inline)");
-                    } else if (a->expression() && a->expression()->assignment()) {
-                        // inline call used an assignment expression: treat as keyword arg
-                        auto assignCtx = a->expression()->assignment();
-                        std::string argText = a->getText();
-                        if (assignCtx && assignCtx->IDENTIFIER() && assignCtx->assignmentOperator()) {
-                            auto val = evaluateExpression(assignCtx->expression());
-                            if (!val) { reportError(std::string("Cannot evaluate keyword argument: ") + argText, postfixOp); return any(); }
-                            keywords[assignCtx->IDENTIFIER()->getText()] = val;
-                            logger_.debug(std::string("Inline keyword arg: ") + assignCtx->IDENTIFIER()->getText());
-                        } else {
-                            reportError(std::string("Invalid inline assignment argument: ") + argText, postfixOp);
+                    } else if (auto* positionalArg = dynamic_cast<PyScriptParser::PositionalArgumentContext*>(a)) {
+                        std::string argText = positionalArg->getText();
+                        logger_.debug(std::string("Evaluating inline positional argument: ") + argText);
+                        auto valAny = visit(positionalArg->nonAssignmentExpression());
+                        shared_ptr<ScriptValue> val;
+                        try {
+                            val = any_cast<shared_ptr<ScriptValue>>(valAny);
+                        } catch (const bad_any_cast&) {
+                            reportError(std::string("Cannot evaluate positional argument: ") + argText, postfixOp); 
                             return any();
                         }
-                    } else if (a->expression()) {
-                        std::string argText = a->getText();
-                        logger_.debug(std::string("Evaluating inline positional argument: ") + argText);
-                        auto val = evaluateExpression(a->expression());
                         if (!val) { reportError(std::string("Cannot evaluate positional argument: ") + argText, postfixOp); return any(); }
                         positional.push_back(val);
                         logger_.debug(std::string("Positional arg=") + val->toString());
@@ -1404,39 +1399,33 @@ any AstVisitor::visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) {
         logger_.debug(std::string("Argument count: ") + std::to_string(argCtxs.size()));
         for (size_t i = 0; i < argCtxs.size(); ++i) {
             auto a = argCtxs[i];
-            std::string argText = a->getText();
-            // keyword form can be parsed either as Argument IDENTIFIER ASSIGN expression
-            // or as an assignment expression inside expression(). Handle both.
-            if (a->IDENTIFIER() && a->ASSIGN()) {
-                auto val = evaluateExpression(a->expression());
-                if (!val) { reportError(std::string("Cannot evaluate keyword argument: ") + argText, ctx); return any(); }
-                keywords[a->IDENTIFIER()->getText()] = val;
-                logger_.debug(std::string("Keyword arg: ") + a->IDENTIFIER()->getText());
-            } else if (a->expression() && a->expression()->assignment()) {
-                // expression is an assignment expression like IDENTIFIER = expr
-                auto assignCtx = a->expression()->assignment();
-                if (assignCtx && assignCtx->IDENTIFIER() && assignCtx->assignmentOperator()) {
-                    auto val = evaluateExpression(assignCtx->expression());
-                    if (!val) { reportError(std::string("Cannot evaluate keyword argument: ") + argText, ctx); return any(); }
-                    keywords[assignCtx->IDENTIFIER()->getText()] = val;
-                    logger_.debug(std::string("Keyword arg (assignment form): ") + assignCtx->IDENTIFIER()->getText());
-                } else {
-                    reportError(std::string("Invalid assignment argument: ") + argText, ctx);
-                    return any();
-                }
-            } else if (a->MUL()) {
-                auto val = evaluateExpression(a->expression());
-                if (!val) { reportError(std::string("Cannot evaluate * argument: ") + argText, ctx); return any(); }
+            // Try to cast to each alternative
+            if (auto* keywordArg = dynamic_cast<PyScriptParser::KeywordArgumentContext*>(a)) {
+                auto val = evaluateExpression(keywordArg->expression());
+                if (!val) { reportError("Cannot evaluate keyword argument", ctx); return any(); }
+                keywords[keywordArg->IDENTIFIER()->getText()] = val;
+                logger_.debug(std::string("Keyword arg: ") + keywordArg->IDENTIFIER()->getText());
+            } else if (auto* starArg = dynamic_cast<PyScriptParser::StarArgumentContext*>(a)) {
+                auto val = evaluateExpression(starArg->expression());
+                if (!val) { reportError("Cannot evaluate * argument", ctx); return any(); }
                 starPos.push_back(val);
                 logger_.debug("Star positional arg detected");
-            } else if (a->DOUBLE_STAR()) {
-                auto val = evaluateExpression(a->expression());
-                if (!val) { reportError(std::string("Cannot evaluate ** argument: ") + argText, ctx); return any(); }
+            } else if (auto* doubleStarArg = dynamic_cast<PyScriptParser::DoubleStarArgumentContext*>(a)) {
+                auto val = evaluateExpression(doubleStarArg->expression());
+                if (!val) { reportError("Cannot evaluate ** argument", ctx); return any(); }
                 starKw.push_back(val);
                 logger_.debug("Star keyword arg detected");
-            } else if (a->expression()) {
+            } else if (auto* positionalArg = dynamic_cast<PyScriptParser::PositionalArgumentContext*>(a)) {
+                std::string argText = positionalArg->getText();
                 logger_.debug(std::string("Evaluating positional argument expression: ") + argText);
-                auto val = evaluateExpression(a->expression());
+                auto valAny = visit(positionalArg->nonAssignmentExpression());
+                shared_ptr<ScriptValue> val;
+                try {
+                    val = any_cast<shared_ptr<ScriptValue>>(valAny);
+                } catch (const bad_any_cast&) {
+                    reportError(std::string("Cannot evaluate positional argument: ") + argText, ctx); 
+                    return any();
+                }
                 if (!val) { reportError(std::string("Cannot evaluate positional argument: ") + argText, ctx); return any(); }
                 positional.push_back(val);
                 logger_.debug(std::string("Positional arg[") + std::to_string(i) + "]=" + val->toString());
@@ -1710,20 +1699,28 @@ any AstVisitor::visitNewExpression(PyScriptParser::NewExpressionContext *ctx) {
         logger_.debug(std::string("Argument count: ") + std::to_string(argCtxs.size()));
         for (size_t i = 0; i < argCtxs.size(); ++i) {
             auto a = argCtxs[i];
-            if (a->IDENTIFIER() && a->ASSIGN()) {
-                auto val = evaluateExpression(a->expression());
+            // Try to cast to each alternative
+            if (auto* keywordArg = dynamic_cast<PyScriptParser::KeywordArgumentContext*>(a)) {
+                auto val = evaluateExpression(keywordArg->expression());
                 if (!val) { reportError("Cannot evaluate keyword argument", ctx); return any(); }
-                keywords[a->IDENTIFIER()->getText()] = val;
-            } else if (a->MUL()) {
-                auto val = evaluateExpression(a->expression());
+                keywords[keywordArg->IDENTIFIER()->getText()] = val;
+            } else if (auto* starArg = dynamic_cast<PyScriptParser::StarArgumentContext*>(a)) {
+                auto val = evaluateExpression(starArg->expression());
                 if (!val) { reportError("Cannot evaluate * argument", ctx); return any(); }
                 starPos.push_back(val);
-            } else if (a->DOUBLE_STAR()) {
-                auto val = evaluateExpression(a->expression());
+            } else if (auto* doubleStarArg = dynamic_cast<PyScriptParser::DoubleStarArgumentContext*>(a)) {
+                auto val = evaluateExpression(doubleStarArg->expression());
                 if (!val) { reportError("Cannot evaluate ** argument", ctx); return any(); }
                 starKw.push_back(val);
-            } else if (a->expression()) {
-                auto val = evaluateExpression(a->expression());
+            } else if (auto* positionalArg = dynamic_cast<PyScriptParser::PositionalArgumentContext*>(a)) {
+                auto valAny = visit(positionalArg->nonAssignmentExpression());
+                shared_ptr<ScriptValue> val;
+                try {
+                    val = any_cast<shared_ptr<ScriptValue>>(valAny);
+                } catch (const bad_any_cast&) {
+                    // 如果转换失败，则使用null
+                    val = ScriptValue::createNull();
+                }
                 positional.push_back(val ? val : ScriptValue::createNull());
             } else {
                 reportError("Invalid argument", ctx);
@@ -2215,23 +2212,23 @@ any AstVisitor::visitDottedName(PyScriptParser::DottedNameContext *ctx) {
 
 any AstVisitor::visitArgumentList(PyScriptParser::ArgumentListContext *ctx) {
     logger_.debug("visitArgumentList called");
-    
+
     vector<shared_ptr<ScriptValue>> args;
     if (ctx) {
         auto arguments = ctx->argument();
         logger_.debug(std::string("Number of arguments: ") + std::to_string(arguments.size()));
         for (size_t i = 0; i < arguments.size(); ++i) {
             auto argCtx = arguments[i];
-            if (argCtx->IDENTIFIER() && argCtx->ASSIGN()) {
-                // keyword arg - handled at call sites
-                logger_.debug(std::string("Keyword argument detected: ") + argCtx->IDENTIFIER()->getText());
-                continue;
-            } else if (argCtx->MUL() || argCtx->DOUBLE_STAR()) {
-                // star/unpack - handled at call sites
-                logger_.debug("Star/unpack argument detected");
-                continue;
-            } else if (argCtx->expression()) {
-                auto argValue = evaluateExpression(argCtx->expression());
+            // Try to cast to each alternative
+            if (auto* positionalArg = dynamic_cast<PyScriptParser::PositionalArgumentContext*>(argCtx)) {
+                auto argValueAny = visit(positionalArg->nonAssignmentExpression());
+                shared_ptr<ScriptValue> argValue;
+                try {
+                    argValue = any_cast<shared_ptr<ScriptValue>>(argValueAny);
+                } catch (const bad_any_cast&) {
+                    reportError("Cannot evaluate argument", ctx);
+                    return any();
+                }
                 if (argValue) {
                     args.push_back(argValue);
                     logger_.debug(std::string("Arg[") + std::to_string(i) + "] type=" + std::to_string(static_cast<int>(argValue->getType())) + ", value=" + argValue->toString());
@@ -2239,6 +2236,18 @@ any AstVisitor::visitArgumentList(PyScriptParser::ArgumentListContext *ctx) {
                     reportError("Cannot evaluate argument", ctx);
                     return any();
                 }
+            } else if (auto* keywordArg = dynamic_cast<PyScriptParser::KeywordArgumentContext*>(argCtx)) {
+                // keyword arg - handled at call sites, we just skip here
+                logger_.debug(std::string("Keyword argument detected: ") + keywordArg->IDENTIFIER()->getText());
+                continue;
+            } else if (auto* starArg = dynamic_cast<PyScriptParser::StarArgumentContext*>(argCtx)) {
+                // star/unpack - handled at call sites
+                logger_.debug("Star/unpack argument detected");
+                continue;
+            } else if (auto* doubleStarArg = dynamic_cast<PyScriptParser::DoubleStarArgumentContext*>(argCtx)) {
+                // double star/unpack - handled at call sites
+                logger_.debug("Double star/unpack argument detected");
+                continue;
             } else {
                 reportError("Invalid argument", ctx);
                 return any();
@@ -2246,7 +2255,7 @@ any AstVisitor::visitArgumentList(PyScriptParser::ArgumentListContext *ctx) {
         }
     }
     return any(args);
-} 
+}
 
 any AstVisitor::visitExpressionList(PyScriptParser::ExpressionListContext *ctx) {
     logger_.debug("visitExpressionList called");
@@ -2307,75 +2316,7 @@ any AstVisitor::visitDictItemList(PyScriptParser::DictItemListContext *ctx) {
 }
 
 // 新增：参数/Argument 和 power 表达式的基础实现
-any AstVisitor::visitArgument(PyScriptParser::ArgumentContext *ctx) {
-    logger_.debug("visitArgument called");
-    // 具体的解析在调用时完成，这里作为占位实现
-    return any();
-}
 
-any AstVisitor::visitParameter(PyScriptParser::ParameterContext *ctx) {
-    logger_.debug("visitParameter called");
-    // 参数解析在函数定义阶段处理，这里保持占位
-    return any();
-}
-
-any AstVisitor::visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) {
-    logger_.debug("visitPowerExpression called");
-    if (!ctx->unaryExpression()) {
-        reportError("Invalid power expression", ctx);
-        return any();
-    }
-    auto leftAny = visit(ctx->unaryExpression());
-    shared_ptr<ScriptValue> left;
-    try {
-        left = any_cast<shared_ptr<ScriptValue>>(leftAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate left-hand side of power expression", ctx);
-        return any();
-    }
-    if (!left) {
-        reportError("Cannot evaluate left-hand side of power expression", ctx);
-        return any();
-    }
-    if (!ctx->DOUBLE_STAR()) {
-        return any(left);
-    }
-
-    // 右侧是另一个powerExpression（右结合）
-    auto rightAny = visit(ctx->powerExpression());
-    shared_ptr<ScriptValue> right;
-    try {
-        right = any_cast<shared_ptr<ScriptValue>>(rightAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate right-hand side of power expression", ctx);
-        return any();
-    }
-
-    if (!right) {
-        reportError("Cannot evaluate right-hand side of power expression", ctx);
-        return any();
-    }
-
-    try {
-        if (left->isInteger() && right->isInteger()) {
-            long long base = left->getInteger();
-            long long exp = right->getInteger();
-            if (exp < 0) {
-                double r = std::pow((double)base, (double)exp);
-                return any(ScriptValue::createDouble(r));
-            }
-            long long res = 1;
-            for (long long i = 0; i < exp; ++i) res *= base;
-            return any(ScriptValue::createInteger(res));
-        } else {
-            double r = std::pow(left->toDouble(), right->toDouble());
-            return any(ScriptValue::createDouble(r));
-        }
-    } catch (const exception& e) {
-        reportError(std::string("Power operation error: ") + e.what(), ctx);
-        return any();
-    }
-} 
 
 any AstVisitor::visitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) {
     logger_.debug("visitKeyValuePair called");
@@ -2649,12 +2590,12 @@ any AstVisitor::visitListComprehension(PyScriptParser::ListComprehensionContext 
 
 any AstVisitor::visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) {
     logger_.debug("visitAttributeAccessOp called");
-    
+
     // 获取当前对象值（来自callOrPrimary中的primaryExpression）
     // 注意：attributeAccessOp的父节点是postfixOp，postfixOp的父节点是callOrPrimary
     // 我们需要获取到当前的对象值，这应该通过上下文传递，这里简化处理
     // 实际实现中，callOrPrimary应该累积应用postfixOp
-    
+
     // 临时实现：报告错误
     reportError("Attribute access operator not fully implemented yet", ctx);
     return any();
@@ -2662,7 +2603,7 @@ any AstVisitor::visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext 
 
 any AstVisitor::visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *ctx) {
     logger_.debug("visitSubscriptAccessOp called");
-    
+
     // 临时实现：报告错误
     reportError("Subscript access operator not fully implemented yet", ctx);
     return any();
@@ -2670,8 +2611,101 @@ any AstVisitor::visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext 
 
 any AstVisitor::visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) {
     logger_.debug("visitFunctionCallOp called");
-    
+
     // 临时实现：报告错误
     reportError("Function call operator not fully implemented yet", ctx);
     return any();
+}
+
+// 新增的visitor方法实现
+any AstVisitor::visitParameter(PyScriptParser::ParameterContext *ctx) {
+    logger_.debug("visitParameter called");
+    // 参数解析在函数定义阶段处理，这里保持占位
+    return any();
+}
+
+any AstVisitor::visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) {
+    logger_.debug("visitPositionalArgument called");
+    // 根据新的语法，PositionalArgumentContext包含nonAssignmentExpression
+    if (ctx->nonAssignmentExpression()) {
+        return visit(ctx->nonAssignmentExpression());
+    }
+    reportError("Invalid positional argument", ctx);
+    return any();
+}
+
+any AstVisitor::visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) {
+    logger_.debug("visitKeywordArgument called");
+    // 关键字参数已经在visitArgumentList中处理，这里只返回占位符
+    return any();
+}
+
+any AstVisitor::visitStarArgument(PyScriptParser::StarArgumentContext *ctx) {
+    logger_.debug("visitStarArgument called");
+    // 星号参数已经在visitArgumentList中处理，这里只返回占位符
+    return any();
+}
+
+any AstVisitor::visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) {
+    logger_.debug("visitDoubleStarArgument called");
+    // 双星号参数已经在visitArgumentList中处理，这里只返回占位符
+    return any();
+}
+
+any AstVisitor::visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) {
+    logger_.debug("visitNonAssignmentExpression called");
+    // nonAssignmentExpression只是ternaryExpression的别名，所以直接委托给visitTernaryExpression
+    if (ctx->ternaryExpression()) {
+        return visit(ctx->ternaryExpression());
+    }
+    reportError("Invalid non-assignment expression", ctx);
+    return any();
+}
+
+any AstVisitor::visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) {
+    logger_.debug("visitPowerExpression called");
+    
+    // 获取左边表达式（callOrPrimary）
+    auto leftAny = visit(ctx->callOrPrimary());
+    shared_ptr<ScriptValue> left;
+    try {
+        left = any_cast<shared_ptr<ScriptValue>>(leftAny);
+    } catch (const bad_any_cast&) {
+        reportError("Cannot evaluate left side of power expression", ctx);
+        return any();
+    }
+    
+    if (!left) {
+        reportError("Cannot evaluate left side of power expression", ctx);
+        return any();
+    }
+    
+    // 检查是否有幂运算（DOUBLE_STAR）
+    if (ctx->powerExpression()) {
+        // 获取右边表达式（递归处理幂运算，因为幂运算是右结合的）
+        auto rightAny = visit(ctx->powerExpression());
+        shared_ptr<ScriptValue> right;
+        try {
+            right = any_cast<shared_ptr<ScriptValue>>(rightAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate right side of power expression", ctx);
+            return any();
+        }
+        
+        if (!right) {
+            reportError("Cannot evaluate right side of power expression", ctx);
+            return any();
+        }
+        
+        // 执行幂运算：a ** b
+        auto result = expression_evaluator_.evaluateBinaryOperation("**", left, right);
+        if (!result) {
+            reportError("Unsupported power operation", ctx);
+            return any();
+        }
+        return any(result);
+    }
+    
+    // 没有幂运算符，直接返回左值
+    return any(left);
 }
