@@ -1,0 +1,6 @@
+def test():
+    import numpy as np
+    print("numpy imported")
+    return np.array([1,2,3])
+
+print("Function defined")

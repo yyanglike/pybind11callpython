@@ -537,3 +537,4 @@ pybind11callpython % antlr4 -Dlanguage=Cpp -visitor -o antlr/generated antlr/PyS
 cmake --build build -- -j8
 
 ./build/test_attribute_assignment --gtest_color=yes --gtest_output=xml:build/test_attribute_assignment.xml
+

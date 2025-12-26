@@ -186,7 +186,7 @@ CMAKE_OSX_ARCHITECTURES:STRING=
 
 //Minimum OS X version to target for deployment (at runtime); newer
 // APIs weak linked. Set to empty string for default value.
-CMAKE_OSX_DEPLOYMENT_TARGET:STRING=26.1
+CMAKE_OSX_DEPLOYMENT_TARGET:STRING=
 
 //The product will be built against the headers and libraries located
 // inside the indicated SDK.
@@ -705,9 +705,9 @@ CPACK_SOURCE_TZ-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CPACK_SOURCE_ZIP
 CPACK_SOURCE_ZIP-ADVANCED:INTERNAL=1
 //Details about finding Python
-FIND_PACKAGE_MESSAGE_DETAILS_Python:INTERNAL=[/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.14][cfound components: Interpreter ][v3.14.0()]
+FIND_PACKAGE_MESSAGE_DETAILS_Python:INTERNAL=[/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.12][cfound components: Interpreter ][v3.12.11()]
 //Details about finding Python3
-FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL=[/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.14][/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/include/python3.14][/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib][cfound components: Interpreter Development Development.Module Development.Embed ][v3.14.0()]
+FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL=[/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.12][/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12][/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib][cfound components: Interpreter Development Development.Module Development.Embed ][v3.12.11()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //ADVANCED property for variable: GIT_EXECUTABLE
@@ -718,32 +718,29 @@ HAS_FLTO:INTERNAL=1
 HAS_FLTO_THIN:INTERNAL=1
 PYBIND11_INCLUDE_DIR:INTERNAL=/Users/yangyi/company/python/pybind11callpython/pybind11/include
 //Python executable during the last CMake run
-PYBIND11_PYTHON_EXECUTABLE_LAST:INTERNAL=/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.14
+PYBIND11_PYTHON_EXECUTABLE_LAST:INTERNAL=/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.12
 //Python debug status
 PYTHON_IS_DEBUG:INTERNAL=0
 PYTHON_MODULE_DEBUG_POSTFIX:INTERNAL=
-PYTHON_MODULE_EXTENSION:INTERNAL=.cpython-314-darwin.so
+PYTHON_MODULE_EXTENSION:INTERNAL=.cpython-312-darwin.so
 //CMAKE_INSTALL_PREFIX during last run
 _GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=/usr/local
 _PYBIND11_CROSSCOMPILING:INTERNAL=OFF
 _Python:INTERNAL=Python3
 //Compiler reason failure
 _Python3_Compiler_REASON_FAILURE:INTERNAL=
-_Python3_DEVELOPMENT_EMBED_SIGNATURE:INTERNAL=d9d708fb73e9387450d34662b8992b91
-_Python3_DEVELOPMENT_MODULE_SIGNATURE:INTERNAL=fbf0eba23be45a76450bb2da0d8512af
+_Python3_DEVELOPMENT_EMBED_SIGNATURE:INTERNAL=fb87f9b38cc37cf4c68c92bd9d65e879
+_Python3_DEVELOPMENT_MODULE_SIGNATURE:INTERNAL=09cc8d845ede2a88f578fb0629b09194
 //Development reason failure
 _Python3_Development_REASON_FAILURE:INTERNAL=
-//Path to a program.
-_Python3_EXECUTABLE:INTERNAL=/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.14
+_Python3_EXECUTABLE:INTERNAL=/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.12
 //Path to a file.
-_Python3_INCLUDE_DIR:INTERNAL=/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/include/python3.14
+_Python3_INCLUDE_DIR:INTERNAL=/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12
 //Python3 Properties
-_Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;14;0;64;<none>;cpython-314-darwin;abi3;/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/python3.14;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14/site-packages;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14/site-packages
-_Python3_INTERPRETER_SIGNATURE:INTERNAL=5b6fe6dbbfe8ecb6556cb75c04cd9f34
-//Interpreter reason failure
-_Python3_Interpreter_REASON_FAILURE:INTERNAL=
+_Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;12;11;64;<none>;cpython-312-darwin;abi3;/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages
+_Python3_INTERPRETER_SIGNATURE:INTERNAL=a892857d2fc5a28207dbd34bd575569a
 //Path to a library.
-_Python3_LIBRARY_RELEASE:INTERNAL=/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
+_Python3_LIBRARY_RELEASE:INTERNAL=/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 //NumPy reason failure
 _Python3_NumPy_REASON_FAILURE:INTERNAL=
 //Compiler reason failure
@@ -751,10 +748,10 @@ _Python_Compiler_REASON_FAILURE:INTERNAL=
 //Development reason failure
 _Python_Development_REASON_FAILURE:INTERNAL=
 //Path to a program.
-_Python_EXECUTABLE:INTERNAL=/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.14
+_Python_EXECUTABLE:INTERNAL=/Users/yangyi/company/python/pybind11callpython/.venv/bin/python3.12
 //Python Properties
-_Python_INTERPRETER_PROPERTIES:INTERNAL=Python;3;14;0;64;32;<none>;cpython-314-darwin;abi3;/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/python3.14;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14/site-packages;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14/site-packages
-_Python_INTERPRETER_SIGNATURE:INTERNAL=58a649d538235e1c053516a5d1dca00d
+_Python_INTERPRETER_PROPERTIES:INTERNAL=Python;3;12;11;64;32;<none>;cpython-312-darwin;abi3;/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages
+_Python_INTERPRETER_SIGNATURE:INTERNAL=e6c0202054256f8d662c1eade488c515
 //NumPy reason failure
 _Python_NumPy_REASON_FAILURE:INTERNAL=
 cmake_package_name:INTERNAL=GTest
@@ -776,6 +773,6 @@ pybind11_FOUND:INTERNAL=TRUE
 //Directory where pybind11 headers are located
 pybind11_INCLUDE_DIR:INTERNAL=/Users/yangyi/company/python/pybind11callpython/pybind11/include
 //Directories where pybind11 and possibly Python headers are located
-pybind11_INCLUDE_DIRS:INTERNAL=/Users/yangyi/company/python/pybind11callpython/pybind11/include;/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/include/python3.14
+pybind11_INCLUDE_DIRS:INTERNAL=/Users/yangyi/company/python/pybind11callpython/pybind11/include;/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12
 targets_export_name:INTERNAL=GTestTargets
 

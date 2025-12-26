@@ -1,0 +1,10 @@
+def test_numpy():
+    import numpy as np
+    print("numpy imported inside function")
+    return np.mean([1,2,3])
+
+try:
+    result = test_numpy()
+    print("Result:", result)
+except Exception as e:
+    print("Error:", e)

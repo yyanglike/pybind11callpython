@@ -1,0 +1,7 @@
+# Step 2 only
+print("\n=== Step 2: Define range_list function ===")
+def range_list(n):
+    return list(range(n))
+
+print("range_list function defined")
+print("Testing range_list(5):", range_list(5))

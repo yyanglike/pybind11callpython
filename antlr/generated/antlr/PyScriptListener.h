@@ -20,11 +20,26 @@ public:
   virtual void enterStatement(PyScriptParser::StatementContext *ctx) = 0;
   virtual void exitStatement(PyScriptParser::StatementContext *ctx) = 0;
 
-  virtual void enterImportStatement(PyScriptParser::ImportStatementContext *ctx) = 0;
-  virtual void exitImportStatement(PyScriptParser::ImportStatementContext *ctx) = 0;
+  virtual void enterSimpleStatement(PyScriptParser::SimpleStatementContext *ctx) = 0;
+  virtual void exitSimpleStatement(PyScriptParser::SimpleStatementContext *ctx) = 0;
 
-  virtual void enterFunctionDefinition(PyScriptParser::FunctionDefinitionContext *ctx) = 0;
-  virtual void exitFunctionDefinition(PyScriptParser::FunctionDefinitionContext *ctx) = 0;
+  virtual void enterSmallStatement(PyScriptParser::SmallStatementContext *ctx) = 0;
+  virtual void exitSmallStatement(PyScriptParser::SmallStatementContext *ctx) = 0;
+
+  virtual void enterCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) = 0;
+  virtual void exitCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) = 0;
+
+  virtual void enterTryStatement(PyScriptParser::TryStatementContext *ctx) = 0;
+  virtual void exitTryStatement(PyScriptParser::TryStatementContext *ctx) = 0;
+
+  virtual void enterExceptClause(PyScriptParser::ExceptClauseContext *ctx) = 0;
+  virtual void exitExceptClause(PyScriptParser::ExceptClauseContext *ctx) = 0;
+
+  virtual void enterSuite(PyScriptParser::SuiteContext *ctx) = 0;
+  virtual void exitSuite(PyScriptParser::SuiteContext *ctx) = 0;
+
+  virtual void enterFunctionDef(PyScriptParser::FunctionDefContext *ctx) = 0;
+  virtual void exitFunctionDef(PyScriptParser::FunctionDefContext *ctx) = 0;
 
   virtual void enterParameterList(PyScriptParser::ParameterListContext *ctx) = 0;
   virtual void exitParameterList(PyScriptParser::ParameterListContext *ctx) = 0;
@@ -41,26 +56,23 @@ public:
   virtual void enterForStatement(PyScriptParser::ForStatementContext *ctx) = 0;
   virtual void exitForStatement(PyScriptParser::ForStatementContext *ctx) = 0;
 
-  virtual void enterForControl(PyScriptParser::ForControlContext *ctx) = 0;
-  virtual void exitForControl(PyScriptParser::ForControlContext *ctx) = 0;
-
-  virtual void enterForInit(PyScriptParser::ForInitContext *ctx) = 0;
-  virtual void exitForInit(PyScriptParser::ForInitContext *ctx) = 0;
-
-  virtual void enterForUpdate(PyScriptParser::ForUpdateContext *ctx) = 0;
-  virtual void exitForUpdate(PyScriptParser::ForUpdateContext *ctx) = 0;
+  virtual void enterPassStatement(PyScriptParser::PassStatementContext *ctx) = 0;
+  virtual void exitPassStatement(PyScriptParser::PassStatementContext *ctx) = 0;
 
   virtual void enterReturnStatement(PyScriptParser::ReturnStatementContext *ctx) = 0;
   virtual void exitReturnStatement(PyScriptParser::ReturnStatementContext *ctx) = 0;
 
-  virtual void enterBlock(PyScriptParser::BlockContext *ctx) = 0;
-  virtual void exitBlock(PyScriptParser::BlockContext *ctx) = 0;
+  virtual void enterSimpleImport(PyScriptParser::SimpleImportContext *ctx) = 0;
+  virtual void exitSimpleImport(PyScriptParser::SimpleImportContext *ctx) = 0;
+
+  virtual void enterFromImport(PyScriptParser::FromImportContext *ctx) = 0;
+  virtual void exitFromImport(PyScriptParser::FromImportContext *ctx) = 0;
+
+  virtual void enterImportItem(PyScriptParser::ImportItemContext *ctx) = 0;
+  virtual void exitImportItem(PyScriptParser::ImportItemContext *ctx) = 0;
 
   virtual void enterAssignment(PyScriptParser::AssignmentContext *ctx) = 0;
   virtual void exitAssignment(PyScriptParser::AssignmentContext *ctx) = 0;
-
-  virtual void enterAssignmentOperator(PyScriptParser::AssignmentOperatorContext *ctx) = 0;
-  virtual void exitAssignmentOperator(PyScriptParser::AssignmentOperatorContext *ctx) = 0;
 
   virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
   virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
@@ -68,38 +80,38 @@ public:
   virtual void enterExpression(PyScriptParser::ExpressionContext *ctx) = 0;
   virtual void exitExpression(PyScriptParser::ExpressionContext *ctx) = 0;
 
-  virtual void enterTernaryExpression(PyScriptParser::TernaryExpressionContext *ctx) = 0;
-  virtual void exitTernaryExpression(PyScriptParser::TernaryExpressionContext *ctx) = 0;
+  virtual void enterLogicalOr(PyScriptParser::LogicalOrContext *ctx) = 0;
+  virtual void exitLogicalOr(PyScriptParser::LogicalOrContext *ctx) = 0;
 
-  virtual void enterNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) = 0;
-  virtual void exitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) = 0;
+  virtual void enterLogicalAnd(PyScriptParser::LogicalAndContext *ctx) = 0;
+  virtual void exitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) = 0;
 
-  virtual void enterLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) = 0;
-  virtual void exitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) = 0;
+  virtual void enterEquality(PyScriptParser::EqualityContext *ctx) = 0;
+  virtual void exitEquality(PyScriptParser::EqualityContext *ctx) = 0;
 
-  virtual void enterLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *ctx) = 0;
-  virtual void exitLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *ctx) = 0;
+  virtual void enterComparison(PyScriptParser::ComparisonContext *ctx) = 0;
+  virtual void exitComparison(PyScriptParser::ComparisonContext *ctx) = 0;
 
-  virtual void enterEqualityExpression(PyScriptParser::EqualityExpressionContext *ctx) = 0;
-  virtual void exitEqualityExpression(PyScriptParser::EqualityExpressionContext *ctx) = 0;
+  virtual void enterAdditive(PyScriptParser::AdditiveContext *ctx) = 0;
+  virtual void exitAdditive(PyScriptParser::AdditiveContext *ctx) = 0;
 
-  virtual void enterRelationalExpression(PyScriptParser::RelationalExpressionContext *ctx) = 0;
-  virtual void exitRelationalExpression(PyScriptParser::RelationalExpressionContext *ctx) = 0;
+  virtual void enterMultiplicative(PyScriptParser::MultiplicativeContext *ctx) = 0;
+  virtual void exitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) = 0;
 
-  virtual void enterAdditiveExpression(PyScriptParser::AdditiveExpressionContext *ctx) = 0;
-  virtual void exitAdditiveExpression(PyScriptParser::AdditiveExpressionContext *ctx) = 0;
+  virtual void enterPower(PyScriptParser::PowerContext *ctx) = 0;
+  virtual void exitPower(PyScriptParser::PowerContext *ctx) = 0;
 
-  virtual void enterMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) = 0;
-  virtual void exitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) = 0;
+  virtual void enterUnary(PyScriptParser::UnaryContext *ctx) = 0;
+  virtual void exitUnary(PyScriptParser::UnaryContext *ctx) = 0;
 
-  virtual void enterUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) = 0;
-  virtual void exitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) = 0;
+  virtual void enterPrimary(PyScriptParser::PrimaryContext *ctx) = 0;
+  virtual void exitPrimary(PyScriptParser::PrimaryContext *ctx) = 0;
 
-  virtual void enterPowerExpression(PyScriptParser::PowerExpressionContext *ctx) = 0;
-  virtual void exitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) = 0;
+  virtual void enterNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
+  virtual void exitNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
 
-  virtual void enterCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) = 0;
-  virtual void exitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) = 0;
+  virtual void enterAtom(PyScriptParser::AtomContext *ctx) = 0;
+  virtual void exitAtom(PyScriptParser::AtomContext *ctx) = 0;
 
   virtual void enterAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) = 0;
   virtual void exitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) = 0;
@@ -116,59 +128,38 @@ public:
   virtual void enterSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) = 0;
   virtual void exitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) = 0;
 
+  virtual void enterSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) = 0;
+  virtual void exitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) = 0;
+
   virtual void enterFunctionCall(PyScriptParser::FunctionCallContext *ctx) = 0;
   virtual void exitFunctionCall(PyScriptParser::FunctionCallContext *ctx) = 0;
 
-  virtual void enterPrimaryExpression(PyScriptParser::PrimaryExpressionContext *ctx) = 0;
-  virtual void exitPrimaryExpression(PyScriptParser::PrimaryExpressionContext *ctx) = 0;
+  virtual void enterArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
+  virtual void exitArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
 
-  virtual void enterNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
-  virtual void exitNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
-
-  virtual void enterLiteral(PyScriptParser::LiteralContext *ctx) = 0;
-  virtual void exitLiteral(PyScriptParser::LiteralContext *ctx) = 0;
+  virtual void enterArgument(PyScriptParser::ArgumentContext *ctx) = 0;
+  virtual void exitArgument(PyScriptParser::ArgumentContext *ctx) = 0;
 
   virtual void enterListLiteral(PyScriptParser::ListLiteralContext *ctx) = 0;
   virtual void exitListLiteral(PyScriptParser::ListLiteralContext *ctx) = 0;
 
+  virtual void enterListElements(PyScriptParser::ListElementsContext *ctx) = 0;
+  virtual void exitListElements(PyScriptParser::ListElementsContext *ctx) = 0;
+
   virtual void enterDictLiteral(PyScriptParser::DictLiteralContext *ctx) = 0;
   virtual void exitDictLiteral(PyScriptParser::DictLiteralContext *ctx) = 0;
 
-  virtual void enterListComprehension(PyScriptParser::ListComprehensionContext *ctx) = 0;
-  virtual void exitListComprehension(PyScriptParser::ListComprehensionContext *ctx) = 0;
+  virtual void enterDictItem(PyScriptParser::DictItemContext *ctx) = 0;
+  virtual void exitDictItem(PyScriptParser::DictItemContext *ctx) = 0;
+
+  virtual void enterLiteral(PyScriptParser::LiteralContext *ctx) = 0;
+  virtual void exitLiteral(PyScriptParser::LiteralContext *ctx) = 0;
 
   virtual void enterLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) = 0;
   virtual void exitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) = 0;
 
   virtual void enterDottedName(PyScriptParser::DottedNameContext *ctx) = 0;
   virtual void exitDottedName(PyScriptParser::DottedNameContext *ctx) = 0;
-
-  virtual void enterArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
-  virtual void exitArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
-
-  virtual void enterKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) = 0;
-  virtual void exitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) = 0;
-
-  virtual void enterPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) = 0;
-  virtual void exitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) = 0;
-
-  virtual void enterStarArgument(PyScriptParser::StarArgumentContext *ctx) = 0;
-  virtual void exitStarArgument(PyScriptParser::StarArgumentContext *ctx) = 0;
-
-  virtual void enterDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) = 0;
-  virtual void exitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) = 0;
-
-  virtual void enterExpressionList(PyScriptParser::ExpressionListContext *ctx) = 0;
-  virtual void exitExpressionList(PyScriptParser::ExpressionListContext *ctx) = 0;
-
-  virtual void enterDictItemList(PyScriptParser::DictItemListContext *ctx) = 0;
-  virtual void exitDictItemList(PyScriptParser::DictItemListContext *ctx) = 0;
-
-  virtual void enterKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) = 0;
-  virtual void exitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) = 0;
-
-  virtual void enterDictUnpack(PyScriptParser::DictUnpackContext *ctx) = 0;
-  virtual void exitDictUnpack(PyScriptParser::DictUnpackContext *ctx) = 0;
 
 
 };

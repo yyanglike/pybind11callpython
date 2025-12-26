@@ -1,46 +1,42 @@
-// huge_complex_program.pys
-// A very complex program written in the PyScript (.pys) language designed
-// to exercise language features and interoperate with Python (numpy, pandas).
+# huge_complex_program.pys
+# A very complex program written in the PyScript (.pys) language designed
+# to exercise language features and interoperate with Python (numpy, pandas).
 
-import numpy as np
-import pandas as pd
 import json as json
 
-// 简单生成器函数（提前定义，供 build_dataframe 使用）
+# 简单生成器函数（提前定义，供 build_dataframe 使用）
 def range_list(n):
-    r = []
-    i = 0
-    while i < n:
-        r = r + [i]
-        i = i + 1
-    return r
+    return list(range(n))
 
-// 创建一个统计函数，使用numpy计算均值和标准差
+# 创建一个统计函数，使用numpy计算均值和标准差
 def compute_stats(nums):
+    import numpy as np
     mean = np.mean(nums)
     std = np.std(nums)
     return { "mean": mean, "std": std, "count": len(nums) }
 
-// 生成一个DataFrame，演示 new 与 numpy 合作
+# 生成一个DataFrame，演示 new 与 numpy 合作
 def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
     idx = [i for i in range_list(n)]
     squares = [i * i for i in idx]
     cubes = [i * i * i for i in idx]
 
-    // 使用 numpy 对列表进行转换
+    # 使用 numpy 对列表进行转换
     arr_idx = np.array(idx)
     arr_sq = np.array(squares)
     arr_cb = np.array(cubes)
 
-    // 用 dict 合并数据并实例化 pandas.DataFrame
+    # 用 dict 合并数据并实例化 pandas.DataFrame
     data = {"x": arr_idx, "x2": arr_sq}
     df = pd.DataFrame(data)
-    df2 = df  // alias
+    df2 = df  # alias
 
-    // 给 df2 增加一列 x3
+    # 给 df2 增加一列 x3
     df2["x3"] = arr_cb
 
-    // 创建一个分组列（偶数/奇数）
+    # 创建一个分组列（偶数/奇数）
     df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
 
     return df2
@@ -51,10 +47,7 @@ def main():
 
     n = 50
     if len(args) > 1:
-        try:
-            n = int(args[1])
-        except Exception:
-            n = 50
+        n = int(args[1])
 
     print("[pys] Building dataframe with n=", n)
     df = build_dataframe(n)

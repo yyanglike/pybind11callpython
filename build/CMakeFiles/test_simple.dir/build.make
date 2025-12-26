@@ -319,9 +319,9 @@ test_simple: CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptVisitor.cp
 test_simple: CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptBaseListener.cpp.o
 test_simple: CMakeFiles/test_simple.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 test_simple: CMakeFiles/test_simple.dir/build.make
-test_simple: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
+test_simple: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 test_simple: /Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.a
-test_simple: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
+test_simple: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 test_simple: CMakeFiles/test_simple.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX executable test_simple"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_simple.dir/link.txt --verbose=$(VERBOSE)

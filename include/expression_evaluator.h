@@ -92,11 +92,11 @@ public:
     std::any evaluateExpression(PyScriptParser::ExpressionContext* ctx);
     
     /**
-     * @brief 执行代码块
-     * @param ctx 代码块上下文
-     * @return 代码块中最后一条语句的值
+     * @brief 执行suite (缩进代码块)
+     * @param ctx suite上下文
+     * @return suite中最后一条语句的值
      */
-    std::shared_ptr<ScriptValue> executeBlock(PyScriptParser::BlockContext* ctx);
+    std::shared_ptr<ScriptValue> executeSuite(PyScriptParser::SuiteContext* ctx);
     
     /**
      * @brief 获取变量管理器引用

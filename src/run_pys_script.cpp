@@ -10,6 +10,8 @@
 #include "script_interpreter.h"
 #include "logger.h"
 
+extern "C" int Py_NoSiteFlag;
+
 static Logger s_logger;
 
 namespace py = pybind11;
@@ -25,70 +27,52 @@ int main(int argc, char **argv) {
     std::vector<std::string> script_args;
     for (int i = 1; i < argc; ++i) script_args.emplace_back(argv[i]);
 
-    // Minimal environment setup similar to src/main.cpp: allow a project .venv by respecting PYTHONPATH
-    // (Users may override environment via existing PYTHONHOME/PYTHONPATH)
-    // Optionally we could detect .venv and set PYTHONHOME; keep minimal to avoid platform issues.
+    // Disable Python sitecustomize module to avoid circular import errors
+    setenv("PYTHONNOUSERSITE", "1", 1);
+    setenv("PYTHONNOUSERSITE", "1", 1);  // Double protection
+    unsetenv("PYTHONVERBOSE");  // Clear any verbose setting that might trigger the error
 
-    // --- 自动检测 .venv 并设置 PYTHONPATH（不要设置 PYTHONHOME，可能会破坏嵌入式启动） ---
+    // Disable site module entirely to prevent sitecustomize errors
+    Py_NoSiteFlag = 1;
+
     try {
-        std::filesystem::path projectRoot = std::filesystem::current_path();
-        std::filesystem::path venv = projectRoot / ".venv";
-        if (std::filesystem::exists(venv)) {
-            // Build a PYTHONPATH that includes the venv stdlib (lib/pythonX.Y) and any site-packages
-            std::string composed_paths;
+        py::scoped_interpreter guard{};
+        py::module_ sys = py::module_::import("sys");
+        // s_logger.info(std::string("[debug] sys.executable=") + std::string(py::str(sys.attr("executable"))));
+        // s_logger.info(std::string("[debug] sys.path(before patch)=") + std::string(py::str(sys.attr("path"))));
 
-            // try to find the lib/pythonX.Y directory inside the venv
-            std::filesystem::path libdir = venv / "lib";
-            if (std::filesystem::exists(libdir) && std::filesystem::is_directory(libdir)) {
-                for (auto &e : std::filesystem::directory_iterator(libdir)) {
-                    if (e.is_directory()) {
-                        std::string name = e.path().filename().string();
-                        // look for directory names like "python3.14"
-                        if (name.rfind("python", 0) == 0) {
-                            if (!composed_paths.empty()) composed_paths += ":";
-                            composed_paths += e.path().string();
+        // --- 自动检测并插入 .venv 的 site-packages 路径 ---
+        py::list sys_path = sys.attr("path");
+        
+        // 自动查找当前虚拟环境的site-packages路径
+        std::filesystem::path venv_path = std::filesystem::current_path() / ".venv";
+        std::string site_packages_path;
+        
+        if (std::filesystem::exists(venv_path)) {
+            for (const auto& entry : std::filesystem::directory_iterator(venv_path / "lib")) {
+                if (entry.is_directory()) {
+                    std::string dir_name = entry.path().filename().string();
+                    if (dir_name.find("python") == 0) {
+                        site_packages_path = (entry.path() / "site-packages").string();
+                        if (std::filesystem::exists(site_packages_path)) {
                             break;
                         }
                     }
                 }
             }
-
-            // include all site-packages directories under the venv
-            for (auto &entry : std::filesystem::recursive_directory_iterator(venv)) {
-                if (entry.is_directory()) {
-                    std::string p = entry.path().string();
-                    if (p.find("site-packages") != std::string::npos) {
-                        if (!composed_paths.empty()) composed_paths += ":";
-                        composed_paths += p;
-                    }
-                }
-            }
-
-            if (!composed_paths.empty()) {
-                const char* prev = getenv("PYTHONPATH");
-                std::string new_py_path = composed_paths;
-                if (prev) new_py_path = std::string(prev) + ":" + new_py_path;
-                setenv("PYTHONPATH", new_py_path.c_str(), 1);
-                s_logger.info(std::string("[pys runner] PYTHONPATH=") + new_py_path);
-            } else {
-                s_logger.info("[pys runner] .venv detected but no python stdlib or site-packages found inside it");
-            }
         }
-    } catch (const std::exception &e) {
-        s_logger.warn(std::string("[pys runner] .venv detection failed: ") + e.what());
-    }
+        
+        if (!site_packages_path.empty()) {
+            sys_path.insert(0, site_packages_path);
+            sys.attr("path") = sys_path;
+            s_logger.info(std::string("[fix] Added site-packages: ") + site_packages_path);
+        } else {
+            s_logger.warn("[fix] No site-packages directory found in .venv");
+        }
 
-    try {
-        py::scoped_interpreter guard{};
-        py::module_ sys = py::module_::import("sys");
-        s_logger.info(std::string("[debug] sys.executable=") + std::string(py::str(sys.attr("executable"))));
-        s_logger.info(std::string("[debug] sys.path(before patch)=") + std::string(py::str(sys.attr("path"))));
-
-        // --- 强制插入 .venv 的 site-packages 路径 ---
-        py::list sys_path = sys.attr("path");
-        sys_path.insert(0, "/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.14/site-packages");
-        sys.attr("path") = sys_path;
-        s_logger.info(std::string("[fix] sys.path(after patch)=") + std::string(py::str(sys.attr("path"))));
+        // Also try to suppress the site module
+        py::module_ site = py::module_::import("site");
+        site.attr("ENABLE_USER_SITE") = false;
 
         // configure sys.argv for the script
         py::list py_argv;

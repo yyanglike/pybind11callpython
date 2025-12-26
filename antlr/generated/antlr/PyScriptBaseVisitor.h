@@ -23,11 +23,31 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitImportStatement(PyScriptParser::ImportStatementContext *ctx) override {
+  virtual std::any visitSimpleStatement(PyScriptParser::SimpleStatementContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitFunctionDefinition(PyScriptParser::FunctionDefinitionContext *ctx) override {
+  virtual std::any visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitTryStatement(PyScriptParser::TryStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitSuite(PyScriptParser::SuiteContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -51,15 +71,7 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitForControl(PyScriptParser::ForControlContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitForInit(PyScriptParser::ForInitContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitForUpdate(PyScriptParser::ForUpdateContext *ctx) override {
+  virtual std::any visitPassStatement(PyScriptParser::PassStatementContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -67,15 +79,19 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitBlock(PyScriptParser::BlockContext *ctx) override {
+  virtual std::any visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFromImport(PyScriptParser::FromImportContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitImportItem(PyScriptParser::ImportItemContext *ctx) override {
     return visitChildren(ctx);
   }
 
   virtual std::any visitAssignment(PyScriptParser::AssignmentContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitAssignmentOperator(PyScriptParser::AssignmentOperatorContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -87,47 +103,47 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitTernaryExpression(PyScriptParser::TernaryExpressionContext *ctx) override {
+  virtual std::any visitLogicalOr(PyScriptParser::LogicalOrContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) override {
+  virtual std::any visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) override {
+  virtual std::any visitEquality(PyScriptParser::EqualityContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *ctx) override {
+  virtual std::any visitComparison(PyScriptParser::ComparisonContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitEqualityExpression(PyScriptParser::EqualityExpressionContext *ctx) override {
+  virtual std::any visitAdditive(PyScriptParser::AdditiveContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitRelationalExpression(PyScriptParser::RelationalExpressionContext *ctx) override {
+  virtual std::any visitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitAdditiveExpression(PyScriptParser::AdditiveExpressionContext *ctx) override {
+  virtual std::any visitPower(PyScriptParser::PowerContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) override {
+  virtual std::any visitUnary(PyScriptParser::UnaryContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) override {
+  virtual std::any visitPrimary(PyScriptParser::PrimaryContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override {
+  virtual std::any visitNewExpression(PyScriptParser::NewExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) override {
+  virtual std::any visitAtom(PyScriptParser::AtomContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -151,19 +167,19 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitPrimaryExpression(PyScriptParser::PrimaryExpressionContext *ctx) override {
+  virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitNewExpression(PyScriptParser::NewExpressionContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override {
+  virtual std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -171,11 +187,19 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitListElements(PyScriptParser::ListElementsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitListComprehension(PyScriptParser::ListComprehensionContext *ctx) override {
+  virtual std::any visitDictItem(PyScriptParser::DictItemContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -184,42 +208,6 @@ public:
   }
 
   virtual std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitStarArgument(PyScriptParser::StarArgumentContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitExpressionList(PyScriptParser::ExpressionListContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitDictItemList(PyScriptParser::DictItemListContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitDictUnpack(PyScriptParser::DictUnpackContext *ctx) override {
     return visitChildren(ctx);
   }
 

@@ -111,8 +111,8 @@ test_module_enum_EXTERNAL_OBJECTS =
 test_module_enum: CMakeFiles/test_module_enum.dir/test_module_enum.cpp.o
 test_module_enum: CMakeFiles/test_module_enum.dir/src/dynamic_python_caller.cpp.o
 test_module_enum: CMakeFiles/test_module_enum.dir/build.make
-test_module_enum: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
-test_module_enum: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
+test_module_enum: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
+test_module_enum: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 test_module_enum: CMakeFiles/test_module_enum.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable test_module_enum"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_module_enum.dir/link.txt --verbose=$(VERBOSE)

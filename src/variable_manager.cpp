@@ -20,6 +20,19 @@ std::shared_ptr<ScriptValue> VariableManager::getVariable(const std::string& nam
     if (it != variables_.end()) {
         return it->second;
     }
+    // If not found in variables, try builtins
+    if (!builtins_.is_none()) {
+        try {
+            py::object obj = builtins_.attr(name.c_str());
+            return ScriptValue::fromPythonObject(obj);
+        } catch (py::error_already_set& e) {
+            // Attribute not found in builtins, ignore and clear error
+            e.restore();
+            PyErr_Clear();
+        } catch (...) {
+            // Ignore other errors
+        }
+    }
     return nullptr;
 }
 

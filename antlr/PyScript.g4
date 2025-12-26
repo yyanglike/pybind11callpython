@@ -1,46 +1,138 @@
 grammar PyScript;
 
-/* =======================
+options {
+    language = Cpp;
+}
+
+tokens { INDENT, DEDENT }
+
+@lexer::header {
+#include "PyScriptParser.h"
+}
+
+@lexer::members {
+    // Indentation stack
+    std::vector<int> indents;
+    // Parenthesis depth
+    int opened = 0;
+    // Pending tokens queue
+    std::vector<std::unique_ptr<antlr4::Token>> pending;
+
+    // Emit token to queue
+    void emitToken(std::unique_ptr<antlr4::Token> t) {
+        pending.push_back(std::move(t));
+    }
+
+    std::unique_ptr<antlr4::Token> nextToken() override {
+        // Return queued tokens first
+        if (!pending.empty()) {
+            auto t = std::move(pending.front());
+            pending.erase(pending.begin());
+            return t;
+        }
+
+        auto next = Lexer::nextToken();
+
+        // At EOF, emit pending DEDENTS
+        if (next->getType() == EOF && !indents.empty()) {
+            while (!indents.empty()) {
+                emitToken(std::make_unique<antlr4::CommonToken>(PyScriptParser::DEDENT));
+                indents.pop_back();
+            }
+            emitToken(std::make_unique<antlr4::CommonToken>(EOF));
+            auto t = std::move(pending.front());
+            pending.erase(pending.begin());
+            return t;
+        }
+
+        return next;
+    }
+
+    // Calculate indentation length (tabs as 8 spaces)
+    int indentationCount(const std::string& s) {
+        int count = 0;
+        for (char c : s) {
+            if (c == '\t') {
+                count += 8 - (count % 8);
+            } else {
+                count++;
+            }
+        }
+        return count;
+    }
+}
+
+/* =========================
  * Program
- * ======================= */
+ * ========================= */
 
 program
-    : statement+ EOF
+    : statement* EOF
     ;
 
-/* =======================
+/* =========================
  * Statements
- * ======================= */
+ * ========================= */
 
 statement
-    : importStatement
-    | functionDefinition
-    | assignment
+    : simpleStatement
+    | compoundStatement
+    ;
+
+simpleStatement
+    : smallStatement (SEMI smallStatement)* SEMI? NEWLINE?
+    ;
+
+smallStatement
+    : assignment
+    | returnStatement
+    | expressionStatement
+    | importStatement
+    | passStatement
+    ;
+
+compoundStatement
+    : functionDef
     | ifStatement
     | whileStatement
     | forStatement
-    | returnStatement
-    | expressionStatement
+    | tryStatement
     ;
 
-/* =======================
- * Import
- * ======================= */
+/* =========================
+ * Try-Except 语句
+ * ========================= */
 
-importStatement
-    : IMPORT dottedName (AS IDENTIFIER)? SEMI?
+tryStatement
+    : TRY COLON suite
+      (exceptClause)*
+      (ELSE COLON suite)?
+      (FINALLY COLON suite)?
     ;
 
-/* =======================
- * Function Definition
- * ======================= */
+exceptClause
+    : EXCEPT (dottedName (AS IDENTIFIER)?)? COLON suite
+    ;
 
-functionDefinition
-    : DEF IDENTIFIER LPAREN parameterList? RPAREN COLON block
+/* =========================
+ * Suite (缩进代码块)
+ * ========================= */
+
+suite
+    : simpleStatement
+    | NEWLINE INDENT statement+ DEDENT
+    ;
+
+/* =========================
+ * 函数定义
+ * ========================= */
+
+functionDef
+    : DEF IDENTIFIER LPAREN parameterList? RPAREN COLON suite
     ;
 
 parameterList
-    : parameter (COMMA parameter)*
+    : parameter (COMMA parameter)* COMMA?
     ;
 
 parameter
@@ -49,296 +141,295 @@ parameter
     | DOUBLE_STAR IDENTIFIER
     ;
 
-/* =======================
- * Control Flow
- * ======================= */
+/* =========================
+ * 控制流 (Python风格)
+ * ========================= */
 
 ifStatement
-    : IF LPAREN expression RPAREN COLON block (ELSE COLON block)?
+    : IF expression COLON suite
+      (ELSE IF expression COLON suite)*
+      (ELSE COLON suite)?
     ;
 
 whileStatement
-    : WHILE LPAREN expression RPAREN COLON block
+    : WHILE expression COLON suite
     ;
 
 forStatement
-    : FOR LPAREN forControl RPAREN COLON block
+    : FOR IDENTIFIER IN expression COLON suite
     ;
 
-forControl
-    : forInit? SEMI expression? SEMI forUpdate?
-    ;
+/* =========================
+ * 简单语句
+ * ========================= */
 
-forInit
-    : assignment
-    ;
-
-forUpdate
-    : assignment
+passStatement
+    : PASS
     ;
 
 returnStatement
-    : RETURN expression? SEMI?
+    : RETURN expression?
     ;
 
-block
-    : LBRACE statement* RBRACE
+importStatement
+    : IMPORT dottedName (AS IDENTIFIER)?                    # simpleImport
+    | FROM dottedName IMPORT importItem (COMMA importItem)* # fromImport
     ;
 
-/* =======================
- * Assignment
- * ======================= */
+importItem
+    : IDENTIFIER (AS IDENTIFIER)?
+    ;
 
 assignment
-    : IDENTIFIER assignmentOperator expression SEMI?
-    | attributeAccess ASSIGN expression SEMI?
-    | subscriptAccess ASSIGN expression SEMI?
+    : (IDENTIFIER | attributeAccess | subscriptAccess) ASSIGN expression
     ;
-
-assignmentOperator
-    : ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN
-    ;
-
-/* =======================
- * Expression Statement
- * ======================= */
 
 expressionStatement
-    : expression SEMI?
+    : expression
     ;
 
-/* =======================
- * Expressions
- * ======================= */
+/* =========================
+ * 表达式 (类Python)
+ * ========================= */
 
 expression
-    : assignment
-    | ternaryExpression
+    : logicalOr
     ;
 
-/* --- Ternary / Python Conditional Expression --- */
-
-ternaryExpression
-    : logicalOrExpression (IF logicalOrExpression ELSE ternaryExpression)?
-    | logicalOrExpression (QUESTION expression COLON ternaryExpression)?
+logicalOr
+    : logicalAnd (OR logicalAnd)*
     ;
 
-/* --- Non-assignment expression for positional arguments --- */
-
-nonAssignmentExpression
-    : ternaryExpression
+logicalAnd
+    : equality (AND equality)*
     ;
 
-/* --- Logical --- */
-
-logicalOrExpression
-    : logicalAndExpression (OR logicalAndExpression)*
+equality
+    : comparison ((EQ | NE) comparison)*
     ;
 
-logicalAndExpression
-    : equalityExpression (AND equalityExpression)*
+comparison
+    : additive ((LT | LE | GT | GE) additive)*
     ;
 
-/* --- Equality --- */
-
-equalityExpression
-    : relationalExpression ((EQ | NE) relationalExpression)*
+additive
+    : multiplicative ((PLUS | MINUS) multiplicative)*
     ;
 
-/* --- Relational --- */
-
-relationalExpression
-    : additiveExpression ((LT | GT | LE | GE) additiveExpression)*
+multiplicative
+    : power ((MUL | DIV | MOD) power)*
     ;
 
-/* --- Arithmetic --- */
-
-additiveExpression
-    : multiplicativeExpression ((PLUS | MINUS) multiplicativeExpression)*
+power
+    : unary (DOUBLE_STAR power)?
     ;
 
-multiplicativeExpression
-    : unaryExpression ((MUL | DIV | MOD) unaryExpression)*
+unary
+    : (NOT | PLUS | MINUS)? atom
     ;
 
-/* --- Unary --- */
+/* =========================
+ * 调用 / 属性 / 主表达式
+ * ========================= */
 
-unaryExpression
-    : (NOT | MINUS)? powerExpression
-    ;
-
-/* --- Power (right associative) --- */
-
-powerExpression
-    : callOrPrimary (DOUBLE_STAR powerExpression)?
-    ;
-
-/* =======================
- * Call / Access
- * ======================= */
-
-callOrPrimary
-    : primaryExpression (postfixOp)*
-    ;
-
-postfixOp
-    : DOT IDENTIFIER                 # attributeAccessOp
-    | LBRACK expression RBRACK       # subscriptAccessOp
-    | LPAREN argumentList? RPAREN    # functionCallOp
-    ;
-
-// 辅助规则用于赋值目标
-attributeAccess
-    : primaryExpression DOT IDENTIFIER
-    ;
-
-subscriptAccess
-    : primaryExpression LBRACK expression RBRACK
-    ;
-
-functionCall
-    : (dottedName | attributeAccess | subscriptAccess | LPAREN expression RPAREN) LPAREN argumentList? RPAREN
-    ;
-
-/* =======================
- * Primary Expressions
- * ======================= */
-
-primaryExpression
+primary
     : literal
-    | dottedName
+    | IDENTIFIER
     | LPAREN expression RPAREN
     | listLiteral
     | dictLiteral
     | newExpression
     | lambdaExpression
-    | listComprehension
     ;
-
-/* --- new --- */
 
 newExpression
     : NEW dottedName LPAREN argumentList? RPAREN
     ;
 
-/* =======================
- * Literals
- * ======================= */
+atom
+    : primary (postfixOp)*
+    ;
+
+postfixOp
+    : DOT IDENTIFIER                 # attributeAccessOp
+    | LBRACK subscriptArg RBRACK     # subscriptAccessOp  
+    | LPAREN argumentList? RPAREN    # functionCallOp
+    ;
+
+// 辅助规则用于赋值目标
+attributeAccess
+    : atom DOT IDENTIFIER
+    ;
+
+subscriptAccess
+    : atom LBRACK subscriptArg RBRACK
+    ;
+
+subscriptArg
+    : expression? (COLON expression? (COLON expression?)?)?
+    ;
+
+functionCall
+    : atom LPAREN argumentList? RPAREN
+    ;
+
+argumentList
+    : argument (COMMA argument)* COMMA?
+    ;
+
+argument
+    : IDENTIFIER ASSIGN expression  // 关键字参数
+    | expression                     // 位置参数
+    | MUL expression                // 可变位置参数
+    | DOUBLE_STAR expression        // 可变关键字参数
+    ;
+
+/* =========================
+ * 字面量
+ * ========================= */
+
+listLiteral
+    : LBRACK (listElements)? RBRACK
+    ;
+
+listElements
+    : expression (COMMA expression)* COMMA?
+    | expression FOR IDENTIFIER IN expression
+    ;
+
+dictLiteral
+    : LBRACE (dictItem (COMMA dictItem)* COMMA?)? RBRACE
+    ;
+
+dictItem
+    : expression COLON expression
+    | DOUBLE_STAR expression
+    ;
 
 literal
     : INTEGER
     | FLOAT
     | STRING
-    | BOOL
-    | NULL_LIT
+    | TRUE
+    | FALSE
+    | NONE
     ;
 
-listLiteral
-    : LBRACK expressionList? RBRACK
-    ;
-
-dictLiteral
-    : LBRACE dictItemList? RBRACE
-    ;
-
-/* =======================
- * Comprehensions
- * ======================= */
-
-listComprehension
-    : LBRACK expression FOR IDENTIFIER IN expression RBRACK
-    ;
-
-/* =======================
- * Helpers
- * ======================= */
+/* =========================
+ * Lambda表达式
+ * ========================= */
 
 lambdaExpression
-    : LAMBDA ( IDENTIFIER (COMMA IDENTIFIER)* )? COLON expression
+    : LAMBDA parameterList? COLON expression
     ;
+
+/* =========================
+ * 辅助规则
+ * ========================= */
 
 dottedName
     : IDENTIFIER (DOT IDENTIFIER)*
     ;
 
-argumentList
-    : argument (COMMA argument)*
+/* =========================
+ * 关键词
+ * ========================= */
+
+DEF     : 'def';
+IF      : 'if';
+ELSE    : 'else';
+FOR     : 'for';
+WHILE   : 'while';
+RETURN  : 'return';
+IMPORT  : 'import';
+FROM    : 'from';
+AS      : 'as';
+IN      : 'in';
+PASS    : 'pass';
+NEW     : 'new';
+LAMBDA  : 'lambda';
+
+TRY     : 'try';
+EXCEPT  : 'except';
+FINALLY : 'finally';
+
+TRUE    : 'true';
+FALSE   : 'false';
+NONE    : 'none';
+
+AND     : 'and';
+OR      : 'or';
+NOT     : 'not';
+
+/* =========================
+ * 操作符 / 分隔符
+ * ========================= */
+
+PLUS    : '+';
+MINUS   : '-';
+MUL     : '*';
+DIV     : '/';
+MOD     : '%';
+
+EQ      : '==';
+NE      : '!=';
+LT      : '<';
+LE      : '<=';
+GT      : '>';
+GE      : '>=';
+
+ASSIGN  : '=';
+SEMI    : ';';
+
+LPAREN  : '(' { opened++; };
+RPAREN  : ')' { opened--; };
+LBRACK  : '[' { opened++; };
+RBRACK  : ']' { opened--; };
+LBRACE  : '{' { opened++; };
+RBRACE  : '}' { opened--; };
+
+COMMA   : ',';
+COLON   : ':';
+DOT     : '.';
+DOUBLE_STAR : '**';
+
+/* =========================
+ * 换行符 / 缩进处理
+ * ========================= */
+
+NEWLINE
+    : '\r'? '\n' [ \t]*
+      {
+        // 如果在括号内，则忽略缩进
+        if (opened > 0) {
+            skip();
+        } else {
+            // 提取缩进部分（换行后的空格/制表符）
+            std::string text = getText();
+            size_t lastNewline = text.find_last_of('\n');
+            std::string spaces = (lastNewline == std::string::npos) ? text : text.substr(lastNewline + 1);
+            int indent = indentationCount(spaces);
+            int prev = indents.empty() ? 0 : indents.back();
+
+            if (indent > prev) {
+                // 增加缩进
+                indents.push_back(indent);
+                emitToken(std::make_unique<antlr4::CommonToken>(PyScriptParser::INDENT));
+            } else if (indent < prev) {
+                // 减少缩进，可能需要多个DEDENT
+                while (!indents.empty() && indents.back() > indent) {
+                    emitToken(std::make_unique<antlr4::CommonToken>(PyScriptParser::DEDENT));
+                    indents.pop_back();
+                }
+            }
+            // 如果缩进相同，则不需要INDENT/DEDENT，跳过空格
+        }
+      }
     ;
 
-argument
-    : IDENTIFIER ASSIGN expression           # keywordArgument  
-    | nonAssignmentExpression                # positionalArgument
-    | MUL expression                         # starArgument
-    | DOUBLE_STAR expression                 # doubleStarArgument
-    ;
-
-expressionList
-    : expression (COMMA expression)*
-    ;
-
-dictItemList
-    : dictItem (COMMA dictItem)*
-    ;
-
-dictItem
-    : expression COLON expression  # keyValuePair
-    | DOUBLE_STAR expression       # dictUnpack
-    ;
-
-/* =======================
- * Lexer
- * ======================= */
-
-// 首先定义操作符和标点符号
-SEMI: ';';
-COMMA: ',';
-DOT: '.';
-LPAREN: '(';
-RPAREN: ')';
-LBRACK: '[';
-RBRACK: ']';
-LBRACE: '{';
-RBRACE: '}';
-
-ASSIGN: '=';
-PLUS_ASSIGN: '+=';
-MINUS_ASSIGN: '-=';
-MUL_ASSIGN: '*=';
-DIV_ASSIGN: '/=';
-MOD_ASSIGN: '%=';
-
-EQ: '==';
-NE: '!=';
-LT: '<';
-LE: '<=';
-GT: '>';
-GE: '>=';
-
-PLUS: '+';
-MINUS: '-';
-MUL: '*';
-DIV: '/';
-MOD: '%';
-
-NOT: '!';
-AND: '&&';
-OR: '||';
-QUESTION: '?';
-COLON: ':';
-DOUBLE_STAR: '**';
-
-// 关键字必须放在IDENTIFIER之前，以确保优先匹配
-RETURN : 'return';
-IF : 'if';
-ELSE : 'else';
-WHILE : 'while';
-FOR : 'for';
-DEF : 'def';
-IMPORT : 'import';
-AS : 'as';
-NEW : 'new';
-LAMBDA : 'lambda';
-IN : 'in';
+/* =========================
+ * 标识符和字面量
+ * ========================= */
 
 IDENTIFIER
     : [a-zA-Z_][a-zA-Z0-9_]*
@@ -349,7 +440,7 @@ INTEGER
     ;
 
 FLOAT
-    : [0-9]+ '.' [0-9]*
+    : [0-9]+ '.' [0-9]+
     | '.' [0-9]+
     ;
 
@@ -358,27 +449,14 @@ STRING
     | '\'' (~['\\\r\n] | '\\' .)* '\''
     ;
 
-BOOL
-    : 'true' | 'false'
-    ;
+/* =========================
+ * 空白和注释
+ * ========================= */
 
-NULL_LIT
-    : 'null'
-    ;
-
-// 空白符
 WS
     : [ \t]+ -> skip
     ;
 
-NEWLINE
-    : ( '\r'? '\n' | '\r' ) -> skip
-    ;
-
 COMMENT
-    : ('//' | '#') ~[\r\n]* -> skip
-    ;
-
-MULTILINE_COMMENT
-    : '/*' .*? '*/' -> skip
+    : '#' ~[\r\n]* -> skip
     ;

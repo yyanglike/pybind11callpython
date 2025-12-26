@@ -111,8 +111,8 @@ stock_data_app_EXTERNAL_OBJECTS =
 stock_data_app: CMakeFiles/stock_data_app.dir/src/main.cpp.o
 stock_data_app: CMakeFiles/stock_data_app.dir/src/stock_data_processor.cpp.o
 stock_data_app: CMakeFiles/stock_data_app.dir/build.make
-stock_data_app: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
-stock_data_app: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
+stock_data_app: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
+stock_data_app: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 stock_data_app: CMakeFiles/stock_data_app.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable stock_data_app"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/stock_data_app.dir/link.txt --verbose=$(VERBOSE)

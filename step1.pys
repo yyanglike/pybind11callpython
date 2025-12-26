@@ -1,0 +1,4 @@
+# Step 1 only
+print("=== Step 1: Import json ===")
+import json as json
+print("json imported successfully")

@@ -90,67 +90,69 @@ public:
     std::optional<ScriptError> getLastError() const { return error_handler_.getLastError(); }
     std::vector<ScriptError> getAllErrors() const { return error_handler_.getAllErrors(); }
     
-    // Visitor接口实现
+    // Visitor接口实现 - 根据新的语法规则更新
     std::any visitProgram(PyScriptParser::ProgramContext *ctx) override;
     std::any visitStatement(PyScriptParser::StatementContext *ctx) override;
-    std::any visitImportStatement(PyScriptParser::ImportStatementContext *ctx) override;
-    std::any visitFunctionDefinition(PyScriptParser::FunctionDefinitionContext *ctx) override;
+    std::any visitSimpleStatement(PyScriptParser::SimpleStatementContext *ctx) override;
+    std::any visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) override;
+    std::any visitCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) override;
+    std::any visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) override;
+    std::any visitFromImport(PyScriptParser::FromImportContext *ctx) override;
+    std::any visitImportItem(PyScriptParser::ImportItemContext *ctx) override;
+    std::any visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) override;
     std::any visitParameterList(PyScriptParser::ParameterListContext *ctx) override;
+    std::any visitParameter(PyScriptParser::ParameterContext *ctx) override;
     std::any visitIfStatement(PyScriptParser::IfStatementContext *ctx) override;
     std::any visitWhileStatement(PyScriptParser::WhileStatementContext *ctx) override;
+    std::any visitForStatement(PyScriptParser::ForStatementContext *ctx) override;
+    std::any visitPassStatement(PyScriptParser::PassStatementContext *ctx) override;
     std::any visitReturnStatement(PyScriptParser::ReturnStatementContext *ctx) override;
-    std::any visitBlock(PyScriptParser::BlockContext *ctx) override;
+    std::any visitSuite(PyScriptParser::SuiteContext *ctx) override;
     std::any visitAssignment(PyScriptParser::AssignmentContext *ctx) override;
-    std::any visitAssignmentOperator(PyScriptParser::AssignmentOperatorContext *ctx) override;
     std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) override;
     std::any visitExpression(PyScriptParser::ExpressionContext *ctx) override;
-    std::any visitTernaryExpression(PyScriptParser::TernaryExpressionContext *ctx) override;
-    std::any visitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) override;
-    std::any visitLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *ctx) override;
-    std::any visitEqualityExpression(PyScriptParser::EqualityExpressionContext *ctx) override;
-    std::any visitRelationalExpression(PyScriptParser::RelationalExpressionContext *ctx) override;
-    std::any visitAdditiveExpression(PyScriptParser::AdditiveExpressionContext *ctx) override;
-    std::any visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) override;
-    std::any visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) override;
-    std::any visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) override;
-    std::any visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) override;
-    std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) override;
-    std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) override;
-    std::any visitPrimaryExpression(PyScriptParser::PrimaryExpressionContext *ctx) override;
+    std::any visitLogicalOr(PyScriptParser::LogicalOrContext *ctx) override;
+    std::any visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) override;
+    std::any visitEquality(PyScriptParser::EqualityContext *ctx) override;
+    std::any visitComparison(PyScriptParser::ComparisonContext *ctx) override;
+    std::any visitAdditive(PyScriptParser::AdditiveContext *ctx) override;
+    std::any visitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) override;
+    std::any visitUnary(PyScriptParser::UnaryContext *ctx) override;
+    std::any visitPrimary(PyScriptParser::PrimaryContext *ctx) override;
     std::any visitNewExpression(PyScriptParser::NewExpressionContext *ctx) override;
-    std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override;
-    std::any visitListLiteral(PyScriptParser::ListLiteralContext *ctx) override;
-    std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override;
-    std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override;
-    std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
-    std::any visitExpressionList(PyScriptParser::ExpressionListContext *ctx) override;
-    std::any visitDictItemList(PyScriptParser::DictItemListContext *ctx) override; 
-    std::any visitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) override;
-    std::any visitDictUnpack(PyScriptParser::DictUnpackContext *ctx) override;
-    std::any visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) override;
-    std::any visitForStatement(PyScriptParser::ForStatementContext *ctx) override;
-    std::any visitForControl(PyScriptParser::ForControlContext *ctx) override;
-    std::any visitForInit(PyScriptParser::ForInitContext *ctx) override;
-    std::any visitForUpdate(PyScriptParser::ForUpdateContext *ctx) override;
-    std::any visitListComprehension(PyScriptParser::ListComprehensionContext *ctx) override;
-
-    // 新增的Visitor方法，用于新的语法规则
+    std::any visitAtom(PyScriptParser::AtomContext *ctx) override;
     std::any visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) override;
     std::any visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *ctx) override;
     std::any visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) override;
+    std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) override;
+    std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) override;
+    std::any visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) override;
+    std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
+    std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override;
+    std::any visitListLiteral(PyScriptParser::ListLiteralContext *ctx) override;
+    std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override;
+    std::any visitDictItem(PyScriptParser::DictItemContext *ctx) override;
+    std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override;
+    std::any visitListElements(PyScriptParser::ListElementsContext *ctx) override;
+    std::any visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) override;
+    std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override;
+    std::any visitPower(PyScriptParser::PowerContext *ctx) override;
+    std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) override;
+    std::any visitTryStatement(PyScriptParser::TryStatementContext *ctx) override;
+    std::any visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) override;
     
-    // 新增的参数和参数相关方法
-    std::any visitParameter(PyScriptParser::ParameterContext *ctx) override;
-    std::any visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) override;
-    std::any visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) override;
-    std::any visitStarArgument(PyScriptParser::StarArgumentContext *ctx) override;
-    std::any visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) override;
-    
-    // 新增的非赋值表达式方法
-    std::any visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) override;
-    
-    // 新增的幂表达式方法
-    std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override;
+    // 以下方法在新的语法中可能不存在，提供空实现或移除
+    // 注意：这些方法在生成的Visitor中可能不存在，我们需要检查
+    // 暂时保留但标记为未使用
+    // std::any visitForControl(PyScriptParser::ForControlContext *ctx) override;
+    // std::any visitForInit(PyScriptParser::ForInitContext *ctx) override;
+    // std::any visitForUpdate(PyScriptParser::ForUpdateContext *ctx) override;
+    // std::any visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) override;
+    // std::any visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) override;
+    // std::any visitStarArgument(PyScriptParser::StarArgumentContext *ctx) override;
+    // std::any visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) override;
+    // std::any visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) override;
+    // std::any visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) override;
 
 private:
     // 模块化组件
@@ -178,7 +180,7 @@ private:
     
     // 表达式求值辅助方法（委托给expression_evaluator_）
     std::shared_ptr<ScriptValue> evaluateExpression(PyScriptParser::ExpressionContext *ctx);
-    std::shared_ptr<ScriptValue> executeBlock(PyScriptParser::BlockContext *ctx);
+    std::shared_ptr<ScriptValue> executeSuite(PyScriptParser::SuiteContext *ctx);
 };
 
 } // namespace script_interpreter

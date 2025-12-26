@@ -4,6 +4,10 @@ project(StockDataCppProject)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 指定使用虚拟环境中的 Python 3.12
+set(Python3_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/.venv)
+set(Python3_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/.venv/bin/python3.12)
+
 # 查找Python3
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 

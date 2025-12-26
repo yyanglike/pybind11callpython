@@ -1,0 +1,6 @@
+def test():
+    import numpy as np
+    return np.array([1,2,3])
+
+result = test()
+print("Result:", result)

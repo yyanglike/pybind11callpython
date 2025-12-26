@@ -1,0 +1,214 @@
+# advanced_complex_test.pys
+# 一个展示PyScript高级特性的复杂测试脚本
+
+import json as json
+import math
+import random
+
+# 1. 复杂数据结构
+def create_complex_data():
+    # 嵌套列表和字典
+    data = {
+        "metadata": {
+            "author": "Cline",
+            "version": "2.0",
+            "tags": ["test", "advanced", "integration"]
+        },
+        "matrix": [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ],
+        "records": [
+            {"id": 1, "name": "Alice", "scores": [85, 92, 78]},
+            {"id": 2, "name": "Bob", "scores": [76, 88, 95]},
+            {"id": 3, "name": "Charlie", "scores": [90, 87, 93]}
+        ]
+    }
+    return data
+
+# 2. 复杂函数：计算统计信息
+def compute_statistics(data):
+    import numpy as np
+    
+    all_scores = []
+    for record in data["records"]:
+        all_scores.extend(record["scores"])
+    
+    # 使用numpy计算统计量
+    scores_array = np.array(all_scores)
+    stats = {
+        "mean": np.mean(scores_array),
+        "std": np.std(scores_array),
+        "min": np.min(scores_array),
+        "max": np.max(scores_array),
+        "median": np.median(scores_array),
+        "sum": np.sum(scores_array)
+    }
+    
+    # 使用字典解包添加额外信息
+    extra_info = {
+        "count": len(all_scores),
+        "unique_count": len(set(all_scores))
+    }
+    
+    # 合并字典
+    return {**stats, **extra_info}
+
+# 3. 使用lambda表达式和列表推导式
+def process_with_lambda():
+    numbers = list(range(1, 11))
+    
+    # 使用lambda进行映射和过滤
+    square = lambda x: x * x
+    squares = [square(x) for x in numbers]
+    
+    is_even = lambda x: x % 2 == 0
+    even_squares = [x for x in squares if is_even(x)]
+    
+    # 使用lambda作为排序键
+    pairs = [(2, "b"), (1, "a"), (3, "c")]
+    sorted_pairs = sorted(pairs, key=lambda p: p[1])
+    
+    return {
+        "numbers": numbers,
+        "squares": squares,
+        "even_squares": even_squares,
+        "sorted_pairs": sorted_pairs
+    }
+
+# 4. 创建Python对象并操作属性
+def work_with_python_objects():
+    import datetime as dt
+    
+    # 创建datetime对象
+    now = dt.datetime.now()
+    tomorrow = now + dt.timedelta(days=1)
+    
+    # 访问属性
+    date_info = {
+        "year": now.year,
+        "month": now.month,
+        "day": now.day,
+        "hour": now.hour,
+        "minute": now.minute,
+        "weekday": now.strftime("%A")
+    }
+    
+    # 使用数学模块
+    circle_area = lambda r: math.pi * r * r
+    areas = [circle_area(i) for i in range(1, 6)]
+    
+    # 随机抽样
+    population = list(range(100))
+    sample = random.sample(population, 5)
+    
+    return {
+        "date_info": date_info,
+        "tomorrow": tomorrow.strftime("%Y-%m-%d"),
+        "areas": areas,
+        "random_sample": sample
+    }
+
+# 5. 控制流和复杂逻辑
+def complex_control_flow(limit):
+    # 使用while循环生成斐波那契数列
+    fib = [0, 1]
+    while (fib[-1] + fib[-2] <= limit) {
+        fib.append(fib[-1] + fib[-2])
+    }
+    
+    # 条件分类
+    categories = {
+        "small": [],
+        "medium": [],
+        "large": []
+    }
+    
+    for num in fib {
+        if (num < 10) {
+            categories["small"].append(num)
+        } elif (num < 50) {
+            categories["medium"].append(num)
+        } else {
+            categories["large"].append(num)
+        }
+    }
+    
+    # 使用算术运算替代位运算（避免词法分析器问题）
+    arithmetic_results = []
+    for num in fib {
+        if (num > 0) {
+            # 使用算术运算代替位运算
+            doubled_twice = num * 4  # 替代左移2位 (num << 2)
+            arithmetic_results.append({
+                "original": num,
+                "doubled_twice": doubled_twice,
+                "binary": bin(num),
+                "mod_15": num % 15  # 替代与15的位运算 (num & 15)
+            })
+        }
+    }
+    
+    return {
+        "fibonacci": fib,
+        "categories": categories,
+        "arithmetic": arithmetic_results
+    }
+
+# 6. 主函数：整合所有测试
+def main():
+    import sys
+    
+    # 解析命令行参数
+    limit = 100
+    if (len(sys.argv) > 1) {
+        limit = int(sys.argv[1])
+    }
+    
+    print("[Advanced Test] Starting complex PyScript test...")
+    print("=" * 60)
+    
+    # 测试1：复杂数据结构
+    print("\n1. Complex Data Structure Test:")
+    data = create_complex_data()
+    print(json.dumps(data, indent=2))
+    
+    # 测试2：统计计算
+    print("\n2. Statistics Computation Test:")
+    stats = compute_statistics(data)
+    print(json.dumps(stats, indent=2))
+    
+    # 测试3：Lambda和列表推导式
+    print("\n3. Lambda and List Comprehension Test:")
+    lambda_results = process_with_lambda()
+    print(json.dumps(lambda_results, indent=2))
+    
+    # 测试4：Python对象操作
+    print("\n4. Python Object Manipulation Test:")
+    object_results = work_with_python_objects()
+    print(json.dumps(object_results, indent=2))
+    
+    # 测试5：控制流
+    print("\n5. Complex Control Flow Test (limit=" + str(limit) + "):")
+    flow_results = complex_control_flow(limit)
+    print("Fibonacci sequence:", flow_results["fibonacci"])
+    print("Categories:", flow_results["categories"])
+    print("Arithmetic operations (first 3):", flow_results["arithmetic"][:3])
+    
+    # 综合测试结果
+    print("\n" + "=" * 60)
+    print("[Advanced Test] All tests completed successfully!")
+    
+    return {
+        "data": data,
+        "stats": stats,
+        "lambda": lambda_results,
+        "objects": object_results,
+        "control_flow": flow_results
+    }
+
+# 执行主函数
+if (__name__ == "__main__") {
+    main()
+}

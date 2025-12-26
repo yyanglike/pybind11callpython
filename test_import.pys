@@ -1,0 +1,5 @@
+import json
+print("json imported")
+def test():
+    return "OK"
+print(test())

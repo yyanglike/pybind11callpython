@@ -1,0 +1,7 @@
+def test():
+    import numpy as np
+    import pandas as pd
+    return np.array([1,2,3]), pd.DataFrame()
+
+result = test()
+print("Result:", result)

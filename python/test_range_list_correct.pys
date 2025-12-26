@@ -1,0 +1,11 @@
+def range_list(n) : {
+    r = []
+    i = 0
+    while (i < n) : {
+        r = r + [i]
+        i = i + 1
+    }
+    return r
+}
+
+print(range_list(5))

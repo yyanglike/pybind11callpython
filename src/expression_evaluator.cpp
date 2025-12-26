@@ -227,9 +227,9 @@ any ExpressionEvaluator::evaluateExpression(PyScriptParser::ExpressionContext* c
     return any();
 }
 
-shared_ptr<ScriptValue> ExpressionEvaluator::executeBlock(PyScriptParser::BlockContext* ctx) {
+shared_ptr<ScriptValue> ExpressionEvaluator::executeSuite(PyScriptParser::SuiteContext* ctx) {
     // 这个函数需要在AST Visitor中实现，这里暂时返回null
-    logger_.error("executeBlock should be implemented in AST Visitor");
+    logger_.error("executeSuite should be implemented in AST Visitor");
     return nullptr;
 }
 

@@ -1,0 +1,17 @@
+import json as js
+import os
+from math import sqrt
+
+print("JSON module:", js)
+print("OS module:", os)
+print("sqrt from math:", sqrt(16))
+
+def complex_func():
+    import sys
+    import datetime as dt
+    print("Python version:", sys.version_info)
+    print("Current time:", dt.datetime.now())
+    return sys.platform
+
+result = complex_func()
+print("Platform:", result)

@@ -1,0 +1,97 @@
+# step_by_step_test.pys
+# 逐步测试 huge_complex_program.pys 中的各个部分
+
+print("=== Step 1: Import json ===")
+import json as json
+print("json imported successfully")
+
+print("\n=== Step 2: Define range_list function ===")
+def range_list(n):
+    return list(range(n))
+
+print("range_list function defined")
+print("Testing range_list(5):", range_list(5))
+
+print("\n=== Step 3: Define compute_stats function ===")
+def compute_stats(nums):
+    import numpy as np
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+print("compute_stats function defined")
+print("Testing compute_stats([1,2,3,4,5]):", compute_stats([1,2,3,4,5]))
+
+print("\n=== Step 4: Define build_dataframe function ===")
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+print("build_dataframe function defined")
+
+print("\n=== Step 5: Test build_dataframe with small n ===")
+try:
+    df = build_dataframe(5)
+    print("DataFrame created successfully")
+    print("DataFrame shape:", df.shape)
+    print("DataFrame columns:", list(df.columns))
+    print("First few rows:")
+    print(df.head())
+except Exception as e:
+    print("ERROR in build_dataframe:", e)
+
+print("\n=== Step 6: Test main function logic ===")
+def main():
+    import sys
+    args = sys.argv
+
+    n = 50
+    if len(args) > 1:
+        n = int(args[1])
+
+    print("[pys] Building dataframe with n=", n)
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = agg.to_dict()
+    extra = { "meta": { "n": n, "source": "step_by_step_test.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("main function defined")
+
+print("\n=== Step 7: Execute main with n=10 ===")
+try:
+    result = main()
+    print("main executed successfully")
+except Exception as e:
+    print("ERROR in main:", e)
+
+print("\n=== Step 8: Test direct execution ===")
+print("Script completed successfully!")

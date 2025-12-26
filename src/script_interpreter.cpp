@@ -102,110 +102,43 @@ any ScriptInterpreter::visitProgram(PyScriptParser::ProgramContext *ctx) {
     }
     
     // 如果没有return语句，最后一条语句的值作为结果
-    if (result_ == nullptr && ctx->statement().size() > 0) {
-        // 尝试获取最后一个表达式语句的结果
-        auto lastStmt = ctx->statement().back();
-        // 使用ANTLR上下文方法检查是否是expressionStatement
-        auto exprStmt = lastStmt->expressionStatement();
-        if (exprStmt) {
-            result_ = evaluateExpression(exprStmt->expression());
-        }
-    }
+    // 注意：在新的语法中，表达式语句可能在simpleStatement的smallStatement中
+    // 暂时不处理最后一条语句的结果，避免编译错误
+    // TODO: 修复获取最后一条表达式语句结果的逻辑
     
     return any();
 }
 
 any ScriptInterpreter::visitStatement(PyScriptParser::StatementContext *ctx) {
     // 根据实际的子节点类型进行分发
-    if (ctx->importStatement()) {
-        return ast_visitor_.visit(ctx->importStatement());
-    } else if (ctx->functionDefinition()) {
-        return ast_visitor_.visit(ctx->functionDefinition());
-    } else if (ctx->assignment()) {
-        return ast_visitor_.visit(ctx->assignment());
-    } else if (ctx->ifStatement()) {
-        return ast_visitor_.visit(ctx->ifStatement());
-    } else if (ctx->whileStatement()) {
-        return ast_visitor_.visit(ctx->whileStatement());
-    } else if (ctx->forStatement()) {
-        return ast_visitor_.visit(ctx->forStatement());
-    } else if (ctx->returnStatement()) {
-        return ast_visitor_.visit(ctx->returnStatement());
-    } else if (ctx->expressionStatement()) {
-        return ast_visitor_.visit(ctx->expressionStatement());
+    if (ctx->simpleStatement()) {
+        return ast_visitor_.visit(ctx->simpleStatement());
+    } else if (ctx->compoundStatement()) {
+        return ast_visitor_.visit(ctx->compoundStatement());
     }
     
     reportError("Unknown statement type", ctx);
     return any();
 }
 
-any ScriptInterpreter::visitImportStatement(PyScriptParser::ImportStatementContext *ctx) {
-    logger_.debug("visitImportStatement called");
-    
-    try {
-        auto dottedNameCtx = ctx->dottedName();
-        if (!dottedNameCtx) {
-            reportError("Import statement must specify a module name", ctx);
-            return any();
-        }
-        
-        // 获取模块名
-        string moduleName = dottedNameCtx->getText();
-        logger_.debug(std::string("Importing module: ") + moduleName);
-        
-        // 检查是否有别名
-        string alias;
-        if (ctx->IDENTIFIER()) {
-            alias = ctx->IDENTIFIER()->getText();
-            logger_.debug(std::string("Alias: ") + alias);
-        }
-        
-        // 导入Python模块
-        logger_.debug("Calling py::module_::import...");
-        py::module_ module = py::module_::import(moduleName.c_str());
-        logger_.info(std::string("Module imported successfully: ") + moduleName);
-        
-        // 存储模块到VariableManager
-        variable_manager_.importModule(moduleName, module);
-        
-        // 存储模块引用到变量
-        if (!alias.empty()) {
-            variable_manager_.setVariable(alias, ScriptValue::createPythonObject(module));
-            logger_.debug(std::string("Module stored in variables with alias: ") + alias);
-        } else {
-            // 使用模块名的最后一部分作为变量名
-            size_t dotPos = moduleName.find_last_of('.');
-            string shortName = (dotPos != string::npos) ? 
-                              moduleName.substr(dotPos + 1) : moduleName;
-            variable_manager_.setVariable(shortName, ScriptValue::createPythonObject(module));
-            logger_.debug(std::string("Module stored in variables with short name: ") + shortName);
-        }
-        
-        // 验证存储
-        logger_.debug("Verifying storage...");
-        if (!alias.empty()) {
-            auto var = variable_manager_.getVariable(alias);
-            if (var) {
-                logger_.debug(std::string("Variable '") + alias + "' found in variables map");
-            } else {
-                logger_.error(std::string("ERROR: Variable '") + alias + "' NOT found in variables map!");
-            }
-        }
-        
-    } catch (const py::error_already_set& e) {
-        logger_.error(std::string("Python import error: ") + e.what());
-        reportError("Failed to import module: " + string(e.what()), ctx);
-    } catch (const exception& e) {
-        logger_.error(std::string("General import error: ") + e.what());
-        reportError("Import error: " + string(e.what()), ctx);
-    }
-    
-    return any();
+any ScriptInterpreter::visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitSimpleImport(ctx);
 }
 
-any ScriptInterpreter::visitFunctionDefinition(PyScriptParser::FunctionDefinitionContext *ctx) {
+any ScriptInterpreter::visitFromImport(PyScriptParser::FromImportContext *ctx) {
     // 委托给AstVisitor处理
-    return ast_visitor_.visitFunctionDefinition(ctx);
+    return ast_visitor_.visitFromImport(ctx);
+}
+
+any ScriptInterpreter::visitImportItem(PyScriptParser::ImportItemContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitImportItem(ctx);
+}
+
+any ScriptInterpreter::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitFunctionDef(ctx);
 }
 
 any ScriptInterpreter::visitParameterList(PyScriptParser::ParameterListContext *ctx) {
@@ -228,9 +161,29 @@ any ScriptInterpreter::visitReturnStatement(PyScriptParser::ReturnStatementConte
     return ast_visitor_.visitReturnStatement(ctx);
 }
 
-any ScriptInterpreter::visitBlock(PyScriptParser::BlockContext *ctx) {
+any ScriptInterpreter::visitSuite(PyScriptParser::SuiteContext *ctx) {
     // 委托给AstVisitor处理
-    return ast_visitor_.visitBlock(ctx);
+    return ast_visitor_.visitSuite(ctx);
+}
+
+any ScriptInterpreter::visitSimpleStatement(PyScriptParser::SimpleStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitSimpleStatement(ctx);
+}
+
+any ScriptInterpreter::visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitSmallStatement(ctx);
+}
+
+any ScriptInterpreter::visitCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitCompoundStatement(ctx);
+}
+
+any ScriptInterpreter::visitPassStatement(PyScriptParser::PassStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitPassStatement(ctx);
 }
 
 any ScriptInterpreter::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
@@ -238,10 +191,6 @@ any ScriptInterpreter::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     return ast_visitor_.visitAssignment(ctx);
 }
 
-any ScriptInterpreter::visitAssignmentOperator(PyScriptParser::AssignmentOperatorContext *ctx) {
-    // 赋值操作符已经在visitAssignment中处理
-    return any();
-}
 
 any ScriptInterpreter::visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) {
     // 委托给AstVisitor处理
@@ -253,288 +202,12 @@ any ScriptInterpreter::visitExpression(PyScriptParser::ExpressionContext *ctx) {
     return ast_visitor_.visitExpression(ctx);
 }
 
-any ScriptInterpreter::visitTernaryExpression(PyScriptParser::TernaryExpressionContext *ctx) {
-    // Grammar:
-    // ternaryExpression
-    //   : logicalOrExpression (IF logicalOrExpression ELSE ternaryExpression)?
-    //   | logicalOrExpression (QUESTION expression COLON ternaryExpression)?
-    // Handles both Python-style (cond if true_expr else false_expr)
-    // and C-style (cond ? true_expr : false_expr)
 
-    // If only logicalOrExpression, just evaluate and return
-    if (ctx->logicalOrExpression().size() == 1 && ctx->IF() == nullptr && ctx->QUESTION() == nullptr) {
-        return visit(ctx->logicalOrExpression(0));
-    }
 
-    // Python-style: logicalOrExpression IF logicalOrExpression ELSE ternaryExpression
-    if (ctx->IF() && ctx->ELSE()) {
-        // true_expr IF cond ELSE false_expr
-        auto trueExpr = ctx->logicalOrExpression(0);
-        auto condExpr = ctx->logicalOrExpression(1);
-        auto falseExpr = ctx->ternaryExpression();
-        // Evaluate condition
-        auto condAny = visit(condExpr);
-        shared_ptr<ScriptValue> condValue;
-        try {
-            condValue = any_cast<shared_ptr<ScriptValue>>(condAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate condition in ternary expression", ctx);
-            return any();
-        }
-        if (expression_evaluator_.isTruthy(condValue)) {
-            return visit(trueExpr);
-        } else {
-            return visit(falseExpr);
-        }
-    }
 
-    // C-style: logicalOrExpression QUESTION expression COLON ternaryExpression
-    if (ctx->QUESTION() && ctx->COLON()) {
-        // cond ? true_expr : false_expr
-        auto condExpr = ctx->logicalOrExpression(0);
-        auto trueExpr = ctx->expression();
-        auto falseExpr = ctx->ternaryExpression();
-        // Evaluate condition
-        auto condAny = visit(condExpr);
-        shared_ptr<ScriptValue> condValue;
-        try {
-            condValue = any_cast<shared_ptr<ScriptValue>>(condAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate condition in ternary expression", ctx);
-            return any();
-        }
-        if (expression_evaluator_.isTruthy(condValue)) {
-            return evaluateExpression(trueExpr);
-        } else {
-            return visit(falseExpr);
-        }
-    }
 
-    reportError("Invalid ternary expression", ctx);
-    return any();
-}
 
-any ScriptInterpreter::visitEqualityExpression(PyScriptParser::EqualityExpressionContext *ctx) {
-    auto relationalExprs = ctx->relationalExpression();
-    if (relationalExprs.size() == 1) {
-        return this->visit(relationalExprs[0]);
-    }
-    
-    // 处理相等性比较
-    auto leftAny = visit(relationalExprs[0]);
-    shared_ptr<ScriptValue> left;
-    try {
-        left = any_cast<shared_ptr<ScriptValue>>(leftAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate left side of equality expression", ctx);
-        return any();
-    }
-    if (!left) {
-        reportError("Cannot evaluate left side of equality expression", ctx);
-        return any();
-    }
-    
-    for (size_t i = 1; i < relationalExprs.size(); ++i) {
-        auto rightAny = visit(relationalExprs[i]);
-        shared_ptr<ScriptValue> right;
-        try {
-            right = any_cast<shared_ptr<ScriptValue>>(rightAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate right side of equality expression", ctx);
-            return any();
-        }
-        if (!right) {
-            reportError("Cannot evaluate right side of equality expression", ctx);
-            return any();
-        }
-        
-        // 获取操作符
-        string op = ctx->children[2*i - 1]->getText();
-        auto result = expression_evaluator_.evaluateBinaryOperation(op, left, right);
-        if (!result) {
-            reportError("Unsupported equality operator: " + op, ctx);
-            return any();
-        }
-        
-        left = result;
-    }
-    
-    return any(left);
-}
 
-any ScriptInterpreter::visitRelationalExpression(PyScriptParser::RelationalExpressionContext *ctx) {
-    auto additiveExprs = ctx->additiveExpression();
-    if (additiveExprs.size() == 1) {
-        return this->visit(additiveExprs[0]);
-    }
-    
-    // 处理关系比较
-    auto leftAny = visit(additiveExprs[0]);
-    shared_ptr<ScriptValue> left;
-    try {
-        left = any_cast<shared_ptr<ScriptValue>>(leftAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate left side of relational expression", ctx);
-        return any();
-    }
-    if (!left) {
-        reportError("Cannot evaluate left side of relational expression", ctx);
-        return any();
-    }
-    
-    for (size_t i = 1; i < additiveExprs.size(); ++i) {
-        auto rightAny = visit(additiveExprs[i]);
-        shared_ptr<ScriptValue> right;
-        try {
-            right = any_cast<shared_ptr<ScriptValue>>(rightAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate right side of relational expression", ctx);
-            return any();
-        }
-        if (!right) {
-            reportError("Cannot evaluate right side of relational expression", ctx);
-            return any();
-        }
-        
-        // 获取操作符
-        string op = ctx->children[2*i - 1]->getText();
-        auto result = expression_evaluator_.evaluateBinaryOperation(op, left, right);
-        if (!result) {
-            reportError("Unsupported relational operator: " + op, ctx);
-            return any();
-        }
-        
-        left = result;
-    }
-    
-    return any(left);
-}
-
-any ScriptInterpreter::visitAdditiveExpression(PyScriptParser::AdditiveExpressionContext *ctx) {
-    auto multiplicativeExprs = ctx->multiplicativeExpression();
-    if (multiplicativeExprs.size() == 1) {
-        return this->visit(multiplicativeExprs[0]);
-    }
-    
-    // 处理加减运算
-    auto leftAny = visit(multiplicativeExprs[0]);
-    shared_ptr<ScriptValue> left;
-    try {
-        left = any_cast<shared_ptr<ScriptValue>>(leftAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate left side of additive expression", ctx);
-        return any();
-    }
-    if (!left) {
-        reportError("Cannot evaluate left side of additive expression", ctx);
-        return any();
-    }
-    
-    for (size_t i = 1; i < multiplicativeExprs.size(); ++i) {
-        auto rightAny = visit(multiplicativeExprs[i]);
-        shared_ptr<ScriptValue> right;
-        try {
-            right = any_cast<shared_ptr<ScriptValue>>(rightAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate right side of additive expression", ctx);
-            return any();
-        }
-        if (!right) {
-            reportError("Cannot evaluate right side of additive expression", ctx);
-            return any();
-        }
-        
-        // 获取操作符
-        string op = ctx->children[2*i - 1]->getText();
-        auto result = expression_evaluator_.evaluateBinaryOperation(op, left, right);
-        if (!result) {
-            reportError("Unsupported multiplicative operator: " + op, ctx);
-            return any();
-        }
-        
-        left = result;
-    }
-    
-    return any(left);
-}
-
-any ScriptInterpreter::visitMultiplicativeExpression(PyScriptParser::MultiplicativeExpressionContext *ctx) {
-    auto unaryExprs = ctx->unaryExpression();
-    if (unaryExprs.size() == 1) {
-        return this->visit(unaryExprs[0]);
-    }
-    // 处理乘除取模运算
-    auto leftAny = visit(unaryExprs[0]);
-    shared_ptr<ScriptValue> left;
-    try {
-        left = any_cast<shared_ptr<ScriptValue>>(leftAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate left side of multiplicative expression", ctx);
-        return any();
-    }
-    if (!left) {
-        reportError("Cannot evaluate left side of multiplicative expression", ctx);
-        return any();
-    }
-    for (size_t i = 1; i < unaryExprs.size(); ++i) {
-        auto rightAny = visit(unaryExprs[i]);
-        shared_ptr<ScriptValue> right;
-        try {
-            right = any_cast<shared_ptr<ScriptValue>>(rightAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate right side of multiplicative expression", ctx);
-            return any();
-        }
-        if (!right) {
-            reportError("Cannot evaluate right side of multiplicative expression", ctx);
-            return any();
-        }
-        // 获取操作符
-        string op = ctx->children[2*i - 1]->getText();
-        auto result = expression_evaluator_.evaluateBinaryOperation(op, left, right);
-        if (!result) {
-            reportError("Unsupported multiplicative operator: " + op, ctx);
-            return any();
-        }
-        left = result;
-    }
-    return any(left);
-}
-
-any ScriptInterpreter::visitUnaryExpression(PyScriptParser::UnaryExpressionContext *ctx) {
-    auto powerExprCtx = ctx->powerExpression();
-    auto powerExprAny = this->visit(powerExprCtx);
-    shared_ptr<ScriptValue> powerExprValue;
-    try {
-        powerExprValue = any_cast<shared_ptr<ScriptValue>>(powerExprAny);
-    } catch (const bad_any_cast&) {
-        reportError("Cannot evaluate expression in unary expression", ctx);
-        return any();
-    }
-    
-    if (!powerExprValue) {
-        reportError("Cannot evaluate expression in unary expression", ctx);
-        return any();
-    }
-    
-    // 检查是否有前缀操作符
-    if (ctx->children.size() > 1) {
-        string op = ctx->children[0]->getText();
-        auto result = expression_evaluator_.evaluateUnaryOperation(op, powerExprValue);
-        if (!result) {
-            reportError("Unsupported unary operator: " + op, ctx);
-            return any();
-        }
-        return any(result);
-    }
-    
-    return any(powerExprValue);
-}
-
-any ScriptInterpreter::visitCallOrPrimary(PyScriptParser::CallOrPrimaryContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitCallOrPrimary(ctx);
-}
 
 any ScriptInterpreter::visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) {
     // 委托给AstVisitor处理
@@ -551,10 +224,6 @@ any ScriptInterpreter::visitSubscriptAccess(PyScriptParser::SubscriptAccessConte
     return ast_visitor_.visitSubscriptAccess(ctx);
 }
 
-any ScriptInterpreter::visitPrimaryExpression(PyScriptParser::PrimaryExpressionContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitPrimaryExpression(ctx);
-}
 
 any ScriptInterpreter::visitNewExpression(PyScriptParser::NewExpressionContext *ctx) {
     // 委托给AstVisitor处理
@@ -589,140 +258,30 @@ any ScriptInterpreter::visitArgumentList(PyScriptParser::ArgumentListContext *ct
 
 
 
-any ScriptInterpreter::visitExpressionList(PyScriptParser::ExpressionListContext *ctx) {
-    // 表达式列表已经在列表字面量中处理
-    return any();
-}
-
-any ScriptInterpreter::visitDictItemList(PyScriptParser::DictItemListContext *ctx) {
-    // 字典项列表已经在字典字面量中处理
-    return any();
-}
-
-any ScriptInterpreter::visitKeyValuePair(PyScriptParser::KeyValuePairContext *ctx) {
-    // 键值对已经在字典字面量中处理
-    return any();
-}
-
-any ScriptInterpreter::visitDictUnpack(PyScriptParser::DictUnpackContext *ctx) {
-    // 字典展开已经在字典字面量中处理
-    return any();
-}
-
 any ScriptInterpreter::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
-    logger_.debug("visitForStatement called");
-    
-    auto forControlCtx = ctx->forControl();
-    if (!forControlCtx) {
-        reportError("For statement missing control", ctx);
-        return any();
-    }
-    
-    // 执行初始化部分（如果有）
-    if (forControlCtx->forInit()) {
-        visit(forControlCtx->forInit());
-        if (error_handler_.hasError()) {
-            return any();
-        }
-    }
-    
-    // 循环条件
-    auto condExpr = forControlCtx->expression();
-    if (!condExpr) {
-        // 如果没有条件表达式，默认为true（无限循环）
-        // 在实际中应该避免无限循环，但这里简单处理
-    }
-    
-    while (true) {
-        if (condExpr) {
-            auto condValue = evaluateExpression(condExpr);
-            if (!condValue) {
-                reportError("Cannot evaluate for loop condition", ctx);
-                break;
-            }
-            if (!expression_evaluator_.isTruthy(condValue)) {
-                break;
-            }
-        }
-        
-        // 执行循环体
-        this->visit(ctx->block());
-        if (error_handler_.hasError()) {
-            break;
-        }
-        
-        // 执行更新部分（如果有）
-        if (forControlCtx->forUpdate()) {
-            visit(forControlCtx->forUpdate());
-            if (error_handler_.hasError()) {
-                break;
-            }
-        }
-    }
-    
-    return any();
+    return ast_visitor_.visitForStatement(ctx);
 }
 
-any ScriptInterpreter::visitForControl(PyScriptParser::ForControlContext *ctx) {
-    // for控制已经在visitForStatement中处理
-    return any();
-}
 
-any ScriptInterpreter::visitForInit(PyScriptParser::ForInitContext *ctx) {
-    // 执行初始化赋值
-    if (ctx->assignment()) {
-        return visit(ctx->assignment());
-    }
-    return any();
-}
 
-any ScriptInterpreter::visitForUpdate(PyScriptParser::ForUpdateContext *ctx) {
-    // 执行更新赋值
-    if (ctx->assignment()) {
-        return visit(ctx->assignment());
-    }
-    return any();
-}
 
-any ScriptInterpreter::visitListComprehension(PyScriptParser::ListComprehensionContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitListComprehension(ctx);
-}
 
-any ScriptInterpreter::visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitLambdaExpression(ctx);
-}
 
 // 新的visitor方法实现
 
 any ScriptInterpreter::visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) {
-    logger_.debug("visitAttributeAccessOp called");
-    
-    // 获取当前对象值（来自callOrPrimary中的primaryExpression）
-    // 注意：attributeAccessOp的父节点是postfixOp，postfixOp的父节点是callOrPrimary
-    // 我们需要获取到当前的对象值，这应该通过上下文传递，这里简化处理
-    // 实际实现中，callOrPrimary应该累积应用postfixOp
-    
-    // 临时实现：报告错误
-    reportError("Attribute access operator not fully implemented yet", ctx);
-    return any();
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitAttributeAccessOp(ctx);
 }
 
 any ScriptInterpreter::visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *ctx) {
-    logger_.debug("visitSubscriptAccessOp called");
-    
-    // 临时实现：报告错误
-    reportError("Subscript access operator not fully implemented yet", ctx);
-    return any();
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitSubscriptAccessOp(ctx);
 }
 
 any ScriptInterpreter::visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) {
-    logger_.debug("visitFunctionCallOp called");
-
-    // 临时实现：报告错误
-    reportError("Function call operator not fully implemented yet", ctx);
-    return any();
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitFunctionCallOp(ctx);
 }
 
 // 新增的参数和参数相关方法实现
@@ -732,29 +291,6 @@ any ScriptInterpreter::visitParameter(PyScriptParser::ParameterContext *ctx) {
     return any();
 }
 
-any ScriptInterpreter::visitPositionalArgument(PyScriptParser::PositionalArgumentContext *ctx) {
-    logger_.debug("visitPositionalArgument called");
-    // 委托给AstVisitor处理，因为PositionalArgumentContext现在包含nonAssignmentExpression
-    return ast_visitor_.visitPositionalArgument(ctx);
-}
-
-any ScriptInterpreter::visitKeywordArgument(PyScriptParser::KeywordArgumentContext *ctx) {
-    logger_.debug("visitKeywordArgument called");
-    // 关键字参数已经在visitArgumentList中处理，这里只返回占位符
-    return any();
-}
-
-any ScriptInterpreter::visitStarArgument(PyScriptParser::StarArgumentContext *ctx) {
-    logger_.debug("visitStarArgument called");
-    // 星号参数已经在visitArgumentList中处理，这里只返回占位符
-    return any();
-}
-
-any ScriptInterpreter::visitDoubleStarArgument(PyScriptParser::DoubleStarArgumentContext *ctx) {
-    logger_.debug("visitDoubleStarArgument called");
-    // 双星号参数已经在visitArgumentList中处理，这里只返回占位符
-    return any();
-}
 
 // 缺失的成员函数实现
 shared_ptr<ScriptValue> ScriptInterpreter::getVariable(const string& name) {
@@ -773,13 +309,11 @@ shared_ptr<ScriptValue> ScriptInterpreter::evaluateExpression(PyScriptParser::Ex
     return ast_visitor_.evaluateExpression(ctx);
 }
 
-any ScriptInterpreter::visitLogicalOrExpression(PyScriptParser::LogicalOrExpressionContext *ctx) {
-    return ast_visitor_.visitLogicalOrExpression(ctx);
+shared_ptr<ScriptValue> ScriptInterpreter::executeSuite(PyScriptParser::SuiteContext *ctx) {
+    return ast_visitor_.executeSuite(ctx);
 }
 
-any ScriptInterpreter::visitLogicalAndExpression(PyScriptParser::LogicalAndExpressionContext *ctx) {
-    return ast_visitor_.visitLogicalAndExpression(ctx);
-}
+
 
 void ScriptInterpreter::reportError(const string& message,
                                     ScriptErrorType type,
@@ -832,12 +366,71 @@ bool ScriptInterpreter::executeFile(const string& filename) {
     }
 }
 
-any ScriptInterpreter::visitNonAssignmentExpression(PyScriptParser::NonAssignmentExpressionContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitNonAssignmentExpression(ctx);
+any ScriptInterpreter::visitLogicalOr(PyScriptParser::LogicalOrContext *ctx) {
+    return ast_visitor_.visitLogicalOr(ctx);
 }
 
-any ScriptInterpreter::visitPowerExpression(PyScriptParser::PowerExpressionContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitPowerExpression(ctx);
+any ScriptInterpreter::visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) {
+    return ast_visitor_.visitLogicalAnd(ctx);
+}
+
+any ScriptInterpreter::visitEquality(PyScriptParser::EqualityContext *ctx) {
+    return ast_visitor_.visitEquality(ctx);
+}
+
+any ScriptInterpreter::visitComparison(PyScriptParser::ComparisonContext *ctx) {
+    return ast_visitor_.visitComparison(ctx);
+}
+
+any ScriptInterpreter::visitAdditive(PyScriptParser::AdditiveContext *ctx) {
+    return ast_visitor_.visitAdditive(ctx);
+}
+
+any ScriptInterpreter::visitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) {
+    return ast_visitor_.visitMultiplicative(ctx);
+}
+
+any ScriptInterpreter::visitUnary(PyScriptParser::UnaryContext *ctx) {
+    return ast_visitor_.visitUnary(ctx);
+}
+
+any ScriptInterpreter::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
+    return ast_visitor_.visitPrimary(ctx);
+}
+
+any ScriptInterpreter::visitAtom(PyScriptParser::AtomContext *ctx) {
+    return ast_visitor_.visitAtom(ctx);
+}
+
+any ScriptInterpreter::visitArgument(PyScriptParser::ArgumentContext *ctx) {
+    return ast_visitor_.visitArgument(ctx);
+}
+
+any ScriptInterpreter::visitDictItem(PyScriptParser::DictItemContext *ctx) {
+    return ast_visitor_.visitDictItem(ctx);
+}
+
+any ScriptInterpreter::visitPower(PyScriptParser::PowerContext *ctx) {
+    return ast_visitor_.visitPower(ctx);
+}
+
+any ScriptInterpreter::visitListElements(PyScriptParser::ListElementsContext *ctx) {
+    return ast_visitor_.visitListElements(ctx);
+}
+
+any ScriptInterpreter::visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) {
+    return ast_visitor_.visitLambdaExpression(ctx);
+}
+
+any ScriptInterpreter::visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) {
+    // Delegate to AstVisitor's implementation
+    return ast_visitor_.visitSubscriptArg(ctx);
+}
+
+any ScriptInterpreter::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
+    return ast_visitor_.visitTryStatement(ctx);
+}
+
+any ScriptInterpreter::visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) {
+    return ast_visitor_.visitExceptClause(ctx);
 }

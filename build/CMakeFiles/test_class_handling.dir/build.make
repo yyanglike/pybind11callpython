@@ -111,8 +111,8 @@ test_class_handling_EXTERNAL_OBJECTS =
 test_class_handling: CMakeFiles/test_class_handling.dir/test_class_handling.cpp.o
 test_class_handling: CMakeFiles/test_class_handling.dir/src/dynamic_python_caller.cpp.o
 test_class_handling: CMakeFiles/test_class_handling.dir/build.make
-test_class_handling: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
-test_class_handling: /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib/libpython3.14.dylib
+test_class_handling: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
+test_class_handling: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 test_class_handling: CMakeFiles/test_class_handling.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable test_class_handling"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_class_handling.dir/link.txt --verbose=$(VERBOSE)

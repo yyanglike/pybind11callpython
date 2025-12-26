@@ -1,0 +1,17 @@
+[INFO] [fix] Added site-packages: /Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages
+[INFO] [PythonBridge] Python path configured: ../python
+[INFO] ScriptInterpreter constructor started
+[INFO] Builtins imported successfully
+[INFO] Module imported successfully: json
+[INFO] Function defined: test_func
+[ERROR] Script Error: Python function call error: ModuleNotFoundError: No module named 'pand'
+
+At:
+  <string>(4): test_func
+ [Type=2, Code=0, Line=12, Col=18]
+[ERROR] Script Error: Cannot evaluate atom in unary expression [Type=2, Code=0, Line=12, Col=9]
+[ERROR] Script Error: Cannot evaluate left side of power expression [Type=2, Code=0, Line=12, Col=9]
+[ERROR] Script Error: Cannot evaluate right-hand side [Type=2, Code=0, Line=12, Col=0]
+[ERROR] Script execution failed: [Runtime Error] at line 12, column 0: Cannot evaluate right-hand side
+json imported
+calling test_func...

@@ -1,0 +1,13 @@
+# 简单测试导入语句
+import json as js
+print("json imported")
+
+def test_func():
+    import numpy as np
+    import pandas as pd
+    print("numpy and pandas imported inside function")
+    return np.array([1,2,3]), pd.DataFrame()
+
+print("calling test_func...")
+result = test_func()
+print("Result:", result)
