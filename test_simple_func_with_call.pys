@@ -1,0 +1,6 @@
+def test():
+    idx = [1, 2, 3]
+    result = list(idx)
+    return result
+
+print("Result:", test())

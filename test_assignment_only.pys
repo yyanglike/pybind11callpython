@@ -1,0 +1,7 @@
+def test():
+    idx = [i for i in range(5)]
+    print("idx:", idx)
+    return idx
+
+result = test()
+print("Result:", result)

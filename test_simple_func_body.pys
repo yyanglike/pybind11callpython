@@ -1,0 +1,10 @@
+def test():
+    idx = [i for i in range(5)]
+    squares = [i * i for i in idx]
+    return squares
+
+try:
+    result = test()
+    print("Result:", result)
+except Exception as e:
+    print("ERROR:", e)

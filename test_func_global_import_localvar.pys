@@ -1,0 +1,10 @@
+import sys
+
+def test():
+    x = 5
+    y = 3
+    print("sys:", sys)
+    return x + y
+
+result = test()
+print("Result:", result)

@@ -1,0 +1,7 @@
+def test():
+    x = 5
+    y = 3
+    return x + y
+
+result = test()
+print("Result:", result)

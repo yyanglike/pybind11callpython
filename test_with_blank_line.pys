@@ -1,0 +1,8 @@
+def test_with_blank_line(n):
+    import numpy as np
+    idx = [i for i in range(n)]
+    
+    return np.array(idx)
+
+result = test_with_blank_line(5)
+print("Result:", result)

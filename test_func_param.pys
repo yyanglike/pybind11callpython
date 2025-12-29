@@ -1,0 +1,6 @@
+def test(n):
+    x = n + 1
+    return x
+
+result = test(5)
+print("Result:", result)

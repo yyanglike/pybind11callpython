@@ -1,0 +1,6 @@
+def test(n):
+    idx = [i for i in range(n)]
+    return idx
+
+result = test(5)
+print("Result:", result)

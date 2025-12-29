@@ -1,0 +1,8 @@
+def test_two_imports_param(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(n)]
+    return np.array(idx)
+
+result = test_two_imports_param(5)
+print("Result:", result)

@@ -1,0 +1,7 @@
+def test():
+    idx = [i for i in range(5)]
+    squares = [i * i for i in idx]
+    return squares
+
+result = test()
+print("Result:", result)

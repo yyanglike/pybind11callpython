@@ -1,0 +1,9 @@
+def test():
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(5)]
+    arr = np.array(idx)
+    return arr
+
+result = test()
+print("Result:", result)

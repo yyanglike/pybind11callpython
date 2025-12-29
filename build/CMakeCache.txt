@@ -739,6 +739,8 @@ _Python3_INCLUDE_DIR:INTERNAL=/opt/homebrew/opt/python@3.12/Frameworks/Python.fr
 //Python3 Properties
 _Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;12;11;64;<none>;cpython-312-darwin;abi3;/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages;/Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages
 _Python3_INTERPRETER_SIGNATURE:INTERNAL=a892857d2fc5a28207dbd34bd575569a
+//Interpreter reason failure
+_Python3_Interpreter_REASON_FAILURE:INTERNAL=
 //Path to a library.
 _Python3_LIBRARY_RELEASE:INTERNAL=/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 //NumPy reason failure

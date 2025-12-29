@@ -1,0 +1,13 @@
+def test_with_listcomp():
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(5)]
+    squares = [i * i for i in idx]
+    arr = np.array(squares)
+    return arr
+
+try:
+    result = test_with_listcomp()
+    print("Result with listcomp:", result)
+except Exception as e:
+    print("ERROR in build_dataframe:", e)

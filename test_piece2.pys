@@ -1,0 +1,18 @@
+def test2(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+    
+    return arr_idx, arr_sq, arr_cb
+
+result = test2(5)
+print("test2 result - arr_idx:", result[0])
+print("test2 result - arr_sq:", result[1])
+print("test2 result - arr_cb:", result[2])

@@ -1,0 +1,7 @@
+def test():
+    import sys
+    print("sys module:", sys)
+    return sys.version
+
+result = test()
+print("Result:", result)

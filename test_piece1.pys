@@ -1,0 +1,10 @@
+def test1(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+    return idx, squares, cubes
+
+result = test1(5)
+print("test1 result:", result)

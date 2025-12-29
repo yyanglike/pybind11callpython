@@ -1,0 +1,10 @@
+def test_two_imports_three_listcomp(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+    return np.array(idx)
+
+result = test_two_imports_three_listcomp(5)
+print("Result:", result)

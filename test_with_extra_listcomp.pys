@@ -1,0 +1,9 @@
+def test_with_extra_listcomp(n):
+    import numpy as np
+    idx = [i for i in range(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+    return np.array(idx)
+
+result = test_with_extra_listcomp(5)
+print("Result:", result)

@@ -1,0 +1,8 @@
+def simple_func(n):
+    idx = [1, 2, 3]
+    squares = [i * i for i in idx]
+    return squares
+
+print("Testing simple function without complex listcomp...")
+result = simple_func(3)
+print("Result:", result)

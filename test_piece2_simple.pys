@@ -1,0 +1,8 @@
+def test2_simple(n):
+    import numpy as np
+    idx = [i for i in range(n)]
+    arr_idx = np.array(idx)
+    return arr_idx
+
+result = test2_simple(5)
+print("test2_simple result:", result)

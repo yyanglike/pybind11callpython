@@ -1,0 +1,8 @@
+def test():
+    import numpy as np
+    idx = [i for i in range(5)]
+    squares = [i * i for i in idx]
+    return np.array(idx)
+
+result = test()
+print("Result:", result)

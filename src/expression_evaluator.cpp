@@ -119,8 +119,23 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                     throw runtime_error("Modulo by zero");
                 }
                 return ScriptValue::createInteger(left->getInteger() % divisor);
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                // Use Python's modulo operator for Python objects
+                py::object mod_func = py::module_::import("operator").attr("mod");
+                py::object result = mod_func(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
             } else {
-                throw runtime_error("Modulo operation requires integer operands");
+                // For non-integer numeric types, attempt to perform modulo as Python would
+                try {
+                    // Try to convert to Python objects and use Python's modulo
+                    py::object lhs = left->toPythonObject();
+                    py::object rhs = right->toPythonObject();
+                    py::object mod_func = py::module_::import("operator").attr("mod");
+                    py::object result = mod_func(lhs, rhs);
+                    return ScriptValue::fromPythonObject(result);
+                } catch (...) {
+                    throw runtime_error("Modulo operation requires integer operands or Python objects");
+                }
             }
         } else if (op == "==") {
             bool equal = (*left == *right);

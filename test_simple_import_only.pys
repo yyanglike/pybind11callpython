@@ -1,0 +1,6 @@
+def test_simple_import():
+    import numpy as np
+    return np
+
+result = test_simple_import()
+print("Result:", result)
