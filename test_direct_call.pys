@@ -1,0 +1,7 @@
+def simple_func():
+    print("simple_func called")
+    return 42
+
+print("Before direct call")
+simple_func()
+print("After direct call")

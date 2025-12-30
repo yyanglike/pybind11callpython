@@ -1,0 +1,10 @@
+import json as json
+print("A")
+
+def func():
+    import sys
+    print("inside func, argv:", sys.argv)
+    
+print("B")
+func()
+print("C")

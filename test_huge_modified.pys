@@ -3,7 +3,6 @@
 # to exercise language features and interoperate with Python (numpy, pandas).
 
 import json as json
-print("DEBUG: json imported")
 
 # 简单生成器函数（提前定义，供 build_dataframe 使用）
 def range_list(n):
@@ -45,14 +44,12 @@ def build_dataframe(n):
 def main():
     import sys
     args = sys.argv
-    print("DEBUG: args =", args)
-    print("DEBUG: type(args) =", type(args))
 
     n = 50
     if len(args) > 1:
         n = int(args[1])
 
-    print("[pys] Building dataframe with n=" + str(n))
+    print("[pys] Building dataframe with n=", n)
     df = build_dataframe(n)
 
     grouped = df.groupby("cat")
@@ -66,6 +63,5 @@ def main():
     print(json.dumps(merged, indent=2))
     return merged
 
-print("Starting main() call")
 result = main()
-print("Main returned:", result)
+print("Returned:", result)

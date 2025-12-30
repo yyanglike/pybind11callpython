@@ -1,0 +1,19 @@
+import json as json
+print("Step 1: Import json")
+
+def main():
+    print("Inside main")
+    import sys
+    print("sys imported")
+    args = sys.argv
+    print("args:", args)
+    n = 50
+    if len(args) > 1:
+        n = int(args[1])
+    print("n:", n)
+    return {"test": "ok"}
+
+print("Before main()")
+result = main()
+print("Result:", result)
+print("After main()")

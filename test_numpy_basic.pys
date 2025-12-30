@@ -1,0 +1,27 @@
+import json as json
+print("json imported")
+
+def test_numpy():
+    import numpy as np
+    print("numpy imported")
+    arr = np.array([1, 2, 3])
+    print("array created:", arr)
+    return arr.tolist()
+
+def test_pandas():
+    import pandas as pd
+    print("pandas imported")
+    data = {"a": [1, 2, 3], "b": [4, 5, 6]}
+    df = pd.DataFrame(data)
+    print("dataframe shape:", df.shape)
+    return df.shape
+
+print("Testing numpy...")
+numpy_result = test_numpy()
+print("Numpy result:", numpy_result)
+
+print("Testing pandas...")
+pandas_result = test_pandas()
+print("Pandas result:", pandas_result)
+
+print("All tests passed")

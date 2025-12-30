@@ -1,0 +1,12 @@
+print("Test start")
+import json as json
+print("json imported")
+
+def simple():
+    print("in simple")
+    return 1
+
+print("Before call")
+x = simple()
+print("Result:", x)
+print("Test end")

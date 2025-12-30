@@ -1,0 +1,43 @@
+--- a/src/ast_visitor.cpp
++++ b/src/ast_visitor.cpp
+@@ -148,24 +148,24 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
+     defining_function_ = true;
+     
+     try {
+-        // 获取函数定义的原始文本，使用函数定义节点和suite节点的边界
++        // 使用ANTLR的getText()获取函数定义节点的完整文本
++        // 这应该包含从'def'到函数体结束的所有内容
+         auto startToken = ctx->getStart();
+-        auto suiteCtx = ctx->suite();
+-        auto stopToken = suiteCtx->getStop();
++        auto stopToken = ctx->getStop();
+         
+         if (!startToken || !stopToken) {
+-            logger_.error("Cannot get start or stop token for function definition");
+-            defining_function_ = old_defining_function;
+-            return any();
++            // 如果无法获取令牌，尝试使用getText()
++            string funcDef = ctx->getText();
++            logger_.debug("Using ctx->getText(), length: " + to_string(funcDef.length()));
++        } else {
++            // 使用输入流提取精确文本
++            auto inputStream = startToken->getInputStream();
++            if (inputStream) {
++                ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
++                ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
++                string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
++            }
+         }
+-        
+-        auto inputStream = startToken->getInputStream();
+-        if (!inputStream) {
+-            logger_.error("Cannot get input stream for function definition");
+-            defining_function_ = old_defining_function;
+-            return any();
+-        }
+-        
+-        ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
+-        ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
+-        string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
++
++        string funcDef = ctx->getText(); // 简单方法：直接使用getText()

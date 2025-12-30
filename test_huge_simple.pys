@@ -1,0 +1,40 @@
+import json as json
+print("DEBUG: json imported", flush=True)
+
+def range_list(n):
+    return list(range(n))
+
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df
+
+    df2["x3"] = arr_cb
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    n = 5
+    if len(args) > 1:
+        n = int(args[1])
+
+    print(f"[pys] Building dataframe with n={n}", flush=True)
+    df = build_dataframe(n)
+    print(f"DataFrame shape: {df.shape}", flush=True)
+    return {"shape": df.shape, "n": n}
+
+result = main()
+print(f"Result: {result}", flush=True)

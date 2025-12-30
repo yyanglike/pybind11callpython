@@ -3,24 +3,32 @@
 # to exercise language features and interoperate with Python (numpy, pandas).
 
 import json as json
-print("DEBUG: json imported")
+print("DEBUG 1: json imported")
 
 # 简单生成器函数（提前定义，供 build_dataframe 使用）
 def range_list(n):
+    print(f"DEBUG range_list: n={n}")
     return list(range(n))
+
+print("DEBUG 2: range_list defined")
 
 # 创建一个统计函数，使用numpy计算均值和标准差
 def compute_stats(nums):
+    print("DEBUG compute_stats called")
     import numpy as np
     mean = np.mean(nums)
     std = np.std(nums)
     return { "mean": mean, "std": std, "count": len(nums) }
 
+print("DEBUG 3: compute_stats defined")
+
 # 生成一个DataFrame，演示 new 与 numpy 合作
 def build_dataframe(n):
+    print(f"DEBUG build_dataframe: n={n}")
     import numpy as np
     import pandas as pd
     idx = [i for i in range_list(n)]
+    print(f"DEBUG: idx created, len={len(idx)}")
     squares = [i * i for i in idx]
     cubes = [i * i * i for i in idx]
 
@@ -42,18 +50,21 @@ def build_dataframe(n):
 
     return df2
 
+print("DEBUG 4: build_dataframe defined")
+
 def main():
+    print("DEBUG main: entering")
     import sys
     args = sys.argv
-    print("DEBUG: args =", args)
-    print("DEBUG: type(args) =", type(args))
-
+    print(f"DEBUG main: args={args}, type={type(args)}, len={len(args) if args is not None else 'None'}")
+    
     n = 50
-    if len(args) > 1:
+    if args is not None and len(args) > 1:
         n = int(args[1])
-
-    print("[pys] Building dataframe with n=" + str(n))
+    
+    print(f"[pys] Building dataframe with n={n}")
     df = build_dataframe(n)
+    print(f"DEBUG main: dataframe built, shape={df.shape}")
 
     grouped = df.groupby("cat")
     agg = grouped.agg({ "x": "sum", "x3": "mean" })
@@ -66,6 +77,7 @@ def main():
     print(json.dumps(merged, indent=2))
     return merged
 
-print("Starting main() call")
+print("DEBUG 5: main defined, about to call")
 result = main()
-print("Main returned:", result)
+print(f"DEBUG 6: main returned: {result}")
+print("DEBUG 7: script completed")

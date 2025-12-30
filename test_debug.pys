@@ -1,0 +1,23 @@
+print("Starting debug test")
+
+import json as json
+print("json imported successfully")
+
+def range_list(n):
+    return list(range(n))
+
+print("range_list defined")
+
+def compute_stats(nums):
+    import numpy as np
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+print("compute_stats defined")
+
+nums = [1, 2, 3, 4, 5]
+stats = compute_stats(nums)
+print("stats:", stats)
+
+print("Debug test completed")

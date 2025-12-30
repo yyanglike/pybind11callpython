@@ -3,11 +3,14 @@
 # to exercise language features and interoperate with Python (numpy, pandas).
 
 import json as json
-print("DEBUG: json imported")
+import sys
+print("DEBUG: json imported", flush=True)
 
 # 简单生成器函数（提前定义，供 build_dataframe 使用）
 def range_list(n):
     return list(range(n))
+
+print("DEBUG: range_list defined", flush=True)
 
 # 创建一个统计函数，使用numpy计算均值和标准差
 def compute_stats(nums):
@@ -15,6 +18,8 @@ def compute_stats(nums):
     mean = np.mean(nums)
     std = np.std(nums)
     return { "mean": mean, "std": std, "count": len(nums) }
+
+print("DEBUG: compute_stats defined", flush=True)
 
 # 生成一个DataFrame，演示 new 与 numpy 合作
 def build_dataframe(n):
@@ -42,30 +47,41 @@ def build_dataframe(n):
 
     return df2
 
+print("DEBUG: build_dataframe defined", flush=True)
+
 def main():
-    import sys
-    args = sys.argv
-    print("DEBUG: args =", args)
-    print("DEBUG: type(args) =", type(args))
+    try:
+        import sys
+        args = sys.argv
+        print(f"DEBUG: args = {args}", flush=True)
 
-    n = 50
-    if len(args) > 1:
-        n = int(args[1])
+        n = 5  # 使用较小的 n 进行测试
+        if len(args) > 1:
+            n = int(args[1])
 
-    print("[pys] Building dataframe with n=" + str(n))
-    df = build_dataframe(n)
+        print(f"[pys] Building dataframe with n={n}", flush=True)
+        df = build_dataframe(n)
 
-    grouped = df.groupby("cat")
-    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+        grouped = df.groupby("cat")
+        agg = grouped.agg({ "x": "sum", "x3": "mean" })
 
-    summary = agg.to_dict()
-    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+        summary = agg.to_dict()
+        extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
 
-    merged = { **summary, **extra }
+        merged = { **summary, **extra }
 
-    print(json.dumps(merged, indent=2))
-    return merged
+        # 使用 json.dumps 并确保可序列化
+        import json
+        json_str = json.dumps(merged, indent=2, default=str)
+        print(json_str, flush=True)
+        return merged
+    except Exception as e:
+        print(f"ERROR in main: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        raise
 
-print("Starting main() call")
+print("DEBUG: main defined, calling main()", flush=True)
 result = main()
-print("Main returned:", result)
+print(f"DEBUG: result = {result}", flush=True)
+print("DEBUG: script completed", flush=True)

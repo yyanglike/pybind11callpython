@@ -1,0 +1,2 @@
+import json as json
+print("Hello from json import test")

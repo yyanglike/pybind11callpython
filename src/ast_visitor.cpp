@@ -272,29 +272,61 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     defining_function_ = true;
     
     try {
-        // 使用ANTLR的输入流直接提取函数定义的原始文本，避免触发对函数体节点的访问
-        auto startToken = ctx->getStart();
-        auto stopToken = ctx->getStop();
-        if (!startToken || !stopToken) {
-            logger_.error("Cannot get start or stop token for function definition");
+        // 获取函数定义节点的所有终端令牌，过滤掉虚拟令牌（INDENT/DEDENT）
+        std::vector<antlr4::Token*> tokens;
+        
+        // 收集所有终端令牌
+        std::function<void(antlr4::tree::ParseTree*)> collectTokens = 
+            [&](antlr4::tree::ParseTree* node) {
+                if (auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(node)) {
+                    tokens.push_back(terminal->getSymbol());
+                } else {
+                    for (auto child : node->children) {
+                        collectTokens(child);
+                    }
+                }
+            };
+        
+        collectTokens(ctx);
+        
+        if (tokens.empty()) {
+            logger_.error("No tokens found in function definition");
             defining_function_ = old_defining_function;
             return any();
         }
         
-        auto inputStream = startToken->getInputStream();
+        // 过滤掉虚拟令牌（INDENT, DEDENT）
+        std::vector<antlr4::Token*> validTokens;
+        for (auto token : tokens) {
+            if (token->getType() != PyScriptParser::INDENT && 
+                token->getType() != PyScriptParser::DEDENT) {
+                validTokens.push_back(token);
+            }
+        }
+        
+        if (validTokens.empty()) {
+            logger_.error("No valid tokens found after filtering");
+            defining_function_ = old_defining_function;
+            return any();
+        }
+        
+        // 使用第一个和最后一个有效令牌提取文本
+        auto firstToken = validTokens.front();
+        auto lastToken = validTokens.back();
+        auto inputStream = firstToken->getInputStream();
+        
         if (!inputStream) {
             logger_.error("Cannot get input stream for function definition");
             defining_function_ = old_defining_function;
             return any();
         }
         
-        // 提取从函数开始到结束的完整文本
-        ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
-        ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
+        ssize_t startIndex = static_cast<ssize_t>(firstToken->getStartIndex());
+        ssize_t stopIndex = static_cast<ssize_t>(lastToken->getStopIndex());
         string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
         
         logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
-        logger_.debug("First 100 chars: " + funcDef.substr(0, min((size_t)100, funcDef.length())));
+        logger_.debug("First 200 chars: " + funcDef.substr(0, min((size_t)200, funcDef.length())));
         
         // 提取函数名
         string funcName = ctx->IDENTIFIER()->getText();

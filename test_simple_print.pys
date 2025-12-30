@@ -1,0 +1,7 @@
+print("Simple test")
+def func():
+    print("inside func")
+    return 1
+
+result = func()
+print("Result:", result)

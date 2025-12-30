@@ -1,0 +1,10 @@
+def func_with_try():
+    try:
+        print("inside try")
+    except:
+        print("except")
+    return 42
+
+print("Before call")
+result = func_with_try()
+print("Result:", result)

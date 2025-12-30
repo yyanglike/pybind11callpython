@@ -1,0 +1,60 @@
+import json as json
+print("1: json imported")
+
+def range_list(n):
+    print("2: range_list called")
+    return list(range(n))
+
+print("3: range_list defined")
+
+def compute_stats(nums):
+    print("4: compute_stats called")
+    import numpy as np
+    print("5: numpy imported inside compute_stats")
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+print("6: compute_stats defined")
+
+def build_dataframe(n):
+    print("7: build_dataframe called")
+    import numpy as np
+    import pandas as pd
+    print("8: numpy and pandas imported inside build_dataframe")
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df
+
+    df2["x3"] = arr_cb
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+print("9: build_dataframe defined")
+
+def main():
+    print("10: main called")
+    import sys
+    args = sys.argv
+    print("11: sys.argv =", args)
+    n = 5
+    if len(args) > 1:
+        n = int(args[1])
+    print("12: n =", n)
+    df = build_dataframe(n)
+    print("13: dataframe built, shape =", df.shape)
+    return {"status": "ok", "shape": df.shape}
+
+print("14: main defined, about to call")
+result = main()
+print("15: result =", result)
+print("16: script done")
