@@ -1,0 +1,19 @@
+# Test dictionary unpacking
+import json as json
+
+dict1 = {"a": 1, "b": 2}
+dict2 = {"c": 3, "d": 4}
+
+# Test simple dict creation
+merged = {**dict1, **dict2}
+print("Merged dict:", merged)
+
+# Test with extra key
+extra = {"e": 5}
+merged2 = {**dict1, **extra}
+print("Merged2 dict:", merged2)
+
+# Test nested dict
+nested = {"nested": {"x": 10}}
+merged3 = {**dict1, **nested}
+print("Merged3 dict:", merged3)

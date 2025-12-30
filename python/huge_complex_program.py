@@ -1,7 +1,3 @@
-# huge_complex_program.pys
-# A very complex program written in the PyScript (.pys) language designed
-# to exercise language features and interoperate with Python (numpy, pandas).
-
 import json as json
 print("DEBUG: json imported")
 
@@ -49,8 +45,8 @@ def main():
     print("DEBUG: type(args) =", type(args))
 
     n = 50
-    if len(args) > 1:
-        n = int(args[1])
+    # if len(args) > 1:
+    #     n = int(args[1])
 
     print("[pys] Building dataframe with n=" + str(n))
     df = build_dataframe(n)

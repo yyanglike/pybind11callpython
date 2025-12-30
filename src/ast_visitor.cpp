@@ -1932,14 +1932,15 @@ any AstVisitor::visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) {
                 }
             } else if (unpackValue->isPythonObject()) {
                 py::object pyObj = unpackValue->getPythonObject();
-                if (py::isinstance<py::dict>(pyObj)) {
-                    py::dict pyDict = pyObj.cast<py::dict>();
+                // 尝试转换为字典
+                try {
+                    py::dict pyDict = py::dict(pyObj);
                     for (auto item : pyDict) {
                         string key = py::str(item.first).cast<string>();
                         py::object value = py::reinterpret_borrow<py::object>(item.second);
                         dictVal->setKey(key, ScriptValue::fromPythonObject(value));
                     }
-                } else {
+                } catch (const py::error_already_set& e) {
                     reportError("** unpack requires a mapping", ctx);
                     return any();
                 }
