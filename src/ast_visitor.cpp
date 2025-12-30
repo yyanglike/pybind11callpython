@@ -236,10 +236,9 @@ any AstVisitor::visitCompoundStatement(PyScriptParser::CompoundStatementContext 
 }
 
 any AstVisitor::visitSuite(PyScriptParser::SuiteContext *ctx) {
-    // 如果在函数定义阶段，跳过suite中的语句访问，并阻止访问子节点
+    // 如果在函数定义阶段，仍然访问子节点，但其他visit方法会跳过求值
     if (defining_function_) {
-        logger_.debug("Skipping suite evaluation during function definition");
-        return any(true);
+        logger_.debug("Suite evaluation during function definition - visiting children but skipping evaluation");
     }
     
     // suite: simple_stmt | NEWLINE INDENT statement+ DEDENT
@@ -272,57 +271,109 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     defining_function_ = true;
     
     try {
-        // 获取函数定义节点的所有终端令牌，过滤掉虚拟令牌（INDENT/DEDENT）
-        std::vector<antlr4::Token*> tokens;
+        // 获取开始令牌（函数定义的开始，即'def'关键字）
+        auto startToken = ctx->getStart();
+        if (!startToken) {
+            logger_.error("Function definition has no start token");
+            defining_function_ = old_defining_function;
+            return any();
+        }
         
-        // 收集所有终端令牌
-        std::function<void(antlr4::tree::ParseTree*)> collectTokens = 
+        // 获取suite上下文（函数体）
+        auto suiteCtx = ctx->suite();
+        if (!suiteCtx) {
+            logger_.error("Function definition has no suite");
+            defining_function_ = old_defining_function;
+            return any();
+        }
+        
+        // 收集整个函数定义节点（包括函数头、参数列表和suite）中的所有令牌
+        std::vector<antlr4::Token*> allTokens;
+        std::function<void(antlr4::tree::ParseTree*)> collectAllTokens = 
             [&](antlr4::tree::ParseTree* node) {
                 if (auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(node)) {
-                    tokens.push_back(terminal->getSymbol());
+                    auto token = terminal->getSymbol();
+                    allTokens.push_back(token);
                 } else {
                     for (auto child : node->children) {
-                        collectTokens(child);
+                        collectAllTokens(child);
                     }
                 }
             };
+        collectAllTokens(ctx);
         
-        collectTokens(ctx);
-        
-        if (tokens.empty()) {
-            logger_.error("No tokens found in function definition");
-            defining_function_ = old_defining_function;
-            return any();
-        }
-        
-        // 过滤掉虚拟令牌（INDENT, DEDENT）
-        std::vector<antlr4::Token*> validTokens;
-        for (auto token : tokens) {
+        // 创建真实令牌列表（过滤掉INDENT和DEDENT）用于调试和停止令牌选择
+        std::vector<antlr4::Token*> realTokens;
+        for (auto token : allTokens) {
             if (token->getType() != PyScriptParser::INDENT && 
                 token->getType() != PyScriptParser::DEDENT) {
-                validTokens.push_back(token);
+                realTokens.push_back(token);
             }
         }
         
-        if (validTokens.empty()) {
-            logger_.error("No valid tokens found after filtering");
+        if (realTokens.empty()) {
+            logger_.error("No real tokens found in function definition");
             defining_function_ = old_defining_function;
             return any();
         }
         
-        // 使用第一个和最后一个有效令牌提取文本
-        auto firstToken = validTokens.front();
-        auto lastToken = validTokens.back();
-        auto inputStream = firstToken->getInputStream();
+        // 确定函数体的结束位置：使用函数定义上下文的停止令牌，它应该包括整个函数定义（包括嵌套函数）
+        auto stopToken = ctx->getStop();
+        if (!stopToken) {
+            // 如果函数定义没有停止令牌，回退到suite的停止令牌
+            stopToken = suiteCtx->getStop();
+            logger_.warn("Function definition has no stop token, using suite stop token");
+        }
         
+        if (!stopToken) {
+            logger_.error("Cannot determine stop token for function definition");
+            defining_function_ = old_defining_function;
+            return any();
+        }
+        
+        // 注意：即使停止令牌是虚拟令牌（INDENT/DEDENT），我们也使用它，因为它的停止索引应该指向整个函数定义的结束位置
+        // 虚拟令牌（如DEDENT）的停止索引通常指向缩进级别的结束，这正是我们需要的
+        
+        logger_.debug("Final stop token type: " + to_string(stopToken->getType()));
+        logger_.debug("Stop token text: '" + stopToken->getText() + "'");
+        logger_.debug("Stop token line: " + to_string(stopToken->getLine()));
+        logger_.debug("Stop token char position: " + to_string(stopToken->getCharPositionInLine()));
+        logger_.debug("Stop token start index: " + to_string(stopToken->getStartIndex()));
+        logger_.debug("Stop token stop index: " + to_string(stopToken->getStopIndex()));
+        
+        // 验证停止令牌是否合理：应该在开始令牌之后
+        if (stopToken->getLine() < startToken->getLine()) {
+            logger_.warn("Stop token line < start token line, may not be correct");
+        }
+        
+        // 调试：打印令牌信息
+        logger_.info("Total tokens collected: " + to_string(allTokens.size()));
+        logger_.info("Real tokens count: " + to_string(realTokens.size()));
+        
+        // 打印所有真实令牌及其行号（最多前50个，避免日志过大）
+        size_t limit = min(realTokens.size(), (size_t)50);
+        logger_.info("First " + to_string(limit) + " real tokens in function definition:");
+        for (size_t i = 0; i < limit; ++i) {
+            auto token = realTokens[i];
+            logger_.info("  [" + to_string(i) + "]: line " + to_string(token->getLine()) + 
+                       ", col " + to_string(token->getCharPositionInLine()) + 
+                       ", type " + to_string(token->getType()) + 
+                       ", text: '" + token->getText() + "'");
+        }
+        if (realTokens.size() > limit) {
+            logger_.info("  ... and " + to_string(realTokens.size() - limit) + " more tokens");
+        }
+        
+        auto inputStream = startToken->getInputStream();
         if (!inputStream) {
             logger_.error("Cannot get input stream for function definition");
             defining_function_ = old_defining_function;
             return any();
         }
         
-        ssize_t startIndex = static_cast<ssize_t>(firstToken->getStartIndex());
-        ssize_t stopIndex = static_cast<ssize_t>(lastToken->getStopIndex());
+        // 使用字符区间获取完整函数定义文本
+        ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
+        ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
         string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
         
         logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));

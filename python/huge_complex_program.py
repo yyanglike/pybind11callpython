@@ -54,7 +54,7 @@ def main():
     grouped = df.groupby("cat")
     agg = grouped.agg({ "x": "sum", "x3": "mean" })
 
-    summary = agg.to_dict()
+    summary = dict(agg.to_dict())
     extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
 
     merged = { **summary, **extra }

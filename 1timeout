@@ -1,0 +1,812 @@
+[INFO] [fix] Added site-packages: /Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages
+[INFO] [fix] Added site-packages: /Users/yangyi/company/python/pybind11callpython/.venv/lib/python3.12/site-packages
+[INFO] [PythonBridge] Python path configured: ../python
+[INFO] ScriptInterpreter constructor started
+[INFO] Builtins imported successfully
+[INFO] [PythonBridge] Python path configured: ../python
+[INFO] ScriptInterpreter constructor started
+[INFO] Builtins imported successfully
+[INFO] Module imported successfully: json[INFO] Module imported successfully: json
+
+[WARN] [WARN] Stop token line < start token line, may not be correct
+[INFO] Total tokens collected: 18
+[INFOStop token line < start token line, may not be correct
+[INFO] Total tokens collected: 18
+[INFO] Real tokens count: 16
+[INFO] First 16 real tokens in function definition:
+[INFO] ] Real tokens count: 16
+[INFO] First 16 real tokens in function definition:
+[INFO]   [0]: line 5, col 0, type 1, text: 'def'
+[INFO]   [1]: line 5, col 4, type 47, text: 'range_list'
+[INFO]   [2]: line 5, col 14, type 36, text: '('
+[INFO  [0]: line 5, col 0, type 1, text: 'def'
+[INFO]   [1]: line 5, col 4, type 47, text: 'range_list'
+[INFO]   [2]: line 5, col 14, type 36, text: '('
+[INFO]   [3]: line 5, col 15, type 47, text: 'n'
+[INFO]   [4]: line 5, col 16, type 37, text: ')'
+[INFO]   [5]: line 5, col 17, type 43, text: ':'
+]   [3]: line 5, col 15, type 47, text: 'n'
+[INFO]   [4]: line 5, col 16, type 37, text: ')'
+[INFO]   [5]: line 5, col 17, type 43, text: ':'
+[INFO]   [6]: line 5, col 18, type 46, text: '
+    '
+[INFO]   [7]: line 6, col 4, type 6, text: 'return'[INFO]   [6]: line 5, col 18, type 46, text: '
+    '
+[INFO]   [7]: line 6, col 4, type 6, text: 'return'
+[INFO]   [8]: line 6, col 11, type 47, text: 'list'
+[INFO]   [9]: line 6, col 15, type 36, text: '('
+[INFO]   [8]: line 6, col 11, type 47, text: 'list'
+[INFO]   [9]: line 6, col 15, type 36, text: '('
+[INFO]   [10]: line 6, col 16, type 47, text: 'range'
+[INFO]   [11]: line 6, col 21, type 36, text: '('
+[INFO]   [10]: line 6, col 16, type 47, text: 'range'
+[INFO]   [11]: line 6, col 21, type 36, text: '('
+[INFO]   [12]: line 6, col 22, type 47, text: 'n'
+[INFO]   [13]: line 6, col 23, type 37, text: ')'
+
+[INFO]   [12]: line 6, col 22, type 47, text: 'n'
+[INFO]   [13]: line 6, col 23, type 37, text: ')'
+[INFO]   [14]: line 6, col 24, type 37, text: ')'
+[INFO]   [15]: line 6, col 25, type 46, text: '
+'
+[INFO]   [14]: line 6, col 24, type 37, text: ')'
+[INFO]   [15]: line 6, col 25, type 46, text: '
+'
+[INFO] [INFO] Function definition string length: 1607
+[INFO] Function definition string:
+def range_list(n):
+    return list(range(n))
+
+# 创建一个统计函数，使用numpy计算均值和标准差
+def compute_stats(nums):
+    import numpy as np
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+# 生成一个DataFrame，演示 new 与 numpy 合作
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+Function definition string length: 1607
+[INFO] Function definition string:
+def range_list(n):
+    return list(range(n))
+
+# 创建一个统计函数，使用numpy计算均值和标准差
+def compute_stats(nums):
+    import numpy as np
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+# 生成一个DataFrame，演示 new 与 numpy 合作
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+[INFO] Function defined: range_list
+[WARN] Stop token line < start token line, may not be correct
+[INFO] [INFO] Function defined: range_list
+[WARN] Stop token line < start token line, may not be correct
+[INFO] Total tokens collected: 50
+[INFO] Real tokens count: 48
+[INFO] First 48 real tokens in function definition:
+[INFO]   [0]: line 9, col 0, type 1, text: 'def'
+[INFO]   [1]: line 9, col 4, type 47, text: 'compute_stats'
+[INFO]   [2]: line 9, col 17, type 36, text: '('
+[INFO]   [3]: line 9, col 18, type 47, text: 'nums'
+[INFO]   [4]: line 9, col 22, type 37, text: ')'
+[INFOTotal tokens collected: 50
+[INFO] Real tokens count: 48
+[INFO] First 48 real tokens in function definition:
+[INFO]   [0]: line 9, col 0, type 1, text: 'def'
+[INFO]   [1]: line 9, col 4, type 47, text: 'compute_stats'
+[INFO]   [2]: line 9, col 17, type 36, text: '('
+[INFO]   [3]: line 9, col 18, type 47, text: 'nums'
+[INFO]   [4]: line 9, col 22, type 37, text: ')'
+[INFO] ]   [5]: line 9, col 23, type 43, text: ':'
+[INFO  [5]: line 9, col 23, type 43, text: ':'
+[INFO]   [6]: line 9, col 24, type 46, text: '
+    '
+[INFO]   [7]: line 10, col 4, type 7, text: 'import'
+]   [6]: line 9, col 24, type 46, text: '
+    '
+[INFO]   [7]: line 10, col 4, type 7, text: 'import'
+[INFO]   [8]: line 10, col 11, type 47, text: 'numpy'
+[INFO]   [9]: line 10, col 17, type 9, text: 'as'
+[INFO] [INFO]   [8]: line 10, col 11, type 47, text: 'numpy'
+[INFO]   [9]: line 10, col 17, type 9, text: 'as'
+[INFO]   [10]: line 10, col 20, type 47, text: 'np'
+[INFO]   [11]: line 10, col 22, type 46, text: '
+    '
+[INFO]   [12]: line 11, col 4, type 47, text: 'mean'  [10]: line 10, col 20, type 47, text: 'np'
+[INFO]   [11]: line 10, col 22, type 46, text: '
+    '
+[INFO]   [12]: line 11, col 4, type 47, text: 'mean'
+[INFO]   [13]: line 11, col 9, type 34, text: '='
+[INFO]   [14]: line 11, col 11, type 47, text: 'np'
+
+[INFO]   [13]: line 11, col 9, type 34, text: '='
+[INFO]   [14]: line 11, col 11, type 47, text: 'np'
+[INFO]   [15]: line 11, col 13, type 44, text: '.'
+[INFO]   [15]: line 11, col 13, type 44, text: '.'
+[INFO]   [16]: line 11, col 14, type 47, text: 'mean'
+[INFO] [INFO]   [16]: line 11, col 14, type 47, text: 'mean'
+[INFO]   [17]: line 11, col 18, type 36, text: '('
+[INFO]   [18]: line 11, col 19, type 47, text: 'nums'
+[INFO  [17]: line 11, col 18, type 36, text: '('
+[INFO]   [18]: line 11, col 19, type 47, text: 'nums'
+[INFO]   [19]: line 11, col 23, type 37, text: ')'
+[INFO]   [20]: line 11, col 24, type 46, text: '
+    '
+[INFO]   [21]: line 12, col 4, type 47, text: 'std'
+[INFO]   [22]: line 12, col 8, type 34, text: '='
+[INFO]   [23]: line 12, col 10, type 47, text: 'np'
+]   [19]: line 11, col 23, type 37, text: ')'
+[INFO]   [20]: line 11, col 24, type 46, text: '
+    '
+[INFO]   [21]: line 12, col 4, type 47, text: 'std'
+[INFO]   [22]: line 12, col 8, type 34, text: '='
+[INFO]   [23]: line 12, col 10, type 47, text: 'np'
+[INFO]   [24]: line 12, col 12, type 44, text: '.'
+[INFO]   [25]: line 12, col 13, type 47, text: 'std'
+[INFO]   [24]: line 12, col 12, type 44, text: '.'
+[INFO]   [25]: line 12, col 13, type 47, text: 'std'
+[INFO]   [26]: line 12, col 16, type 36, text: '('
+[INFO] [INFO]   [26]: line 12, col 16, type 36, text: '('
+[INFO]   [27]: line 12, col 17, type 47, text: 'nums'
+[INFO]   [28]: line 12, col 21, type 37, text: ')'
+[  [27]: line 12, col 17, type 47, text: 'nums'
+[INFO]   [28]: line 12, col 21, type 37, text: ')'
+[INFO]   [29]: line 12, col 22, type 46, text: '
+    '
+[INFO]   [30]: line 13, col 4, type 6, text: 'return'
+INFO]   [29]: line 12, col 22, type 46, text: '
+    '
+[INFO]   [30]: line 13, col 4, type 6, text: 'return'
+[INFO]   [31]: line 13, col 11, type 40, text: '{'
+[INFO]   [32]: line 13, col 13, type 50, text: '"mean"'[INFO]   [31]: line 13, col 11, type 40, text: '{'
+[INFO]   [32]: line 13, col 13, type 50, text: '"mean"'
+[INFO]   [33]: line 13, col 19, type 43, text: ':'
+[INFO
+[INFO]   [33]: line 13, col 19, type 43, text: ':'
+[INFO]   [34]: line 13, col 21, type 47, text: 'mean'
+[INFO]   [35]: line 13, col 25, type 42, text: ','
+[]   [34]: line 13, col 21, type 47, text: 'mean'
+[INFO]   [35]: line 13, col 25, type 42, text: ','
+[INFO]   [36]: line 13, col 27, type 50, text: '"std"'
+[INFO]   [37]: line 13, col 32, type 43, text: ':'
+[INFO]   [36]: line 13, col 27, type 50, text: '"std"'
+[INFO]   [37]: line 13, col 32, type 43, text: ':'
+[INFO]   [38]: line 13, col 34, type 47, text: 'std'
+[INFO]   [39]: line 13, col 37, type 42, text: ','
+INFO]   [38]: line 13, col 34, type 47, text: 'std'
+[INFO]   [39]: line 13, col 37, type 42, text: ','
+[INFO]   [40]: line 13, col 39, type 50, text: '"count"'
+[INFO]   [41]: line 13, col 46, type 43, text: ':'[INFO]   [40]: line 13, col 39, type 50, text: '"count"'
+[INFO]   [41]: line 13, col 46, type 43, text: ':'
+[INFO]   [42]: line 13, col 48, type 47, text: 'len'
+[INFO] 
+[INFO]   [42]: line 13, col 48, type 47, text: 'len'
+[INFO]   [43]: line 13, col 51, type 36, text: '('
+[INFO]   [44]: line 13, col 52, type 47, text: 'nums'
+[  [43]: line 13, col 51, type 36, text: '('
+[INFO]   [44]: line 13, col 52, type 47, text: 'nums'
+[INFO]   [45]: line 13, col 56, type 37, text: ')'
+[INFO]   [46]: line 13, col 58, type 41, text: '}'
+INFO]   [45]: line 13, col 56, type 37, text: ')'
+[INFO]   [46]: line 13, col 58, type 41, text: '}'
+[INFO]   [47]: line 13, col 59, type 46, text: '
+'
+[INFO]   [47]: line 13, col 59, type 46, text: '
+'
+[INFO] [INFO] Function definition string length: 1496
+[INFO] Function definition string:
+def compute_stats(nums):
+    import numpy as np
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+# 生成一个DataFrame，演示 new 与 numpy 合作
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+Function definition string length: 1496
+[INFO] Function definition string:
+def compute_stats(nums):
+    import numpy as np
+    mean = np.mean(nums)
+    std = np.std(nums)
+    return { "mean": mean, "std": std, "count": len(nums) }
+
+# 生成一个DataFrame，演示 new 与 numpy 合作
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+[INFO] Function defined: compute_stats
+[INFO] Function defined: compute_stats
+[WARN] Stop token line < start token line, may not be correct
+[INFO] Total tokens collected: 58
+[INFO] Real tokens count: 56
+[INFO[WARN] Stop token line < start token line, may not be correct
+[INFO] Total tokens collected: 58
+[INFO] Real tokens count: 56
+[INFO] First 50 real tokens in function definition:
+[INFO]   [0]: line 16, col 0, type 1, text: 'def'] First 50 real tokens in function definition:
+[INFO]   [0]: line 16, col 0, type 1, text: 'def'
+[INFO]   [1]: line 16, col 4, type 47, text: 'build_dataframe'
+[INFO]   [2]: line 16, col 19, type 36, text: '('
+[INFO] 
+[INFO]   [1]: line 16, col 4, type 47, text: 'build_dataframe'
+[INFO]   [2]: line 16, col 19, type 36, text: '('
+[INFO]   [3]: line 16, col 20, type 47, text: 'n'
+[INFO]   [4]: line 16, col 21, type 37, text: ')'
+[INFO]   [5]: line 16, col 22, type 43, text: ':'
+  [3]: line 16, col 20, type 47, text: 'n'
+[INFO]   [4]: line 16, col 21, type 37, text: ')'
+[INFO]   [5]: line 16, col 22, type 43, text: ':'
+[INFO]   [6]: line 16, col 23, type 46, text: '
+    '
+[INFO]   [7]: line 17, col 4, type 7, text: 'import'[INFO]   [6]: line 16, col 23, type 46, text: '
+    '
+[INFO]   [7]: line 17, col 4, type 7, text: 'import'
+[INFO]   [8]: line 17, col 11, type 47, text: 'numpy'
+[INFO
+[INFO]   [8]: line 17, col 11, type 47, text: 'numpy'
+[INFO]   [9]: line 17, col 17, type 9, text: 'as'
+[INFO]   [10]: line 17, col 20, type 47, text: 'np'
+[INFO]   [9]: line 17, col 17, type 9, text: 'as'
+[INFO]   [10]: line 17, col 20, type 47, text: 'np'
+[INFO]   [11]: line 17, col 22, type 46, text: '
+    '
+[INFO]   [12]: line 18, col 4, type 7, text: 'import'
+[]   [11]: line 17, col 22, type 46, text: '
+    '
+[INFO]   [12]: line 18, col 4, type 7, text: 'import'
+[INFO]   [13]: line 18, col 11, type 47, text: 'pandas'
+[INFO]   [14]: line 18, col 18, type 9, text: 'as'
+INFO]   [13]: line 18, col 11, type 47, text: 'pandas'
+[INFO]   [14]: line 18, col 18, type 9, text: 'as'
+[INFO]   [15]: line 18, col 21, type 47, text: 'pd'
+[INFO]   [16]: line 18, col 23, type 46, text: '
+    '
+[INFO]   [17]: line 19, col 4, type 47, text: 'idx'
+[INFO]   [18]: line 19, col 8, type 34, text: '='
+[INFO]   [19]: line 19, col 10, type 38, text: '['
+[INFO]   [15]: line 18, col 21, type 47, text: 'pd'
+[INFO]   [16]: line 18, col 23, type 46, text: '
+    '
+[INFO]   [17]: line 19, col 4, type 47, text: 'idx'
+[INFO]   [18]: line 19, col 8, type 34, text: '='
+[INFO]   [19]: line 19, col 10, type 38, text: '['
+[INFO]   [20]: line 19, col 11, type 47, text: 'i'
+[INFO]   [21]: line 19, col 13, type 4, text: 'for'[INFO]   [20]: line 19, col 11, type 47, text: 'i'
+[INFO]   [21]: line 19, col 13, type 4, text: 'for'
+[INFO]   [22]: line 19, col 17, type 47, text: 'i'
+[INFO
+[INFO]   [22]: line 19, col 17, type 47, text: 'i'
+[INFO]   [23]: line 19, col 19, type 10, text: 'in'
+[INFO]   [24]: line 19, col 22, type 47, text: 'range_list'
+]   [23]: line 19, col 19, type 10, text: 'in'
+[INFO]   [24]: line 19, col 22, type 47, text: 'range_list'
+[INFO]   [25]: line 19, col 32, type 36, text: '('
+[INFO]   [26]: line 19, col 33, type 47, text: 'n'[INFO]   [25]: line 19, col 32, type 36, text: '('
+[INFO]   [26]: line 19, col 33, type 47, text: 'n'
+[INFO]   [27]: line 19, col 34, type 37, text: ')'
+[INFO]   [28]: line 19, col 35, type 39, text: ']'
+[INFO
+[INFO]   [27]: line 19, col 34, type 37, text: ')'
+[INFO]   [28]: line 19, col 35, type 39, text: ']'
+[INFO]   [29]: line 19, col 36, type 46, text: '
+    '
+[INFO]   [30]: line 20, col 4, type 47, text: 'squares'
+[]   [29]: line 19, col 36, type 46, text: '
+    '
+[INFO]   [30]: line 20, col 4, type 47, text: 'squares'
+[INFO]   [31]: line 20, col 12, type 34, text: '='
+[INFO]   [32]: line 20, col 14, type 38, text: '['
+[INFO]   [31]: line 20, col 12, type 34, text: '='
+[INFO]   [32]: line 20, col 14, type 38, text: '['
+[INFO]   [33]: line 20, col 15, type 47, text: 'i'
+[INFO]   [34]: line 20, col 17, type 25, text: '*'
+INFO]   [33]: line 20, col 15, type 47, text: 'i'
+[INFO]   [34]: line 20, col 17, type 25, text: '*'
+[INFO]   [35]: line 20, col 19, type 47, text: 'i'
+[INFO]   [36]: line 20, col 21, type 4, text: 'for'[INFO]   [35]: line 20, col 19, type 47, text: 'i'
+[INFO]   [36]: line 20, col 21, type 4, text: 'for'
+[INFO]   [37]: line 20, col 25, type 47, text: 'i'
+[INFO] 
+[INFO]   [37]: line 20, col 25, type 47, text: 'i'
+[INFO]   [38]: line 20, col 27, type 10, text: 'in'
+[INFO]   [39]: line 20, col 30, type 47, text: 'idx'
+[INFO]   [38]: line 20, col 27, type 10, text: 'in'
+[INFO]   [39]: line 20, col 30, type 47, text: 'idx'
+[INFO]   [40]: line 20, col 33, type 39, text: ']'
+[INFO]   [41]: line 20, col 34, type 46, text: '
+    '
+[INFO  [40]: line 20, col 33, type 39, text: ']'
+[INFO]   [41]: line 20, col 34, type 46, text: '
+    '
+[INFO]   [42]: line 21, col 4, type 47, text: 'cubes'
+[INFO]   [43]: line 21, col 10, type 34, text: '='
+[]   [42]: line 21, col 4, type 47, text: 'cubes'
+[INFO]   [43]: line 21, col 10, type 34, text: '='
+[INFO]   [44]: line 21, col 12, type 38, text: '['
+[INFO]   [45]: line 21, col 13, type 47, text: 'i'
+INFO]   [44]: line 21, col 12, type 38, text: '['
+[INFO]   [45]: line 21, col 13, type 47, text: 'i'
+[INFO]   [46]: line 21, col 15, type 25, text: '*'
+[INFO]   [47]: line 21, col 17, type 47, text: 'i'[INFO]   [46]: line 21, col 15, type 25, text: '*'
+[INFO]   [47]: line 21, col 17, type 47, text: 'i'
+[INFO]   [48]: line 21, col 19, type 25, text: '*'
+[INFO] 
+[INFO]   [48]: line 21, col 19, type 25, text: '*'
+[INFO]   [49]: line 21, col 21, type 47, text: 'i'
+[INFO]   ... and 6 more tokens
+  [49]: line 21, col 21, type 47, text: 'i'
+[INFO]   ... and 6 more tokens
+[INFO] Function definition string length: 1285
+[INFO] Function definition string:
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+[INFO] Function definition string length: 1285
+[INFO] Function definition string:
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range_list(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+
+    # 使用 numpy 对列表进行转换
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+
+    # 用 dict 合并数据并实例化 pandas.DataFrame
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df  # alias
+
+    # 给 df2 增加一列 x3
+    df2["x3"] = arr_cb
+
+    # 创建一个分组列（偶数/奇数）
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+
+    return df2
+
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+[[INFO] Function defined: build_dataframe
+INFO] Function defined: build_dataframe
+[WARN] Stop token line < start token line, may not be correct[WARN] Stop token line < start token line, may not be correct
+[INFO] Total tokens collected: 34
+[INFO] Real tokens count: 32
+[INFO] First 32 real tokens in function definition:
+[INFO]   [0]: line 41, col 0, type 1, text: 'def'
+
+[INFO] Total tokens collected: 34
+[INFO] Real tokens count: 32
+[INFO] First 32 real tokens in function definition:
+[INFO]   [0]: line 41, col 0, type 1, text: 'def'
+[INFO]   [1]: line 41, col 4, type 47, text: 'main'
+[INFO]   [2]: line 41, col 8, type 36, text: '('
+[INFO]   [1]: line 41, col 4, type 47, text: 'main'
+[INFO]   [2]: line 41, col 8, type 36, text: '('
+[INFO]   [3]: line 41, col 9, type 37, text: ')'
+[INFO]   [4]: line 41, col 10, type 43, text: ':'
+[INFO]   [3]: line 41, col 9, type 37, text: ')'
+[INFO]   [4]: line 41, col 10, type 43, text: ':'
+[INFO]   [5]: line 41, col 11, type 46, text: '
+    '[INFO]   [5]: line 41, col 11, type 46, text: '
+    '
+[INFO]   [6]: line 42, col 4, type 7, text: 'import'
+[INFO]   [7]: line 42, col 11, type 47, text: 'sys'
+[
+[INFO]   [6]: line 42, col 4, type 7, text: 'import'
+[INFO]   [7]: line 42, col 11, type 47, text: 'sys'
+[INFO]   [8]: line 42, col 14, type 46, text: '
+    '
+[INFO]   [9]: line 43, col 4, type 47, text: 'args'
+[INFO]   [10]: line 43, col 9, type 34, text: '='
+[INFO]   [11]: line 43, col 11, type 47, text: 'sys'
+INFO]   [8]: line 42, col 14, type 46, text: '
+    '
+[INFO]   [9]: line 43, col 4, type 47, text: 'args'
+[INFO]   [10]: line 43, col 9, type 34, text: '='
+[INFO]   [11]: line 43, col 11, type 47, text: 'sys'
+[INFO]   [12]: line 43, col 14, type 44, text: '.'
+[INFO]   [13]: line 43, col 15, type 47, text: 'argv'
+[INFO]   [14]: line 43, col 19, type 46, text: '
+    '
+[INFO]   [15]: line 44, col 4, type 47, text: 'print'
+[INFO]   [16]: line 44, col 9, type 36, text: '('[INFO]   [12]: line 43, col 14, type 44, text: '.'
+[INFO]   [13]: line 43, col 15, type 47, text: 'argv'
+[INFO]   [14]: line 43, col 19, type 46, text: '
+    '
+[INFO]   [15]: line 44, col 4, type 47, text: 'print'
+[INFO]   [16]: line 44, col 9, type 36, text: '('
+[INFO]   [17]: line 44, col 10, type 50, text: '"DEBUG: args ="'
+[INFO]   [18]: line 44, col 25, type 42, text: ','
+[INFO]   [19]: line 44, col 27, type 47, text: 'args'
+[INFO]   [20]: line 44, col 31, type 37, text: ')'
+[INFO]   [21]: line 44, col 32, type 46, text: '
+    '
+[INFO]   [22]: line 45, col 4, type 47, text: 'print'
+[INFO]   [23]: line 45, col 9, type 36, text: '('
+[INFO]   [24]: line 45, col 10, type 50, text: '"DEBUG: type(args) ="'
+[INFO]   [25]: line 45, col 31, type 42, text: ','
+[INFO]   [26]: line 45, col 33, type 47, text: 'type'
+
+[INFO]   [17]: line 44, col 10, type 50, text: '"DEBUG: args ="'
+[INFO]   [18]: line 44, col 25, type 42, text: ','
+[INFO]   [19]: line 44, col 27, type 47, text: 'args'
+[INFO]   [20]: line 44, col 31, type 37, text: ')'
+[INFO]   [21]: line 44, col 32, type 46, text: '
+    '
+[INFO]   [22]: line 45, col 4, type 47, text: 'print'
+[INFO]   [23]: line 45, col 9, type 36, text: '('
+[INFO]   [24]: line 45, col 10, type 50, text: '"DEBUG: type(args) ="'
+[INFO]   [25]: line 45, col 31, type 42, text: ','
+[INFO]   [26]: line 45, col 33, type 47, text: 'type'
+[INFO]   [27]: line 45, col 37, type 36, text: '('
+[INFO]   [28]: line 45, col 38, type 47, text: 'args'
+[INFO]   [29]: line 45, col 42, type 37, text: ')'
+[INFO]   [30]: line 45, col 43, type 37, text: ')'
+[[INFO]   [27]: line 45, col 37, type 36, text: '('
+[INFO]   [28]: line 45, col 38, type 47, text: 'args'
+[INFO]   [29]: line 45, col 42, type 37, text: ')'
+[INFO]   [30]: line 45, col 43, type 37, text: ')'
+[INFO]   [31]: line 45, col 44, type 46, text: '
+'
+INFO]   [31]: line 45, col 44, type 46, text: '
+'
+[INFO] Function definition string length: 640
+[INFO] [INFO] Function definition string length: 640
+[INFO] Function definition string:
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+Function definition string:
+def main():
+    import sys
+    args = sys.argv
+    print("DEBUG: args =", args)
+    print("DEBUG: type(args) =", type(args))
+
+    n = 50
+    # if len(args) > 1:
+    #     n = int(args[1])
+
+    print("[pys] Building dataframe with n=" + str(n))
+    df = build_dataframe(n)
+
+    grouped = df.groupby("cat")
+    agg = grouped.agg({ "x": "sum", "x3": "mean" })
+
+    summary = dict(agg.to_dict())
+    extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
+
+    merged = { **summary, **extra }
+
+    print(json.dumps(merged, indent=2))
+    return merged
+
+print("Starting main() call")
+result = main()
+print("Main returned:", result)
+
+
+[INFO] Function defined: main
+[INFO] Function defined: main
