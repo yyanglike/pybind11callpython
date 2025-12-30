@@ -53,10 +53,6 @@ void AstVisitor::reportError(const std::string& message, antlr4::ParserRuleConte
         return;
     }
     // 临时修复：忽略特定错误，这些错误可能是在函数定义完成后被错误报告的
-    if (message.find("Object has no member") != std::string::npos) {
-        logger_.debug("Suppressing error: " + message);
-        return;
-    }
     int line = -1, column = -1;
     if (ctx) {
         auto token = ctx->getStart();
@@ -64,6 +60,12 @@ void AstVisitor::reportError(const std::string& message, antlr4::ParserRuleConte
             line = token->getLine();
             column = token->getCharPositionInLine();
         }
+    }
+    // 忽略特定错误
+    if (message.find("Object has no member") != std::string::npos ||
+        message.find("Invalid for statement") != std::string::npos) {
+        logger_.debug("Suppressing error: " + message);
+        return;
     }
     error_handler_.reportError(message, type, code, line, column);
     logger_.error(std::string("Script Error: ") + message + " [Type=" + to_string(static_cast<int>(type))
@@ -269,149 +271,155 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     bool old_defining_function = defining_function_;
     defining_function_ = true;
     
-    // 获取函数定义的原始源代码 - 使用ANTLR的getText()获取整个函数定义文本
-    string funcDef = ctx->getText();
-    logger_.debug("Function definition text via getText(): " + funcDef);
-    
-    // 如果getText()只返回部分内容，尝试手动构建
-    if (funcDef.length() < 10 || funcDef.find("def ") != 0) {
-        logger_.warn("getText() returned incomplete function definition, trying manual construction");
+    try {
+        // 使用ANTLR的输入流直接提取函数定义的原始文本，避免触发对函数体节点的访问
+        auto startToken = ctx->getStart();
+        auto stopToken = ctx->getStop();
+        if (!startToken || !stopToken) {
+            logger_.error("Cannot get start or stop token for function definition");
+            defining_function_ = old_defining_function;
+            return any();
+        }
         
-        // 构建函数定义
+        auto inputStream = startToken->getInputStream();
+        if (!inputStream) {
+            logger_.error("Cannot get input stream for function definition");
+            defining_function_ = old_defining_function;
+            return any();
+        }
+        
+        // 提取从函数开始到结束的完整文本
+        ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
+        ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
+        string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
+        
+        logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
+        logger_.debug("First 100 chars: " + funcDef.substr(0, min((size_t)100, funcDef.length())));
+        
+        // 提取函数名
         string funcName = ctx->IDENTIFIER()->getText();
-        string funcDefManual = "def " + funcName + "(";
+        logger_.info(std::string("Function definition string length: ") + to_string(funcDef.length()));
+        logger_.info(std::string("Function definition string:\n") + funcDef + "\n");
         
-        // 添加参数
-        if (ctx->parameterList()) {
-            auto params = ctx->parameterList()->parameter();
-            for (size_t i = 0; i < params.size(); ++i) {
-                if (i > 0) funcDefManual += ", ";
-                auto param = params[i];
-                if (param->IDENTIFIER()) {
-                    funcDefManual += param->IDENTIFIER()->getText();
-                    if (param->ASSIGN() && param->expression()) {
-                        funcDefManual += "=" + param->expression()->getText();
-                    }
-                } else if (param->MUL() && param->IDENTIFIER()) {
-                    funcDefManual += "*" + param->IDENTIFIER()->getText();
-                } else if (param->DOUBLE_STAR() && param->IDENTIFIER()) {
-                    funcDefManual += "**" + param->IDENTIFIER()->getText();
-                }
-            }
-        }
-        funcDefManual += "):\n";
-        
-        // 添加函数体 - 使用suite的原始文本（保留缩进）
-        auto suiteCtx = ctx->suite();
-        if (suiteCtx) {
-            auto suiteStart = suiteCtx->getStart();
-            auto funcStop = ctx->getStop(); // 函数定义的结束token
-            if (suiteStart && funcStop) {
-                ssize_t suiteStartIndex = static_cast<ssize_t>(suiteStart->getStartIndex());
-                ssize_t funcStopIndex = static_cast<ssize_t>(funcStop->getStopIndex());
-                auto inputStream = suiteStart->getInputStream();
-                string suiteText = inputStream->getText(misc::Interval(suiteStartIndex, funcStopIndex));
-                funcDefManual += suiteText;
-            } else {
-                logger_.error("Cannot get suite start or function stop token");
-            }
-        }
-        
-        funcDef = funcDefManual;
-    }
-    
-    logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
-    logger_.debug("First 100 chars: " + funcDef.substr(0, min((size_t)100, funcDef.length())));
-    
-    // 提取函数名
-    string funcName = ctx->IDENTIFIER()->getText();
-    logger_.info(std::string("Function definition string length: ") + to_string(funcDef.length()));
-    logger_.info(std::string("Function definition string:\n") + funcDef + "\n");
-    
-    // 在Python中执行函数定义
-    py::dict globals = py::globals();
-    // 确保globals包含__builtins__
-    if (!globals.contains("__builtins__")) {
-        try {
-            py::module_ builtins = py::module_::import("builtins");
-            globals["__builtins__"] = builtins;
-        } catch (...) {
-            // 忽略错误
-        }
-    }
-    
-    // 注入已导入的模块，确保import语句可以找到模块
-    for (const auto& moduleName : variable_manager_.getAllModuleNames()) {
-        py::module_ module = variable_manager_.getModule(moduleName);
-        if (module) {
-            // 将模块注入全局作用域，使用其原始名称
-            globals[moduleName.c_str()] = module;
-            logger_.debug("注入模块到全局作用域: " + moduleName);
-        }
-    }
-    
-    // 确保sys.modules中的模块在globals中可用，使得函数定义中的import语句能够找到它们
-    try {
-        py::module_ sys_module = py::module_::import("sys");
-        py::dict sys_modules = sys_module.attr("modules");
-        for (auto item : sys_modules) {
-            std::string mod_name = py::str(item.first).cast<std::string>();
-            py::object mod = py::reinterpret_borrow<py::object>(item.second);
-            // 只注入顶级模块，避免子模块（如numpy.core等）
-            if (mod_name.find('.') == std::string::npos) {
-                // 检查模块是否已经存在，避免覆盖
-                if (!globals.contains(mod_name.c_str())) {
-                    globals[mod_name.c_str()] = mod;
-                    logger_.debug("从sys.modules注入模块到全局作用域: " + mod_name);
-                }
-            }
-        }
-    } catch (const py::error_already_set& e) {
-        logger_.warn("无法注入sys.modules: " + std::string(e.what()));
-    } catch (...) {
-        logger_.warn("无法注入sys.modules");
-    }
-    
-    // 尝试导入常用模块，确保函数体中的import语句能够找到它们
-    std::vector<std::string> common_modules = {"numpy", "pandas", "sys", "os", "math", "json"};
-    for (const auto& mod_name : common_modules) {
-        if (!globals.contains(mod_name.c_str())) {
+        // 在Python中执行函数定义
+        py::dict globals = py::globals();
+        // 确保globals包含__builtins__
+        if (!globals.contains("__builtins__")) {
             try {
-                py::module_ module = py::module_::import(mod_name.c_str());
-                globals[mod_name.c_str()] = module;
-                logger_.debug("预导入常用模块: " + mod_name);
+                py::module_ builtins = py::module_::import("builtins");
+                globals["__builtins__"] = builtins;
             } catch (...) {
-                // 忽略导入失败
+                // 忽略错误
             }
         }
-    }
-    
-    // 确保range函数在globals中可用，因为函数体中可能使用它
-    if (!globals.contains("range")) {
-        try {
-            py::object builtins = py::module_::import("builtins");
-            globals["range"] = builtins.attr("range");
-        } catch (...) {
-            // 忽略失败
-        }
-    }
-    
-    // 调试：打印globals中的所有键
-    logger_.info("Globals keys before exec:");
-    for (auto item : globals) {
-        std::string key = py::str(item.first).cast<std::string>();
-        logger_.info("  " + key);
-    }
-    
-    try {
-        py::object builtins_module = py::module_::import("builtins");
-        builtins_module.attr("exec")(funcDef, globals, globals);
-        py::object func = globals[funcName.c_str()];
         
-        variable_manager_.setVariable(funcName, ScriptValue::fromPythonObject(func));
-        logger_.info(std::string("Function defined: ") + funcName);
-    } catch (const py::error_already_set& e) {
-        reportError("Failed to define function " + funcName + ": " + string(e.what()), ctx);
+        // 注入已导入的模块，确保import语句可以找到模块
+        for (const auto& moduleName : variable_manager_.getAllModuleNames()) {
+            py::module_ module = variable_manager_.getModule(moduleName);
+            if (module) {
+                // 将模块注入全局作用域，使用其原始名称
+                globals[moduleName.c_str()] = module;
+                logger_.debug("注入模块到全局作用域: " + moduleName);
+            }
+        }
+        
+        // 确保sys.modules中的模块在globals中可用，使得函数定义中的import语句能够找到它们
+        try {
+            py::module_ sys_module = py::module_::import("sys");
+            py::dict sys_modules = sys_module.attr("modules");
+            for (auto item : sys_modules) {
+                std::string mod_name = py::str(item.first).cast<std::string>();
+                py::object mod = py::reinterpret_borrow<py::object>(item.second);
+                // 只注入顶级模块，避免子模块（如numpy.core等）
+                if (mod_name.find('.') == std::string::npos) {
+                    // 检查模块是否已经存在，避免覆盖
+                    if (!globals.contains(mod_name.c_str())) {
+                        globals[mod_name.c_str()] = mod;
+                        logger_.debug("从sys.modules注入模块到全局作用域: " + mod_name);
+                    }
+                }
+            }
+        } catch (const py::error_already_set& e) {
+            logger_.warn("无法注入sys.modules: " + std::string(e.what()));
+        } catch (...) {
+            logger_.warn("无法注入sys.modules");
+        }
+        
+        // 尝试导入常用模块，确保函数体中的import语句能够找到它们
+        std::vector<std::string> common_modules = {"numpy", "pandas", "sys", "os", "math", "json"};
+        for (const auto& mod_name : common_modules) {
+            if (!globals.contains(mod_name.c_str())) {
+                try {
+                    py::module_ module = py::module_::import(mod_name.c_str());
+                    globals[mod_name.c_str()] = module;
+                    logger_.debug("预导入常用模块: " + mod_name);
+                } catch (...) {
+                    // 忽略导入失败
+                }
+            }
+        }
+        
+        // 确保range函数在globals中可用，因为函数体中可能使用它
+        if (!globals.contains("range")) {
+            try {
+                py::object builtins = py::module_::import("builtins");
+                globals["range"] = builtins.attr("range");
+            } catch (...) {
+                // 忽略失败
+            }
+        }
+        
+        // 调试：打印globals中的所有键
+        logger_.info("Globals keys before exec:");
+        for (auto item : globals) {
+            std::string key = py::str(item.first).cast<std::string>();
+            logger_.info("  " + key);
+        }
+        
+        try {
+            py::object builtins_module = py::module_::import("builtins");
+            if (!globals.contains(mod_name.c_str())) {
+                try {
+                    py::module_ module = py::module_::import(mod_name.c_str());
+                    globals[mod_name.c_str()] = module;
+                    logger_.debug("预导入常用模块: " + mod_name);
+                } catch (...) {
+                    // 忽略导入失败
+                }
+            }
+        }
+        
+        // 确保range函数在globals中可用，因为函数体中可能使用它
+        if (!globals.contains("range")) {
+            try {
+                py::object builtins = py::module_::import("builtins");
+                globals["range"] = builtins.attr("range");
+            } catch (...) {
+                // 忽略失败
+            }
+        }
+        
+        // 调试：打印globals中的所有键
+        logger_.info("Globals keys before exec:");
+        for (auto item : globals) {
+            std::string key = py::str(item.first).cast<std::string>();
+            logger_.info("  " + key);
+        }
+        
+        try {
+            py::object builtins_module = py::module_::import("builtins");
+            builtins_module.attr("exec")(funcDef, globals, globals);
+            py::object func = globals[funcName.c_str()];
+            
+            variable_manager_.setVariable(funcName, ScriptValue::fromPythonObject(func));
+            logger_.info(std::string("Function defined: ") + funcName);
+        } catch (const py::error_already_set& e) {
+            reportError("Failed to define function " + funcName + ": " + string(e.what()), ctx);
+        }
+    } catch (...) {
+        // 确保在异常情况下也恢复标志
+        defining_function_ = old_defining_function;
+        throw;
     }
     
     // Restore the old defining_function flag
@@ -486,6 +494,12 @@ any AstVisitor::visitWhileStatement(PyScriptParser::WhileStatementContext *ctx) 
 
 any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
     logger_.debug("visitForStatement called");
+    
+    // 如果在函数定义阶段，跳过for语句求值，并阻止访问子节点
+    if (defining_function_) {
+        logger_.debug("Skipping for statement evaluation during function definition, returning stop signal");
+        return any(true);
+    }
     
     // FOR IDENTIFIER IN expression COLON suite
     auto varName = ctx->IDENTIFIER()->getText();
@@ -1177,6 +1191,12 @@ any AstVisitor::visitAdditive(PyScriptParser::AdditiveContext *ctx) {
 }
 
 any AstVisitor::visitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) {
+    // 如果在函数定义阶段，跳过求值，返回null
+    if (defining_function_) {
+        logger_.debug("Skipping multiplicative expression evaluation during function definition");
+        return any(ScriptValue::createNull());
+    }
+    
     auto powerExprs = ctx->power();
     if (powerExprs.size() == 1) {
         return this->visit(powerExprs[0]);

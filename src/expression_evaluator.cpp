@@ -113,6 +113,10 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "%") {
+            // If either operand is null, return null (this can happen during function definition)
+            if (left->isNull() || right->isNull()) {
+                return ScriptValue::createNull();
+            }
             if (left->isInteger() && right->isInteger()) {
                 long long divisor = right->getInteger();
                 if (divisor == 0) {
