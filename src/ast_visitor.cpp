@@ -370,41 +370,11 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         }
         
         // 调试：打印globals中的所有键
-        logger_.info("Globals keys before exec:");
-        for (auto item : globals) {
-            std::string key = py::str(item.first).cast<std::string>();
-            logger_.info("  " + key);
-        }
-        
-        try {
-            py::object builtins_module = py::module_::import("builtins");
-            if (!globals.contains(mod_name.c_str())) {
-                try {
-                    py::module_ module = py::module_::import(mod_name.c_str());
-                    globals[mod_name.c_str()] = module;
-                    logger_.debug("预导入常用模块: " + mod_name);
-                } catch (...) {
-                    // 忽略导入失败
-                }
-            }
-        }
-        
-        // 确保range函数在globals中可用，因为函数体中可能使用它
-        if (!globals.contains("range")) {
-            try {
-                py::object builtins = py::module_::import("builtins");
-                globals["range"] = builtins.attr("range");
-            } catch (...) {
-                // 忽略失败
-            }
-        }
-        
-        // 调试：打印globals中的所有键
-        logger_.info("Globals keys before exec:");
-        for (auto item : globals) {
-            std::string key = py::str(item.first).cast<std::string>();
-            logger_.info("  " + key);
-        }
+        // logger_.info("Globals keys before exec:");
+        // for (auto item : globals) {
+        //     std::string key = py::str(item.first).cast<std::string>();
+        //     logger_.info("  " + key);
+        // }
         
         try {
             py::object builtins_module = py::module_::import("builtins");

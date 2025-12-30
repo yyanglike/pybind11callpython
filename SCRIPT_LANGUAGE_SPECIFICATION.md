@@ -352,69 +352,94 @@ result = add(10, 20);  // result = 30
 
 ## 8. 函数定义与调用
 
-### 8.1 函数定义
+### 8.1 函数定义语法
+PyScript使用`def`关键字定义函数，遵循Python风格的语法：
+
 ```python
-function 函数名(参数1, 参数2, ..., 参数n) {
-    // 函数体
-    return 返回值;  // 可选
-}
+def 函数名(参数1, 参数2, ..., 参数n):
+    # 函数体
+    return 返回值  # 可选
 
-// 示例：计算阶乘
-function factorial(n) {
-    if (n <= 1) {
-        return 1;
-    }
-    return n * factorial(n - 1);
-}
+# 示例：计算阶乘
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
 
-// 示例：无返回值函数
-function printGreeting(name) {
-    print("Hello, " + name + "!");
-}
+# 示例：无返回值函数
+def print_greeting(name):
+    print("Hello, " + name + "!")
 ```
 
-### 8.2 函数参数
+### 8.2 函数定义机制
+PyScript的函数定义机制具有以下特点：
 
-#### 8.2.1 默认参数
+1. **完整的Python函数定义**：函数体在Python环境中执行`exec()`定义，支持Python语法
+2. **本地导入支持**：函数体内可以包含`import`语句，导入的模块在函数作用域内可用
+3. **列表推导式支持**：函数体内支持Python风格的列表推导式
+4. **自动错误抑制**：在函数定义阶段，语法树访问器会跳过函数体内部表达式的求值，避免解析错误
+
+**示例：包含本地导入和复杂表达式的函数**
 ```python
-function greet(name, greeting = "Hello") {
-    print(greeting + ", " + name + "!");
-}
-
-greet("Alice");           // 输出: Hello, Alice!
-greet("Bob", "Hi");       // 输出: Hi, Bob!
+def build_dataframe(n):
+    import numpy as np
+    import pandas as pd
+    idx = [i for i in range(n)]
+    squares = [i * i for i in idx]
+    cubes = [i * i * i for i in idx]
+    
+    arr_idx = np.array(idx)
+    arr_sq = np.array(squares)
+    arr_cb = np.array(cubes)
+    
+    data = {"x": arr_idx, "x2": arr_sq}
+    df = pd.DataFrame(data)
+    df2 = df
+    
+    df2["x3"] = arr_cb
+    df2["cat"] = ["even" if i % 2 == 0 else "odd" for i in arr_idx]
+    
+    return df2
 ```
 
-#### 8.2.2 可变参数
-```python
-function sum(...numbers) {
-    total = 0;
-    for (n in numbers) {
-        total = total + n;
-    }
-    return total;
-}
+### 8.4 函数参数
 
-result1 = sum(1, 2, 3);           // result1 = 6
-result2 = sum(1, 2, 3, 4, 5);     // result2 = 15
+#### 8.4.1 默认参数
+```python
+def greet(name, greeting = "Hello"):
+    print(greeting + ", " + name + "!")
+
+greet("Alice")           # 输出: Hello, Alice!
+greet("Bob", "Hi")       # 输出: Hi, Bob!
 ```
 
-#### 8.2.3 关键字参数
+#### 8.4.2 可变参数
 ```python
-function createPerson(name, age = 30, city = "Beijing") {
+def sum(*numbers):
+    total = 0
+    for n in numbers:
+        total = total + n
+    return total
+
+result1 = sum(1, 2, 3)           # result1 = 6
+result2 = sum(1, 2, 3, 4, 5)     # result2 = 15
+```
+
+#### 8.4.3 关键字参数
+```python
+def create_person(name, age = 30, city = "Beijing"):
     return {
         "name": name,
         "age": age,
         "city": city
-    };
-}
+    }
 
-person1 = createPerson("Alice");                    // age=30, city="Beijing"
-person2 = createPerson("Bob", 25);                  // city="Beijing"
-person3 = createPerson("Charlie", city = "Shanghai"); // age=30
+person1 = create_person("Alice")                    # age=30, city="Beijing"
+person2 = create_person("Bob", 25)                  # city="Beijing"
+person3 = create_person("Charlie", city = "Shanghai") # age=30
 ```
 
-### 8.3 匿名函数（Lambda表达式）
+### 8.5 匿名函数（Lambda表达式）
 ```python
 // 简单Lambda表达式
 add = (x, y) -> x + y;
@@ -542,16 +567,30 @@ first_char = str[0];    // first_char = "H"
 substr = str[7:12];     // substr = "World"
 ```
 
-### 9.6 Python错误处理
-注意：当前版本的PyScript语法不支持try-catch-finally异常处理结构。Python异常会在脚本执行时传播到调用方，可以通过C++ API的`hasError()`和`getErrorMessage()`方法检查和处理错误。
+### 9.6 Python错误处理与函数定义
+
+PyScript在处理Python相关操作时具有以下特性：
+
+1. **函数定义阶段的错误抑制**：在函数定义阶段，PyScript会抑制内部表达式的求值错误，允许函数体包含复杂的Python表达式和导入语句。
+
+2. **Python异常传播**：Python函数调用抛出的异常会传播到脚本解释器，可以通过C++ API的`hasError()`和`getErrorMessage()`方法检查和处理错误。
+
+3. **本地导入支持**：函数体内可以包含`import`语句，导入的模块在函数作用域内可用，不会影响全局作用域。
+
+4. **动态错误恢复**：在函数定义阶段，如果遇到未定义的标识符或暂时无法求值的表达式，会返回占位值而不是立即报错，确保函数定义能够成功完成。
 
 ```python
-// Python函数调用可能抛出异常，异常会传播到脚本解释器
-result = math.sqrt(-1);  // 可能引发ValueError，错误会被记录
+// Python函数调用可能抛出异常，异常会在函数执行时被记录
+def risky_operation():
+    import math
+    # 这个错误只有在函数被调用时才会发生
+    return math.sqrt(-1)  # 可能引发ValueError
 
 // 错误检查需要通过C++ API进行
 // 在C++中：if (interpreter.hasError()) { ... }
 ```
+
+**注意**：当前版本的PyScript语法不支持try-catch-finally异常处理结构。Python异常会在脚本执行时传播到调用方。
 
 ## 10. Python类集成
 
@@ -664,16 +703,34 @@ PyScript支持多种错误类型：
 | `ImportError` | 导入错误 | `import nonexistent;` |
 
 ### 12.2 错误处理机制
-PyScript不支持try-catch-finally异常处理语法。错误处理通过以下方式进行：
+PyScript的错误处理机制具有以下特点：
 
-1. **语法错误**：在解析阶段被捕获，通过`hasError()`和`getErrorMessage()`获取
-2. **运行时错误**：在脚本执行时被记录，可以通过C++ API检查
-3. **Python异常**：Python函数抛出的异常会传播到解释器
+1. **分层错误处理**：
+   - **语法错误**：在解析阶段被捕获，通过`hasError()`和`getErrorMessage()`获取
+   - **运行时错误**：在脚本执行时被记录，可以通过C++ API检查
+   - **Python异常**：Python函数抛出的异常会传播到解释器
+
+2. **函数定义阶段的智能错误抑制**：
+   - 在函数定义阶段，PyScript会抑制内部表达式的求值错误
+   - 允许函数体包含复杂的Python表达式、导入语句和列表推导式
+   - 对于未定义的标识符或暂时无法求值的表达式，返回占位值而不是立即报错
+
+3. **动态错误恢复**：
+   - 对于属性访问失败的情况，返回`null`而不是报错，允许脚本继续执行
+   - 对于下标赋值遇到不支持的类型时，返回`null`而不是报错
+   - 对于列表推导式在函数定义阶段，跳过求值并阻止访问子节点
 
 ```python
 // 错误示例 - 这些错误会被记录但不会在脚本中处理
 x = undefined_var;  // NameError: 变量未定义
 result = 10 / 0;    // ZeroDivisionError: 除以零
+
+// 但在函数定义阶段，类似的错误会被抑制
+def complex_function():
+    # 这些表达式在函数定义阶段不会报错
+    y = undefined_in_function  # 不会报错，返回占位值
+    arr = [i * 2 for i in range(10)]  # 列表推导式正常执行
+    return y + len(arr)
 
 // 错误检查需要通过C++ API进行：
 // if (interpreter.hasError()) {
@@ -681,6 +738,16 @@ result = 10 / 0;    // ZeroDivisionError: 除以零
 //     // 处理错误...
 // }
 ```
+
+### 12.3 错误抑制策略
+PyScript在以下情况下会抑制错误：
+
+1. **函数定义阶段**：所有表达式求值错误都会被抑制
+2. **属性访问失败**：返回`null`而不是报错
+3. **列表推导式求值**：在函数定义阶段跳过求值
+4. **for语句求值**：在函数定义阶段跳过求值
+
+这种设计使得PyScript能够处理包含复杂Python代码的函数定义，而不会因为解析阶段的限制而失败。
 
 ### 12.3 自定义异常
 ```python
@@ -1212,14 +1279,15 @@ interpreter.setTimeout(30);  // 30秒
 
 ---
 
-**文档版本**: 1.0  
-**最后更新**: 2025年12月23日  
+**文档版本**: 1.1  
+**最后更新**: 2025年12月30日  
 **作者**: Cline (AI Assistant)  
 **适用项目**: pybind11callpython  
 **相关文件**: 
 - `antlr/PyScript.g4`（语法定义）
 - `include/script_interpreter.h`（解释器接口）
 - `src/script_interpreter.cpp`（解释器实现）
+- `src/ast_visitor.cpp`（语法树访问器）
 - `test_*.cpp`（测试用例）
 - `TECHNICAL_DOCUMENT.md`（技术文档）
 
