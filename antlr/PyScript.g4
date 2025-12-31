@@ -92,7 +92,8 @@ smallStatement
     ;
 
 compoundStatement
-    : functionDef
+    : decoratedDef
+    | functionDef
     | asyncFunctionDef
     | classDef
     | ifStatement
@@ -152,7 +153,19 @@ awaitExpr
     ;
 
 classDef
-    : CLASS IDENTIFIER COLON suite
+    : CLASS IDENTIFIER (LPAREN expression (COMMA expression)* RPAREN)? (decorators)? COLON suite
+    ;
+
+decoratedDef
+    : decorators (functionDef | classDef)
+    ;
+
+decorators
+    : decorator+
+    ;
+
+decorator
+    : AT expression NEWLINE
     ;
 
 /* =========================
@@ -418,6 +431,7 @@ WITH    : 'with';
 ASYNC   : 'async';
 AWAIT   : 'await';
 CLASS   : 'class';
+AT      : '@';
 
 TRUE    : 'true';
 FALSE   : 'false';

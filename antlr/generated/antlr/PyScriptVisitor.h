@@ -47,6 +47,12 @@ public:
 
     virtual std::any visitClassDef(PyScriptParser::ClassDefContext *context) = 0;
 
+    virtual std::any visitDecoratedDef(PyScriptParser::DecoratedDefContext *context) = 0;
+
+    virtual std::any visitDecorators(PyScriptParser::DecoratorsContext *context) = 0;
+
+    virtual std::any visitDecorator(PyScriptParser::DecoratorContext *context) = 0;
+
     virtual std::any visitSuite(PyScriptParser::SuiteContext *context) = 0;
 
     virtual std::any visitFunctionDef(PyScriptParser::FunctionDefContext *context) = 0;

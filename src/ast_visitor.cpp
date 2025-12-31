@@ -2906,6 +2906,32 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
     return any();
 }
 
+any AstVisitor::visitDecorators(PyScriptParser::DecoratorsContext *ctx) {
+    return visitChildren(ctx);
+}
+
+any AstVisitor::visitDecorator(PyScriptParser::DecoratorContext *ctx) {
+    return visitChildren(ctx);
+}
+
+any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
+    // 直接执行整段文本（包含装饰器+定义），让 Python 处理装饰器应用
+    try {
+        auto start = ctx->getStart()->getStartIndex();
+        auto stop = ctx->getStop()->getStopIndex();
+        auto input = ctx->getStart()->getTokenSource()->getInputStream();
+        std::string text = input->getText(antlr4::misc::Interval(start, stop));
+        if (text.empty() || text.back() != '\n') {
+            text.push_back('\n');
+        }
+        py::exec(py::str(text), py::globals(), py::globals());
+    } catch (const std::exception& e) {
+        reportError("Failed to execute decorated definition: " + string(e.what()), ctx);
+        return any();
+    }
+    return any();
+}
+
 any AstVisitor::visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) {
     // async def 与普通 def 等价处理
     return visitFunctionDef(ctx->functionDef());

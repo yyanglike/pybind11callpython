@@ -56,6 +56,15 @@ public:
   virtual void enterClassDef(PyScriptParser::ClassDefContext *ctx) = 0;
   virtual void exitClassDef(PyScriptParser::ClassDefContext *ctx) = 0;
 
+  virtual void enterDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) = 0;
+  virtual void exitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) = 0;
+
+  virtual void enterDecorators(PyScriptParser::DecoratorsContext *ctx) = 0;
+  virtual void exitDecorators(PyScriptParser::DecoratorsContext *ctx) = 0;
+
+  virtual void enterDecorator(PyScriptParser::DecoratorContext *ctx) = 0;
+  virtual void exitDecorator(PyScriptParser::DecoratorContext *ctx) = 0;
+
   virtual void enterSuite(PyScriptParser::SuiteContext *ctx) = 0;
   virtual void exitSuite(PyScriptParser::SuiteContext *ctx) = 0;
 

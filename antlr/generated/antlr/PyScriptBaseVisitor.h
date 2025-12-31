@@ -71,6 +71,18 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDecorators(PyScriptParser::DecoratorsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDecorator(PyScriptParser::DecoratorContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitSuite(PyScriptParser::SuiteContext *ctx) override {
     return visitChildren(ctx);
   }

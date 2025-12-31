@@ -58,6 +58,15 @@ public:
   virtual void enterClassDef(PyScriptParser::ClassDefContext * /*ctx*/) override { }
   virtual void exitClassDef(PyScriptParser::ClassDefContext * /*ctx*/) override { }
 
+  virtual void enterDecoratedDef(PyScriptParser::DecoratedDefContext * /*ctx*/) override { }
+  virtual void exitDecoratedDef(PyScriptParser::DecoratedDefContext * /*ctx*/) override { }
+
+  virtual void enterDecorators(PyScriptParser::DecoratorsContext * /*ctx*/) override { }
+  virtual void exitDecorators(PyScriptParser::DecoratorsContext * /*ctx*/) override { }
+
+  virtual void enterDecorator(PyScriptParser::DecoratorContext * /*ctx*/) override { }
+  virtual void exitDecorator(PyScriptParser::DecoratorContext * /*ctx*/) override { }
+
   virtual void enterSuite(PyScriptParser::SuiteContext * /*ctx*/) override { }
   virtual void exitSuite(PyScriptParser::SuiteContext * /*ctx*/) override { }
 

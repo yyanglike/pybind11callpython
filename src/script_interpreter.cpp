@@ -577,6 +577,18 @@ any ScriptInterpreter::visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) {
     return ast_visitor_.visitAwaitExpr(ctx);
 }
 
+any ScriptInterpreter::visitDecorators(PyScriptParser::DecoratorsContext *ctx) {
+    return ast_visitor_.visitDecorators(ctx);
+}
+
+any ScriptInterpreter::visitDecorator(PyScriptParser::DecoratorContext *ctx) {
+    return ast_visitor_.visitDecorator(ctx);
+}
+
+any ScriptInterpreter::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
+    return ast_visitor_.visitDecoratedDef(ctx);
+}
+
 any ScriptInterpreter::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
     return ast_visitor_.visitClassDef(ctx);
 }

@@ -18,12 +18,12 @@ public:
     DEF = 1, IF = 2, ELSE = 3, FOR = 4, WHILE = 5, RETURN = 6, IMPORT = 7, 
     FROM = 8, AS = 9, IN = 10, PASS = 11, NEW = 12, LAMBDA = 13, TRY = 14, 
     EXCEPT = 15, FINALLY = 16, WITH = 17, ASYNC = 18, AWAIT = 19, CLASS = 20, 
-    TRUE = 21, FALSE = 22, NONE = 23, AND = 24, OR = 25, NOT = 26, PLUS = 27, 
-    MINUS = 28, MUL = 29, DIV = 30, MOD = 31, EQ = 32, NE = 33, LT = 34, 
-    LE = 35, GT = 36, GE = 37, ASSIGN = 38, SEMI = 39, LPAREN = 40, RPAREN = 41, 
-    LBRACK = 42, RBRACK = 43, LBRACE = 44, RBRACE = 45, COMMA = 46, COLON = 47, 
-    DOT = 48, DOUBLE_STAR = 49, NEWLINE = 50, IDENTIFIER = 51, INTEGER = 52, 
-    FLOAT = 53, STRING = 54, WS = 55, COMMENT = 56
+    AT = 21, TRUE = 22, FALSE = 23, NONE = 24, AND = 25, OR = 26, NOT = 27, 
+    PLUS = 28, MINUS = 29, MUL = 30, DIV = 31, MOD = 32, EQ = 33, NE = 34, 
+    LT = 35, LE = 36, GT = 37, GE = 38, ASSIGN = 39, SEMI = 40, LPAREN = 41, 
+    RPAREN = 42, LBRACK = 43, RBRACK = 44, LBRACE = 45, RBRACE = 46, COMMA = 47, 
+    COLON = 48, DOT = 49, DOUBLE_STAR = 50, NEWLINE = 51, IDENTIFIER = 52, 
+    INTEGER = 53, FLOAT = 54, STRING = 55, WS = 56, COMMENT = 57
   };
 
   explicit PyScriptLexer(antlr4::CharStream *input);
