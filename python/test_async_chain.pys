@@ -1,0 +1,12 @@
+# async/await 同步执行链式调用
+async def inc(x):
+    return x + 1
+
+async def add(a, b):
+    return a + b
+
+res1 = await inc(1)
+res2 = await add(res1, 5)
+print("async_chain", res1, res2)
+
+

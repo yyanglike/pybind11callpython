@@ -1,0 +1,12 @@
+# async def 等价普通 def，await 直接求值
+async def add(a, b):
+    return a + b
+
+async def square(x):
+    return x * x
+
+res1 = await add(2, 3)
+res2 = await square(res1)
+print("async_result", res1, res2)
+
+

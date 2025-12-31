@@ -552,3 +552,27 @@ any ScriptInterpreter::visitTryStatement(PyScriptParser::TryStatementContext *ct
 any ScriptInterpreter::visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) {
     return ast_visitor_.visitExceptClause(ctx);
 }
+
+any ScriptInterpreter::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
+    return ast_visitor_.visitWithStatement(ctx);
+}
+
+any ScriptInterpreter::visitWithItem(PyScriptParser::WithItemContext *ctx) {
+    return ast_visitor_.visitWithItem(ctx);
+}
+
+any ScriptInterpreter::visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) {
+    return ast_visitor_.visitAsyncFunctionDef(ctx);
+}
+
+any ScriptInterpreter::visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) {
+    return ast_visitor_.visitAsyncForStatement(ctx);
+}
+
+any ScriptInterpreter::visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) {
+    return ast_visitor_.visitAsyncWithStatement(ctx);
+}
+
+any ScriptInterpreter::visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) {
+    return ast_visitor_.visitAwaitExpr(ctx);
+}

@@ -1,0 +1,5 @@
+# 多重 for/if 生成器表达式，惰性求值（不做算术，直接返回 x）
+g = (x for x in [1, 2, 3] for y in [4, 5, 6] if y % 2 == 0)
+print("gen_multi", list(g))
+
+

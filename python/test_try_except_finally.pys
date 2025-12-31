@@ -1,0 +1,17 @@
+# try/except/finally 行为验证（不抛异常，走 else + finally）
+def risky(v):
+    if v == "ok":
+        return "safe"
+    return "warn"
+
+try:
+    val = risky("ok")
+    print("try", val)
+except Exception as e:
+    print("caught", str(e))
+else:
+    print("else-branch")
+finally:
+    print("finally-done")
+
+

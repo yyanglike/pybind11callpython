@@ -1,0 +1,11 @@
+# 验证多级 for/if 推导式（最简路径，避免未支持的比较运算）
+pairs = [ x for x in [1, 2, 3] for y in [5, 6] ]
+print("pairs", pairs)
+
+sets = { y for x in [2, 3] for y in [4, 5] }
+print("sets", sorted(list(sets)))
+
+dic = { x: y for x in [1, 2, 3] for y in [10, 20] }
+print("dict", dic)
+
+

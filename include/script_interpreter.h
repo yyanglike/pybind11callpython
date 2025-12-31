@@ -144,6 +144,12 @@ public:
     std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) override;
     std::any visitTryStatement(PyScriptParser::TryStatementContext *ctx) override;
     std::any visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) override;
+    std::any visitWithStatement(PyScriptParser::WithStatementContext *ctx) override;
+    std::any visitWithItem(PyScriptParser::WithItemContext *ctx) override;
+    std::any visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) override;
+    std::any visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) override;
+    std::any visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) override;
+    std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) override;
     
     // 以下方法在新的语法中可能不存在，提供空实现或移除
     // 注意：这些方法在生成的Visitor中可能不存在，我们需要检查

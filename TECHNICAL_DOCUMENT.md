@@ -1030,7 +1030,18 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-### 9.2 性能测试与分析
+### 9.2 PyScript 解释器回归脚本
+- 运行命令：`for f in python/*.pys; do ./build/run_pys_script "$f" || break; done`
+- 覆盖要点：
+  - f-string：单/双/三引号，多行，格式说明符（示例：`test_fstring_triple.pys`）
+  - 推导式：list/dict/set 多重 for/if 显式求值，无 eval（示例：`test_comprehension_multifor_if.pys`）
+  - 生成器表达式：惰性执行，支持多重 for/if
+  - 异步语法（同步执行）：`async def/for/with` 与 `await` 可等待对象使用 `asyncio.run` 同步运行（示例：`test_async_def_and_await.pys`、`test_async_for_nested.pys`、`test_async_with_ctx.pys`）
+  - 上下文管理：with/async with 调用 `__enter__` / `__exit__`
+  - sys.argv 注入、函数体缩进提取：由运行器统一处理
+- 已知限制：真异步调度未实现；部分 Python 对象的算术/比较仍可能报 “Unsupported binary operator”，回归样例已尽量规避复杂算术/解构。
+
+### 9.3 性能测试与分析
 
 #### 9.2.1 性能测试代码
 ```cpp

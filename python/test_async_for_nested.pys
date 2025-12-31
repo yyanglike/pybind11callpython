@@ -1,0 +1,12 @@
+# async for 等价 for；嵌套 for/if 推导验证
+async for x in [1, 2, 3]:
+    if x == 1:
+        continue
+    lst = [ x * 100 + y for y in [10, 11, 12] if y % 2 == 0 ]
+    print("async_for", x, lst)
+
+# 多级推导式（无元组，避免未实现的 tuple 支持）
+pairs = [ x * 1000 + y for x in [1, 2, 3] if x > 1 for y in [10, 11] if y % 2 == 1 ]
+print("pairs", pairs)
+
+

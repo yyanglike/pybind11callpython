@@ -35,6 +35,24 @@ public:
   virtual void enterExceptClause(PyScriptParser::ExceptClauseContext *ctx) = 0;
   virtual void exitExceptClause(PyScriptParser::ExceptClauseContext *ctx) = 0;
 
+  virtual void enterWithStatement(PyScriptParser::WithStatementContext *ctx) = 0;
+  virtual void exitWithStatement(PyScriptParser::WithStatementContext *ctx) = 0;
+
+  virtual void enterWithItem(PyScriptParser::WithItemContext *ctx) = 0;
+  virtual void exitWithItem(PyScriptParser::WithItemContext *ctx) = 0;
+
+  virtual void enterAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) = 0;
+  virtual void exitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) = 0;
+
+  virtual void enterAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) = 0;
+  virtual void exitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) = 0;
+
+  virtual void enterAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) = 0;
+  virtual void exitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) = 0;
+
+  virtual void enterAwaitExpr(PyScriptParser::AwaitExprContext *ctx) = 0;
+  virtual void exitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) = 0;
+
   virtual void enterSuite(PyScriptParser::SuiteContext *ctx) = 0;
   virtual void exitSuite(PyScriptParser::SuiteContext *ctx) = 0;
 

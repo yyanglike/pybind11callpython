@@ -43,6 +43,30 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitWithStatement(PyScriptParser::WithStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitWithItem(PyScriptParser::WithItemContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitSuite(PyScriptParser::SuiteContext *ctx) override {
     return visitChildren(ctx);
   }

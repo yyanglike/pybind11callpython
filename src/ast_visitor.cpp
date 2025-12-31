@@ -296,14 +296,22 @@ any AstVisitor::visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) 
 any AstVisitor::visitCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) {
     if (ctx->functionDef()) {
         return visit(ctx->functionDef());
+    } else if (ctx->asyncFunctionDef()) {
+        return visit(ctx->asyncFunctionDef());
     } else if (ctx->ifStatement()) {
         return visit(ctx->ifStatement());
     } else if (ctx->whileStatement()) {
         return visit(ctx->whileStatement());
     } else if (ctx->forStatement()) {
         return visit(ctx->forStatement());
+    } else if (ctx->asyncForStatement()) {
+        return visit(ctx->asyncForStatement());
     } else if (ctx->tryStatement()) {
         return visit(ctx->tryStatement());
+    } else if (ctx->withStatement()) {
+        return visit(ctx->withStatement());
+    } else if (ctx->asyncWithStatement()) {
+        return visit(ctx->asyncWithStatement());
     }
 
     reportError("Unknown compound statement type", ctx);
@@ -1452,6 +1460,17 @@ any AstVisitor::visitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) 
 }
 
 any AstVisitor::visitUnary(PyScriptParser::UnaryContext *ctx) {
+    // awaitExpr 分支
+    if (ctx->awaitExpr()) {
+        auto awaitedAny = visit(ctx->awaitExpr());
+        try {
+            return any(any_cast<shared_ptr<ScriptValue>>(awaitedAny));
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate await expression", ctx);
+            return any();
+        }
+    }
+
     auto atomCtx = ctx->atom();
     if (!atomCtx) {
         reportError("Missing atom in unary expression", ctx);
@@ -1528,6 +1547,8 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
         return visit(ctx->setLiteral());
     } else if (ctx->generatorExpression()) {
         return visit(ctx->generatorExpression());
+    } else if (ctx->awaitExpr()) {
+        return visit(ctx->awaitExpr());
     } else if (ctx->newExpression()) {
         return visit(ctx->newExpression());
     } else if (ctx->lambdaExpression()) {
@@ -2178,43 +2199,104 @@ any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext 
         return any(ScriptValue::createNull());
     }
     auto exprs = ctx->expression();
-    if (exprs.size() != 3 || !ctx->IDENTIFIER()) {
+    if (exprs.empty() || !ctx->IDENTIFIER()) {
         reportError("Invalid dict comprehension", ctx);
         return any();
     }
     auto keyExpr = exprs[0];
     auto valExpr = exprs[1];
-    auto iterExpr = exprs[2];
-    std::string varName = ctx->IDENTIFIER()->getText();
 
-    auto iterVal = evaluateExpression(iterExpr);
-    if (!iterVal) {
-        reportError("Cannot evaluate dict comprehension iterable", ctx);
+    struct CompClause {
+        std::string var;
+        PyScriptParser::ExpressionContext* iter;
+        PyScriptParser::ExpressionContext* cond;
+    };
+    std::vector<CompClause> clauses;
+    auto children = ctx->children;
+    size_t idx = 0;
+    // expressions: key, value, then per-clause iter/cond
+    if (!children.empty()) {
+        // find first FOR after key/val
+        while (idx < children.size()) {
+            auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+            if (t_for && t_for->getSymbol()->getType() == PyScriptParser::FOR) break;
+            ++idx;
+        }
+    }
+    while (idx < children.size()) {
+        auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+        if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
+        if (idx + 3 >= children.size()) break;
+        auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
+        auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
+        if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
+        CompClause clause{ idNode->getText(), iterExprNode, nullptr };
+        idx += 4;
+        if (idx + 1 < children.size()) {
+            auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+            auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
+            if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
+                clause.cond = condExprNode;
+                idx += 2;
+            }
+        }
+        clauses.push_back(std::move(clause));
+    }
+    if (clauses.empty()) {
+        reportError("Invalid dict comprehension clauses", ctx);
         return any();
     }
 
     auto dictVal = ScriptValue::createDictionary();
-    auto oldVar = variable_manager_.getVariable(varName);
-    try {
-        for (auto item : toIterator(iterVal)) {
-            py::object obj = py::reinterpret_borrow<py::object>(item);
-            variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(obj));
+    std::vector<std::shared_ptr<ScriptValue>> oldVars;
+    oldVars.reserve(clauses.size());
+    for (auto& c : clauses) {
+        oldVars.push_back(variable_manager_.getVariable(c.var));
+    }
+
+    std::function<bool(size_t)> evalClause = [&](size_t depth) -> bool {
+        if (depth == clauses.size()) {
             auto keyVal = evaluateExpression(keyExpr);
             auto valVal = evaluateExpression(valExpr);
             if (!keyVal || !valVal) {
                 reportError("Cannot evaluate dict comprehension key/value", ctx);
-                return any();
+                return false;
             }
-            std::string keyStr = keyVal->toString();
-            dictVal->setKey(keyStr, valVal);
+            dictVal->setKey(keyVal->toString(), valVal);
+            return true;
         }
-    } catch (const py::error_already_set& e) {
-        reportError("Failed to evaluate dict comprehension: " + string(e.what()), ctx);
-        return any();
+        auto& clause = clauses[depth];
+        auto iterVal = evaluateExpression(clause.iter);
+        if (!iterVal) {
+            reportError("Cannot evaluate dict comprehension iterable", ctx);
+            return false;
+        }
+        try {
+            for (auto item : toIterator(iterVal)) {
+                py::object obj = py::reinterpret_borrow<py::object>(item);
+                variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                if (clause.cond) {
+                    auto condVal = evaluateExpression(clause.cond);
+                    if (!condVal) {
+                        reportError("Cannot evaluate dict comprehension filter", ctx);
+                        return false;
+                    }
+                    if (!expression_evaluator_.isTruthy(condVal)) continue;
+                }
+                if (!evalClause(depth + 1)) return false;
+            }
+        } catch (const py::error_already_set& e) {
+            reportError("Failed to evaluate dict comprehension: " + string(e.what()), ctx);
+            return false;
+        }
+        return true;
+    };
+
+    bool ok = evalClause(0);
+    for (size_t i = 0; i < clauses.size(); ++i) {
+        if (oldVars[i]) variable_manager_.setVariable(clauses[i].var, oldVars[i]);
     }
-    if (oldVar) {
-        variable_manager_.setVariable(varName, oldVar);
-    }
+    if (!ok) return any();
     return any(dictVal);
 }
 
@@ -2231,36 +2313,96 @@ any AstVisitor::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
     // 推导式
     if (elementsCtx->IDENTIFIER() && elementsCtx->expression().size() >= 2) {
         auto exprs = elementsCtx->expression();
-        if (exprs.size() != 2) {
+        if (exprs.size() < 2) {
             reportError("Invalid set comprehension", ctx);
             return any();
         }
         auto elemExpr = exprs[0];
-        auto iterExpr = exprs[1];
-        std::string varName = elementsCtx->IDENTIFIER()->getText();
-        auto iterVal = evaluateExpression(iterExpr);
-        if (!iterVal) {
-            reportError("Cannot evaluate set comprehension iterable", ctx);
+        struct CompClause {
+            std::string var;
+            PyScriptParser::ExpressionContext* iter;
+            PyScriptParser::ExpressionContext* cond;
+        };
+        std::vector<CompClause> clauses;
+        auto children = elementsCtx->children;
+        size_t idx = 0;
+        // skip first expression child
+        if (!children.empty() && dynamic_cast<PyScriptParser::ExpressionContext*>(children[0]) == elemExpr) {
+            idx = 1;
+        }
+        while (idx < children.size()) {
+            auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+            if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
+            if (idx + 3 >= children.size()) break;
+            auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
+            auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
+            if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
+            CompClause clause{ idNode->getText(), iterExprNode, nullptr };
+            idx += 4;
+            if (idx + 1 < children.size()) {
+                auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+                auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
+                if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
+                    clause.cond = condExprNode;
+                    idx += 2;
+                }
+            }
+            clauses.push_back(std::move(clause));
+        }
+        if (clauses.empty()) {
+            reportError("Invalid set comprehension", ctx);
             return any();
         }
+
         py::set s;
-        auto oldVar = variable_manager_.getVariable(varName);
-        try {
-            for (auto item : toIterator(iterVal)) {
-                py::object obj = py::reinterpret_borrow<py::object>(item);
-                variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(obj));
+        std::vector<std::shared_ptr<ScriptValue>> oldVars;
+        oldVars.reserve(clauses.size());
+        for (auto& c : clauses) {
+            oldVars.push_back(variable_manager_.getVariable(c.var));
+        }
+
+        std::function<bool(size_t)> evalClause = [&](size_t depth) -> bool {
+            if (depth == clauses.size()) {
                 auto val = evaluateExpression(elemExpr);
                 if (!val) {
                     reportError("Cannot evaluate set comprehension element", ctx);
-                    return any();
+                    return false;
                 }
                 s.add(val->toPythonObject());
+                return true;
             }
-        } catch (const py::error_already_set& e) {
-            reportError("Failed to evaluate set comprehension: " + string(e.what()), ctx);
-            return any();
+            auto& clause = clauses[depth];
+            auto iterVal = evaluateExpression(clause.iter);
+            if (!iterVal) {
+                reportError("Cannot evaluate set comprehension iterable", ctx);
+                return false;
+            }
+            try {
+                for (auto item : toIterator(iterVal)) {
+                    py::object obj = py::reinterpret_borrow<py::object>(item);
+                    variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                    if (clause.cond) {
+                        auto condVal = evaluateExpression(clause.cond);
+                        if (!condVal) {
+                            reportError("Cannot evaluate set comprehension filter", ctx);
+                            return false;
+                        }
+                        if (!expression_evaluator_.isTruthy(condVal)) continue;
+                    }
+                    if (!evalClause(depth + 1)) return false;
+                }
+            } catch (const py::error_already_set& e) {
+                reportError("Failed to evaluate set comprehension: " + string(e.what()), ctx);
+                return false;
+            }
+            return true;
+        };
+
+        bool ok = evalClause(0);
+        for (size_t i = 0; i < clauses.size(); ++i) {
+            if (oldVars[i]) variable_manager_.setVariable(clauses[i].var, oldVars[i]);
         }
-        if (oldVar) variable_manager_.setVariable(varName, oldVar);
+        if (!ok) return any();
         return any(ScriptValue::fromPythonObject(s));
     }
 
@@ -2293,26 +2435,48 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
         return any(ScriptValue::createNull());
     }
     auto exprs = ctx->expression();
-    if (exprs.size() != 2 || !ctx->IDENTIFIER()) {
+    if (exprs.empty() || !ctx->IDENTIFIER()) {
         reportError("Invalid generator expression", ctx);
         return any();
     }
     auto bodyExpr = exprs[0];
-    auto iterExpr = exprs[1];
-    std::string varName = ctx->IDENTIFIER()->getText();
-    auto iterVal = evaluateExpression(iterExpr);
-    if (!iterVal) {
-        reportError("Cannot evaluate generator iterable", ctx);
+
+    struct CompClause {
+        std::string var;
+        PyScriptParser::ExpressionContext* iter;
+        PyScriptParser::ExpressionContext* cond;
+    };
+    std::vector<CompClause> clauses;
+    auto children = ctx->children;
+    size_t idx = 0;
+    // skip first expression child
+    if (!children.empty() && dynamic_cast<PyScriptParser::ExpressionContext*>(children[0]) == bodyExpr) {
+        idx = 1;
+    }
+    while (idx < children.size()) {
+        auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+        if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
+        if (idx + 3 >= children.size()) break;
+        auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
+        auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
+        if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
+        CompClause clause{ idNode->getText(), iterExprNode, nullptr };
+        idx += 4;
+        if (idx + 1 < children.size()) {
+            auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+            auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
+            if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
+                clause.cond = condExprNode;
+                idx += 2;
+            }
+        }
+        clauses.push_back(std::move(clause));
+    }
+    if (clauses.empty()) {
+        reportError("Invalid generator expression clauses", ctx);
         return any();
     }
-    py::object iterObj = iterVal->toPythonObject();
-    // 包装主体表达式：接受一个参数（迭代元素），写入变量，再求值
-    py::object bodyFunc = py::cpp_function([this, bodyExpr, varName](py::object item) {
-        variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(item));
-        auto val = evaluateExpression(bodyExpr);
-        if (!val) throw std::runtime_error("Cannot evaluate generator element");
-        return val->toPythonObject();
-    });
+
     py::module_ m = py::module_::import("__main__");
     if (!py::hasattr(m, "__gen_map__")) {
         py::exec(
@@ -2321,8 +2485,50 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
             "        yield func(_x)\n",
             m.attr("__dict__"));
     }
-    py::object gen_map = m.attr("__gen_map__");
-    py::object gen = gen_map(iterObj, bodyFunc);
+    if (!py::hasattr(m, "__gen_map_if__")) {
+        py::exec(
+            "def __gen_map_if__(iterable, func, pred):\n"
+            "    for _x in iterable:\n"
+            "        if pred(_x):\n"
+            "            yield func(_x)\n",
+            m.attr("__dict__"));
+    }
+
+    std::function<py::object(size_t, py::object)> buildGen;
+    buildGen = [&](size_t depth, py::object upstream) -> py::object {
+        auto& clause = clauses[depth];
+        py::object mapper = py::cpp_function([this, bodyExpr, clause](py::object item) {
+            variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(item));
+            auto val = evaluateExpression(bodyExpr);
+            if (!val) throw std::runtime_error("Cannot evaluate generator element");
+            return val->toPythonObject();
+        });
+        py::object pred;
+        if (clause.cond) {
+            pred = py::cpp_function([this, clause](py::object item) {
+                variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(item));
+                auto condVal = evaluateExpression(clause.cond);
+                if (!condVal) throw std::runtime_error("Cannot evaluate generator filter");
+                return py::bool_(expression_evaluator_.isTruthy(condVal));
+            });
+        }
+        auto genMap = pred ? m.attr("__gen_map_if__") : m.attr("__gen_map__");
+        py::object current = pred ? genMap(upstream, mapper, pred) : genMap(upstream, mapper);
+        if (depth + 1 == clauses.size()) {
+            return current;
+        }
+        // downstream mapper uses next clause variable, so rebuild mapper with next clause in recursion
+        return buildGen(depth + 1, current);
+    };
+
+    // seed with first iterable
+    auto firstIterVal = evaluateExpression(clauses[0].iter);
+    if (!firstIterVal) {
+        reportError("Cannot evaluate generator iterable", ctx);
+        return any();
+    }
+    py::object firstIterObj = firstIterVal->toPythonObject();
+    py::object gen = buildGen(0, firstIterObj);
     return any(ScriptValue::fromPythonObject(gen));
 }
 
@@ -2466,7 +2672,7 @@ any AstVisitor::visitPower(PyScriptParser::PowerContext *ctx) {
 }
 
 any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
-    // listElements: expression (COMMA expression)* COMMA? | expression FOR IDENTIFIER IN expression
+    // listElements: expression (COMMA expression)* COMMA? | expression FOR IDENTIFIER IN expression (IF expression)? (FOR IDENTIFIER IN expression (IF expression)?)* 
     logger_.debug("visitListElements called");
     
     // 如果正在定义函数，跳过列表推导式的求值，返回特殊标记阻止访问子节点
@@ -2480,41 +2686,99 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
     if (ctx->FOR()) {
         logger_.debug("List comprehension detected");
         auto expressions = ctx->expression();
-        if (expressions.size() != 2 || !ctx->IDENTIFIER()) {
+        if (expressions.empty() || !ctx->IDENTIFIER()) {
             reportError("Invalid list comprehension syntax", ctx);
             return any();
         }
         auto outputExpr = expressions[0];
-        auto iterExpr = expressions[1];
-        string varName = ctx->IDENTIFIER()->getText();
 
-        auto iterVal = evaluateExpression(iterExpr);
-        if (!iterVal) {
-            reportError("Cannot evaluate list comprehension iterable", ctx);
+        struct CompClause {
+            std::string var;
+            PyScriptParser::ExpressionContext* iter;
+            PyScriptParser::ExpressionContext* cond; // may be nullptr
+        };
+        std::vector<CompClause> clauses;
+        auto children = ctx->children;
+        size_t idx = 0;
+        // skip first expression child
+        if (!children.empty() && dynamic_cast<PyScriptParser::ExpressionContext*>(children[0]) == outputExpr) {
+            idx = 1;
+        }
+        while (idx < children.size()) {
+            auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+            if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
+            if (idx + 3 >= children.size()) break;
+            auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
+            auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
+            if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
+            CompClause clause{ idNode->getText(), iterExprNode, nullptr };
+            idx += 4; // FOR IDENTIFIER IN expr
+            if (idx + 1 < children.size()) {
+                auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
+                auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
+                if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
+                    clause.cond = condExprNode;
+                    idx += 2;
+                }
+            }
+            clauses.push_back(std::move(clause));
+        }
+        if (clauses.empty()) {
+            reportError("Invalid list comprehension syntax", ctx);
             return any();
         }
 
         auto listVal = ScriptValue::createList();
-        // 保存旧值
-        auto oldVar = variable_manager_.getVariable(varName);
-        try {
-            for (auto item : toIterator(iterVal)) {
-                py::object obj = py::reinterpret_borrow<py::object>(item);
-                variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(obj));
+        std::vector<std::shared_ptr<ScriptValue>> oldVars;
+        oldVars.reserve(clauses.size());
+        for (auto& c : clauses) {
+            oldVars.push_back(variable_manager_.getVariable(c.var));
+        }
+
+        std::function<bool(size_t)> evalClause = [&](size_t depth) -> bool {
+            if (depth == clauses.size()) {
                 auto outVal = evaluateExpression(outputExpr);
                 if (!outVal) {
                     reportError("Cannot evaluate list comprehension element", ctx);
-                    return any();
+                    return false;
                 }
                 listVal->append(outVal);
+                return true;
             }
-        } catch (const py::error_already_set& e) {
-            reportError("Failed to evaluate list comprehension: " + string(e.what()), ctx);
-            return any();
+            auto& clause = clauses[depth];
+            auto iterVal = evaluateExpression(clause.iter);
+            if (!iterVal) {
+                reportError("Cannot evaluate list comprehension iterable", ctx);
+                return false;
+            }
+            try {
+                for (auto item : toIterator(iterVal)) {
+                    py::object obj = py::reinterpret_borrow<py::object>(item);
+                    variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                    if (clause.cond) {
+                        auto condVal = evaluateExpression(clause.cond);
+                        if (!condVal) {
+                            reportError("Cannot evaluate list comprehension filter", ctx);
+                            return false;
+                        }
+                        if (!expression_evaluator_.isTruthy(condVal)) {
+                            continue;
+                        }
+                    }
+                    if (!evalClause(depth + 1)) return false;
+                }
+            } catch (const py::error_already_set& e) {
+                reportError("Failed to evaluate list comprehension: " + string(e.what()), ctx);
+                return false;
+            }
+            return true;
+        };
+
+        bool ok = evalClause(0);
+        for (size_t i = 0; i < clauses.size(); ++i) {
+            if (oldVars[i]) variable_manager_.setVariable(clauses[i].var, oldVars[i]);
         }
-        if (oldVar) {
-            variable_manager_.setVariable(varName, oldVar);
-        }
+        if (!ok) return any();
         return any(listVal);
     }
     
@@ -2571,6 +2835,131 @@ any AstVisitor::visitLambdaExpression(PyScriptParser::LambdaExpressionContext *c
         reportError("Failed to create lambda: " + string(e.what()), ctx);
         return any();
     }
+}
+
+any AstVisitor::visitWithItem(PyScriptParser::WithItemContext *ctx) {
+    // 单个 with 项，仅用于 visitWithStatement 内部处理
+    return any();
+}
+
+any AstVisitor::visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) {
+    auto val = evaluateExpression(ctx->expression());
+    if (!val) {
+        reportError("Cannot evaluate await expression", ctx);
+        return any();
+    }
+    if (val->isPythonObject()) {
+        try {
+            py::object obj = val->toPythonObject();
+            if (py::hasattr(obj, "__await__")) {
+                py::object asyncio = py::module_::import("asyncio");
+                py::object res = asyncio.attr("run")(obj);
+                return any(ScriptValue::fromPythonObject(res));
+            }
+        } catch (const py::error_already_set& e) {
+            reportError("Await execution failed: " + string(e.what()), ctx);
+            return any();
+        }
+    }
+    return any(val);
+}
+
+any AstVisitor::visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) {
+    // async def 与普通 def 等价处理
+    return visitFunctionDef(ctx->functionDef());
+}
+
+any AstVisitor::visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) {
+    // async for 等价于普通 for
+    return visitForStatement(ctx->forStatement());
+}
+
+any AstVisitor::visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) {
+    // async with 等价于普通 with
+    return visitWithStatement(ctx->withStatement());
+}
+
+any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
+    if (defining_function_) {
+        return any(ScriptValue::createNull());
+    }
+    auto items = ctx->withItem();
+    if (items.empty()) {
+        reportError("With statement missing items", ctx);
+        return any();
+    }
+
+    struct Entry {
+        std::string asName;
+        py::object exitFunc;
+    };
+    std::vector<Entry> stack;
+    stack.reserve(items.size());
+
+    try {
+        // Enter contexts
+        for (auto item : items) {
+            auto exprCtx = item->expression();
+            if (!exprCtx) {
+                reportError("With item missing expression", ctx);
+                return any();
+            }
+            auto val = evaluateExpression(exprCtx);
+            if (!val) {
+                reportError("Cannot evaluate with expression", ctx);
+                return any();
+            }
+            py::object obj = val->toPythonObject();
+            if (!py::hasattr(obj, "__enter__") || !py::hasattr(obj, "__exit__")) {
+                reportError("With expression has no __enter__/__exit__", ctx);
+                return any();
+            }
+            py::object entered = obj.attr("__enter__")();
+            if (item->IDENTIFIER()) {
+                std::string name = item->IDENTIFIER()->getText();
+                variable_manager_.setVariable(name, ScriptValue::fromPythonObject(entered));
+                stack.push_back({name, obj.attr("__exit__")});
+            } else {
+                stack.push_back({"", obj.attr("__exit__")});
+            }
+        }
+
+        // body
+        auto bodySuite = ctx->suite();
+        if (!bodySuite) {
+            reportError("With statement missing body", ctx);
+            return any();
+        }
+        visit(bodySuite);
+    } catch (const py::error_already_set& e) {
+        // propagate, but ensure exit handlers run
+        for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+            try {
+                it->exitFunc(py::none(), py::none(), py::none());
+            } catch (...) {
+            }
+        }
+        throw;
+    } catch (...) {
+        for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+            try {
+                it->exitFunc(py::none(), py::none(), py::none());
+            } catch (...) {
+            }
+        }
+        throw;
+    }
+
+    // normal exit
+    for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+        try {
+            it->exitFunc(py::none(), py::none(), py::none());
+        } catch (const py::error_already_set& e) {
+            reportError("With __exit__ failed: " + string(e.what()), ctx);
+            return any();
+        }
+    }
+    return any();
 }
 
 any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {

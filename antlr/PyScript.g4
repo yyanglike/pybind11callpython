@@ -93,10 +93,14 @@ smallStatement
 
 compoundStatement
     : functionDef
+    | asyncFunctionDef
     | ifStatement
     | whileStatement
     | forStatement
+    | asyncForStatement
     | tryStatement
+    | withStatement
+    | asyncWithStatement
     ;
 
 /* =========================
@@ -112,6 +116,38 @@ tryStatement
 
 exceptClause
     : EXCEPT (dottedName (AS IDENTIFIER)?)? COLON suite
+    ;
+
+/* =========================
+ * With 语句
+ * ========================= */
+
+withStatement
+    : WITH withItem (COMMA withItem)* COLON suite
+    ;
+
+withItem
+    : expression (AS IDENTIFIER)?
+    ;
+
+/* =========================
+ * Async/await 扩展（同步执行，语义等同非 async）
+ * ========================= */
+
+asyncFunctionDef
+    : ASYNC functionDef
+    ;
+
+asyncForStatement
+    : ASYNC forStatement
+    ;
+
+asyncWithStatement
+    : ASYNC withStatement
+    ;
+
+awaitExpr
+    : AWAIT expression
     ;
 
 /* =========================
@@ -226,6 +262,7 @@ power
 
 unary
     : (NOT | PLUS | MINUS)? atom
+    | awaitExpr
     ;
 
 /* =========================
@@ -242,6 +279,7 @@ primary
     | generatorExpression
     | newExpression
     | lambdaExpression
+    | awaitExpr
     ;
 
 newExpression
@@ -296,7 +334,7 @@ listLiteral
 
 listElements
     : expression (COMMA expression)* COMMA?
-    | expression FOR IDENTIFIER IN expression
+    | expression FOR IDENTIFIER IN expression (IF expression)?
     ;
 
 dictLiteral
@@ -304,7 +342,7 @@ dictLiteral
     ;
 
 dictComprehension
-    : expression COLON expression FOR IDENTIFIER IN expression
+    : expression COLON expression FOR IDENTIFIER IN expression (IF expression)?
     ;
 
 dictItem
@@ -318,11 +356,11 @@ setLiteral
 
 setElements
     : expression (COMMA expression)* COMMA?
-    | expression FOR IDENTIFIER IN expression
+    | expression FOR IDENTIFIER IN expression (IF expression)?
     ;
 
 generatorExpression
-    : LPAREN expression FOR IDENTIFIER IN expression RPAREN
+    : LPAREN expression FOR IDENTIFIER IN expression (IF expression)? RPAREN
     ;
 
 literal
@@ -371,6 +409,9 @@ LAMBDA  : 'lambda';
 TRY     : 'try';
 EXCEPT  : 'except';
 FINALLY : 'finally';
+WITH    : 'with';
+ASYNC   : 'async';
+AWAIT   : 'await';
 
 TRUE    : 'true';
 FALSE   : 'false';

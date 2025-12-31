@@ -111,6 +111,12 @@ public:
     std::any visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) override;
     std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override;
     std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) override;
+    std::any visitWithStatement(PyScriptParser::WithStatementContext *ctx) override;
+    std::any visitWithItem(PyScriptParser::WithItemContext *ctx) override;
+    std::any visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) override;
+    std::any visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) override;
+    std::any visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) override;
+    std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) override;
     
     /**
      * @brief 设置定义函数标志

@@ -17,12 +17,13 @@ public:
   enum {
     DEF = 1, IF = 2, ELSE = 3, FOR = 4, WHILE = 5, RETURN = 6, IMPORT = 7, 
     FROM = 8, AS = 9, IN = 10, PASS = 11, NEW = 12, LAMBDA = 13, TRY = 14, 
-    EXCEPT = 15, FINALLY = 16, TRUE = 17, FALSE = 18, NONE = 19, AND = 20, 
-    OR = 21, NOT = 22, PLUS = 23, MINUS = 24, MUL = 25, DIV = 26, MOD = 27, 
-    EQ = 28, NE = 29, LT = 30, LE = 31, GT = 32, GE = 33, ASSIGN = 34, SEMI = 35, 
-    LPAREN = 36, RPAREN = 37, LBRACK = 38, RBRACK = 39, LBRACE = 40, RBRACE = 41, 
-    COMMA = 42, COLON = 43, DOT = 44, DOUBLE_STAR = 45, NEWLINE = 46, IDENTIFIER = 47, 
-    INTEGER = 48, FLOAT = 49, STRING = 50, WS = 51, COMMENT = 52
+    EXCEPT = 15, FINALLY = 16, WITH = 17, ASYNC = 18, AWAIT = 19, TRUE = 20, 
+    FALSE = 21, NONE = 22, AND = 23, OR = 24, NOT = 25, PLUS = 26, MINUS = 27, 
+    MUL = 28, DIV = 29, MOD = 30, EQ = 31, NE = 32, LT = 33, LE = 34, GT = 35, 
+    GE = 36, ASSIGN = 37, SEMI = 38, LPAREN = 39, RPAREN = 40, LBRACK = 41, 
+    RBRACK = 42, LBRACE = 43, RBRACE = 44, COMMA = 45, COLON = 46, DOT = 47, 
+    DOUBLE_STAR = 48, NEWLINE = 49, IDENTIFIER = 50, INTEGER = 51, FLOAT = 52, 
+    STRING = 53, WS = 54, COMMENT = 55
   };
 
   explicit PyScriptLexer(antlr4::CharStream *input);

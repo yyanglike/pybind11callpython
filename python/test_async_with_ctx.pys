@@ -1,0 +1,7 @@
+# async with 等价 with，使用内置 contextlib.nullcontext
+from contextlib import nullcontext
+
+async with nullcontext("val") as v:
+    print("body", v)
+
+

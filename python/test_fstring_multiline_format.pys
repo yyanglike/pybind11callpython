@@ -1,0 +1,8 @@
+# 多行 f-string + 格式化说明符
+x = 7
+y = "world"
+msg = f"""Hello {y}
+value {x:0>4}"""
+print(msg)
+
+

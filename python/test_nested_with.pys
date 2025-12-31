@@ -1,0 +1,7 @@
+# 嵌套 with / async with 等价同步执行
+from contextlib import nullcontext
+
+with nullcontext("A") as a, nullcontext("B") as b:
+    print("with-nested", a, b)
+
+

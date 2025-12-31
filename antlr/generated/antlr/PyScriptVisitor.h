@@ -33,6 +33,18 @@ public:
 
     virtual std::any visitExceptClause(PyScriptParser::ExceptClauseContext *context) = 0;
 
+    virtual std::any visitWithStatement(PyScriptParser::WithStatementContext *context) = 0;
+
+    virtual std::any visitWithItem(PyScriptParser::WithItemContext *context) = 0;
+
+    virtual std::any visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *context) = 0;
+
+    virtual std::any visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *context) = 0;
+
+    virtual std::any visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *context) = 0;
+
+    virtual std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *context) = 0;
+
     virtual std::any visitSuite(PyScriptParser::SuiteContext *context) = 0;
 
     virtual std::any visitFunctionDef(PyScriptParser::FunctionDefContext *context) = 0;
