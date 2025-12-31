@@ -53,6 +53,9 @@ public:
   virtual void enterAwaitExpr(PyScriptParser::AwaitExprContext *ctx) = 0;
   virtual void exitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) = 0;
 
+  virtual void enterClassDef(PyScriptParser::ClassDefContext *ctx) = 0;
+  virtual void exitClassDef(PyScriptParser::ClassDefContext *ctx) = 0;
+
   virtual void enterSuite(PyScriptParser::SuiteContext *ctx) = 0;
   virtual void exitSuite(PyScriptParser::SuiteContext *ctx) = 0;
 

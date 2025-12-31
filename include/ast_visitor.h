@@ -117,6 +117,7 @@ public:
     std::any visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) override;
     std::any visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) override;
     std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) override;
+    std::any visitClassDef(PyScriptParser::ClassDefContext *ctx) override;
     
     /**
      * @brief 设置定义函数标志

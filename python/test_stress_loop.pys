@@ -1,0 +1,34 @@
+# 长时间/多轮回归，覆盖 f-string、推导式、生成器、with、try/except、await
+async def echo(x):
+    return x
+
+async def main():
+    total = 0
+    count = 0
+    for i in range(200):  # 可调大，但200轮足够覆盖而不至于过慢
+        s = "val-%04d" % i
+        lst = [x * y for x in (i % 5, i % 5 + 1) for y in (1, 2) if y % 2 == 0]
+        gen_sum = sum(x for x in lst)
+        total += gen_sum
+        count += len(lst)
+
+        # 简单异常路径
+        try:
+            if i == 1:
+                raise ValueError("boom")
+        except ValueError:
+            pass
+
+        # 适度 await，避免频繁事件循环开销
+        if i % 50 == 0:
+            res = await echo(i)
+            total += res
+
+        if i % 100 == 0:
+            print("progress", i, s, gen_sum)
+
+    print("stress_done", total, count)
+
+
+await main()
+

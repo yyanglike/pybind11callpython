@@ -1,0 +1,15 @@
+# 自定义上下文管理器类，验证 __enter__/__exit__ 与 with 语义
+class MyCtx:
+    def __init__(self, v):
+        self.v = v
+    def __enter__(self):
+        print("enter", self.v)
+        return self.v * 2
+    def __exit__(self, exc_type, exc, tb):
+        print("exit", exc_type is None)
+        return False
+
+with MyCtx(3) as v:
+    print("body", v)
+
+

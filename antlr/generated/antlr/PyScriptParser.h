@@ -14,32 +14,33 @@ public:
   enum {
     DEF = 1, IF = 2, ELSE = 3, FOR = 4, WHILE = 5, RETURN = 6, IMPORT = 7, 
     FROM = 8, AS = 9, IN = 10, PASS = 11, NEW = 12, LAMBDA = 13, TRY = 14, 
-    EXCEPT = 15, FINALLY = 16, WITH = 17, ASYNC = 18, AWAIT = 19, TRUE = 20, 
-    FALSE = 21, NONE = 22, AND = 23, OR = 24, NOT = 25, PLUS = 26, MINUS = 27, 
-    MUL = 28, DIV = 29, MOD = 30, EQ = 31, NE = 32, LT = 33, LE = 34, GT = 35, 
-    GE = 36, ASSIGN = 37, SEMI = 38, LPAREN = 39, RPAREN = 40, LBRACK = 41, 
-    RBRACK = 42, LBRACE = 43, RBRACE = 44, COMMA = 45, COLON = 46, DOT = 47, 
-    DOUBLE_STAR = 48, NEWLINE = 49, IDENTIFIER = 50, INTEGER = 51, FLOAT = 52, 
-    STRING = 53, WS = 54, COMMENT = 55, INDENT = 56, DEDENT = 57
+    EXCEPT = 15, FINALLY = 16, WITH = 17, ASYNC = 18, AWAIT = 19, CLASS = 20, 
+    TRUE = 21, FALSE = 22, NONE = 23, AND = 24, OR = 25, NOT = 26, PLUS = 27, 
+    MINUS = 28, MUL = 29, DIV = 30, MOD = 31, EQ = 32, NE = 33, LT = 34, 
+    LE = 35, GT = 36, GE = 37, ASSIGN = 38, SEMI = 39, LPAREN = 40, RPAREN = 41, 
+    LBRACK = 42, RBRACK = 43, LBRACE = 44, RBRACE = 45, COMMA = 46, COLON = 47, 
+    DOT = 48, DOUBLE_STAR = 49, NEWLINE = 50, IDENTIFIER = 51, INTEGER = 52, 
+    FLOAT = 53, STRING = 54, WS = 55, COMMENT = 56, INDENT = 57, DEDENT = 58
   };
 
   enum {
     RuleProgram = 0, RuleStatement = 1, RuleSimpleStatement = 2, RuleSmallStatement = 3, 
     RuleCompoundStatement = 4, RuleTryStatement = 5, RuleExceptClause = 6, 
     RuleWithStatement = 7, RuleWithItem = 8, RuleAsyncFunctionDef = 9, RuleAsyncForStatement = 10, 
-    RuleAsyncWithStatement = 11, RuleAwaitExpr = 12, RuleSuite = 13, RuleFunctionDef = 14, 
-    RuleParameterList = 15, RuleParameter = 16, RuleIfStatement = 17, RuleWhileStatement = 18, 
-    RuleForStatement = 19, RulePassStatement = 20, RuleReturnStatement = 21, 
-    RuleImportStatement = 22, RuleImportItem = 23, RuleAssignment = 24, 
-    RuleExpressionStatement = 25, RuleExpression = 26, RuleLogicalOr = 27, 
-    RuleLogicalAnd = 28, RuleEquality = 29, RuleComparison = 30, RuleAdditive = 31, 
-    RuleMultiplicative = 32, RulePower = 33, RuleUnary = 34, RulePrimary = 35, 
-    RuleNewExpression = 36, RuleAtom = 37, RulePostfixOp = 38, RuleAttributeAccess = 39, 
-    RuleSubscriptAccess = 40, RuleSubscriptArg = 41, RuleFunctionCall = 42, 
-    RuleArgumentList = 43, RuleArgument = 44, RuleListLiteral = 45, RuleListElements = 46, 
-    RuleDictLiteral = 47, RuleDictComprehension = 48, RuleDictItem = 49, 
-    RuleSetLiteral = 50, RuleSetElements = 51, RuleGeneratorExpression = 52, 
-    RuleLiteral = 53, RuleLambdaExpression = 54, RuleDottedName = 55
+    RuleAsyncWithStatement = 11, RuleAwaitExpr = 12, RuleClassDef = 13, 
+    RuleSuite = 14, RuleFunctionDef = 15, RuleParameterList = 16, RuleParameter = 17, 
+    RuleIfStatement = 18, RuleWhileStatement = 19, RuleForStatement = 20, 
+    RulePassStatement = 21, RuleReturnStatement = 22, RuleImportStatement = 23, 
+    RuleImportItem = 24, RuleAssignment = 25, RuleExpressionStatement = 26, 
+    RuleExpression = 27, RuleLogicalOr = 28, RuleLogicalAnd = 29, RuleEquality = 30, 
+    RuleComparison = 31, RuleAdditive = 32, RuleMultiplicative = 33, RulePower = 34, 
+    RuleUnary = 35, RulePrimary = 36, RuleNewExpression = 37, RuleAtom = 38, 
+    RulePostfixOp = 39, RuleAttributeAccess = 40, RuleSubscriptAccess = 41, 
+    RuleSubscriptArg = 42, RuleFunctionCall = 43, RuleArgumentList = 44, 
+    RuleArgument = 45, RuleListLiteral = 46, RuleListElements = 47, RuleDictLiteral = 48, 
+    RuleDictComprehension = 49, RuleDictItem = 50, RuleSetLiteral = 51, 
+    RuleSetElements = 52, RuleGeneratorExpression = 53, RuleLiteral = 54, 
+    RuleLambdaExpression = 55, RuleDottedName = 56
   };
 
   explicit PyScriptParser(antlr4::TokenStream *input);
@@ -72,6 +73,7 @@ public:
   class AsyncForStatementContext;
   class AsyncWithStatementContext;
   class AwaitExprContext;
+  class ClassDefContext;
   class SuiteContext;
   class FunctionDefContext;
   class ParameterListContext;
@@ -193,6 +195,7 @@ public:
     virtual size_t getRuleIndex() const override;
     FunctionDefContext *functionDef();
     AsyncFunctionDefContext *asyncFunctionDef();
+    ClassDefContext *classDef();
     IfStatementContext *ifStatement();
     WhileStatementContext *whileStatement();
     ForStatementContext *forStatement();
@@ -354,6 +357,24 @@ public:
   };
 
   AwaitExprContext* awaitExpr();
+
+  class  ClassDefContext : public antlr4::ParserRuleContext {
+  public:
+    ClassDefContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *CLASS();
+    antlr4::tree::TerminalNode *IDENTIFIER();
+    antlr4::tree::TerminalNode *COLON();
+    SuiteContext *suite();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  ClassDefContext* classDef();
 
   class  SuiteContext : public antlr4::ParserRuleContext {
   public:

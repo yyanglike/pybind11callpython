@@ -45,6 +45,8 @@ public:
 
     virtual std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *context) = 0;
 
+    virtual std::any visitClassDef(PyScriptParser::ClassDefContext *context) = 0;
+
     virtual std::any visitSuite(PyScriptParser::SuiteContext *context) = 0;
 
     virtual std::any visitFunctionDef(PyScriptParser::FunctionDefContext *context) = 0;

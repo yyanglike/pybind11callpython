@@ -55,6 +55,9 @@ public:
   virtual void enterAwaitExpr(PyScriptParser::AwaitExprContext * /*ctx*/) override { }
   virtual void exitAwaitExpr(PyScriptParser::AwaitExprContext * /*ctx*/) override { }
 
+  virtual void enterClassDef(PyScriptParser::ClassDefContext * /*ctx*/) override { }
+  virtual void exitClassDef(PyScriptParser::ClassDefContext * /*ctx*/) override { }
+
   virtual void enterSuite(PyScriptParser::SuiteContext * /*ctx*/) override { }
   virtual void exitSuite(PyScriptParser::SuiteContext * /*ctx*/) override { }
 

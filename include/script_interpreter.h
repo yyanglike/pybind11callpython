@@ -150,6 +150,7 @@ public:
     std::any visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) override;
     std::any visitAsyncWithStatement(PyScriptParser::AsyncWithStatementContext *ctx) override;
     std::any visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) override;
+    std::any visitClassDef(PyScriptParser::ClassDefContext *ctx) override;
     
     // 以下方法在新的语法中可能不存在，提供空实现或移除
     // 注意：这些方法在生成的Visitor中可能不存在，我们需要检查

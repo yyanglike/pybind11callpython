@@ -94,6 +94,7 @@ smallStatement
 compoundStatement
     : functionDef
     | asyncFunctionDef
+    | classDef
     | ifStatement
     | whileStatement
     | forStatement
@@ -148,6 +149,10 @@ asyncWithStatement
 
 awaitExpr
     : AWAIT expression
+    ;
+
+classDef
+    : CLASS IDENTIFIER COLON suite
     ;
 
 /* =========================
@@ -412,6 +417,7 @@ FINALLY : 'finally';
 WITH    : 'with';
 ASYNC   : 'async';
 AWAIT   : 'await';
+CLASS   : 'class';
 
 TRUE    : 'true';
 FALSE   : 'false';

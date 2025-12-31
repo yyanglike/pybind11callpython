@@ -576,3 +576,7 @@ any ScriptInterpreter::visitAsyncWithStatement(PyScriptParser::AsyncWithStatemen
 any ScriptInterpreter::visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) {
     return ast_visitor_.visitAwaitExpr(ctx);
 }
+
+any ScriptInterpreter::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
+    return ast_visitor_.visitClassDef(ctx);
+}

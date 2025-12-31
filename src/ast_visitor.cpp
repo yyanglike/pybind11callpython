@@ -298,6 +298,8 @@ any AstVisitor::visitCompoundStatement(PyScriptParser::CompoundStatementContext 
         return visit(ctx->functionDef());
     } else if (ctx->asyncFunctionDef()) {
         return visit(ctx->asyncFunctionDef());
+    } else if (ctx->classDef()) {
+        return visit(ctx->classDef());
     } else if (ctx->ifStatement()) {
         return visit(ctx->ifStatement());
     } else if (ctx->whileStatement()) {
@@ -2878,6 +2880,30 @@ any AstVisitor::visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) {
         }
     }
     return any(val);
+}
+
+any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
+    if (defining_function_) {
+        return any(ScriptValue::createNull());
+    }
+    try {
+        auto start = ctx->getStart()->getStartIndex();
+        auto stop = ctx->getStop()->getStopIndex();
+        auto input = ctx->getStart()->getTokenSource()->getInputStream();
+        std::string text = input->getText(antlr4::misc::Interval(start, stop));
+        // 确保末尾换行，便于 exec
+        if (text.empty() || text.back() != '\n') {
+            text.push_back('\n');
+        }
+        py::exec(py::str(text), py::globals(), py::globals());
+        std::string name = ctx->IDENTIFIER()->getText();
+        py::object cls = py::globals()[name.c_str()];
+        variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
+    } catch (const std::exception& e) {
+        reportError("Failed to define class: " + string(e.what()), ctx);
+        return any();
+    }
+    return any();
 }
 
 any AstVisitor::visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) {
