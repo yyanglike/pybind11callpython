@@ -195,7 +195,23 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitDictItem(PyScriptParser::DictItemContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitSetElements(PyScriptParser::SetElementsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
 

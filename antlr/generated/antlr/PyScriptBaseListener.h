@@ -151,8 +151,20 @@ public:
   virtual void enterDictLiteral(PyScriptParser::DictLiteralContext * /*ctx*/) override { }
   virtual void exitDictLiteral(PyScriptParser::DictLiteralContext * /*ctx*/) override { }
 
+  virtual void enterDictComprehension(PyScriptParser::DictComprehensionContext * /*ctx*/) override { }
+  virtual void exitDictComprehension(PyScriptParser::DictComprehensionContext * /*ctx*/) override { }
+
   virtual void enterDictItem(PyScriptParser::DictItemContext * /*ctx*/) override { }
   virtual void exitDictItem(PyScriptParser::DictItemContext * /*ctx*/) override { }
+
+  virtual void enterSetLiteral(PyScriptParser::SetLiteralContext * /*ctx*/) override { }
+  virtual void exitSetLiteral(PyScriptParser::SetLiteralContext * /*ctx*/) override { }
+
+  virtual void enterSetElements(PyScriptParser::SetElementsContext * /*ctx*/) override { }
+  virtual void exitSetElements(PyScriptParser::SetElementsContext * /*ctx*/) override { }
+
+  virtual void enterGeneratorExpression(PyScriptParser::GeneratorExpressionContext * /*ctx*/) override { }
+  virtual void exitGeneratorExpression(PyScriptParser::GeneratorExpressionContext * /*ctx*/) override { }
 
   virtual void enterLiteral(PyScriptParser::LiteralContext * /*ctx*/) override { }
   virtual void exitLiteral(PyScriptParser::LiteralContext * /*ctx*/) override { }

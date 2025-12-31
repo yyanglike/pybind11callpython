@@ -1,0 +1,4 @@
+# 验证集合推导式
+s = {i * 2 for i in range(5)}
+print(s)
+

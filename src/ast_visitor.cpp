@@ -40,6 +40,34 @@ static void ensureSysArgv() {
     }
 }
 
+// 构建用于 eval 的全局字典，包含 builtins、已定义变量与模块
+static py::dict buildEvalGlobals(VariableManager& variable_manager) {
+    py::dict g = py::globals();
+    try {
+        py::object builtins = py::module_::import("builtins");
+        g["__builtins__"] = builtins;
+    } catch (...) {
+    }
+    // 注入变量
+    for (const auto& name : variable_manager.getAllVariableNames()) {
+        auto val = variable_manager.getVariable(name);
+        if (val) {
+            try {
+                g[name.c_str()] = val->toPythonObject();
+            } catch (...) {
+            }
+        }
+    }
+    // 注入模块
+    for (const auto& modName : variable_manager.getAllModuleNames()) {
+        try {
+            py::module_ m = variable_manager.getModule(modName);
+            if (m) g[modName.c_str()] = m;
+        } catch (...) {
+        }
+    }
+    return g;
+}
 // 构造函数
 AstVisitor::AstVisitor(VariableManager& variable_manager,
                        ErrorHandler& error_handler,
@@ -1472,6 +1500,10 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
         return visit(ctx->listLiteral());
     } else if (ctx->dictLiteral()) {
         return visit(ctx->dictLiteral());
+    } else if (ctx->setLiteral()) {
+        return visit(ctx->setLiteral());
+    } else if (ctx->generatorExpression()) {
+        return visit(ctx->generatorExpression());
     } else if (ctx->newExpression()) {
         return visit(ctx->newExpression());
     } else if (ctx->lambdaExpression()) {
@@ -2048,6 +2080,11 @@ any AstVisitor::visitListLiteral(PyScriptParser::ListLiteralContext *ctx) {
 }
 
 any AstVisitor::visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) {
+    // dictComprehension 分支
+    if (ctx->dictComprehension()) {
+        return visitDictComprehension(ctx->dictComprehension());
+    }
+
     auto dictVal = ScriptValue::createDictionary();
     
     auto dictItems = ctx->dictItem();
@@ -2110,6 +2147,111 @@ any AstVisitor::visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) {
 any AstVisitor::visitDictItem(PyScriptParser::DictItemContext *ctx) {
     // 字典项已经在visitDictLiteral中处理
     return any();
+}
+
+any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) {
+    if (defining_function_) {
+        return any(ScriptValue::createNull());
+    }
+    auto exprs = ctx->expression();
+    if (exprs.size() != 3 || !ctx->IDENTIFIER()) {
+        reportError("Invalid dict comprehension", ctx);
+        return any();
+    }
+    std::string keyText = exprs[0]->getText();
+    std::string valText = exprs[1]->getText();
+    std::string iterText = exprs[2]->getText();
+    std::string varName = ctx->IDENTIFIER()->getText();
+    std::string comp = "{" + keyText + ": " + valText + " for " + varName + " in " + iterText + "}";
+    try {
+        py::dict g = buildEvalGlobals(variable_manager_);
+        py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
+        py::object result = builtins.attr("eval")(comp, g, g);
+        return any(ScriptValue::fromPythonObject(result));
+    } catch (const py::error_already_set& e) {
+        reportError("Failed to evaluate dict comprehension: " + string(e.what()), ctx);
+        return any();
+    }
+}
+
+any AstVisitor::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
+    if (defining_function_) {
+        return any(ScriptValue::createNull());
+    }
+
+    auto elementsCtx = ctx->setElements();
+    // 可能为空集合
+    if (!elementsCtx) {
+        return any(ScriptValue::fromPythonObject(py::set()));
+    }
+    if (elementsCtx->IDENTIFIER() && elementsCtx->expression().size() >= 2) {
+        // 推导式：重建字符串，确保空格正确
+        auto exprs = elementsCtx->expression();
+        if (exprs.size() != 2 || !elementsCtx->IDENTIFIER()) {
+            reportError("Invalid set comprehension", ctx);
+            return any();
+        }
+        std::string elemText = exprs[0]->getText();
+        std::string iterText = exprs[1]->getText();
+        std::string varName = elementsCtx->IDENTIFIER()->getText();
+        std::string comp = "{" + elemText + " for " + varName + " in " + iterText + "}";
+        try {
+            py::dict g = buildEvalGlobals(variable_manager_);
+            py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
+            py::object result = builtins.attr("eval")(comp, g, g);
+            return any(ScriptValue::fromPythonObject(result));
+        } catch (const py::error_already_set& e) {
+            reportError("Failed to evaluate set comprehension: " + string(e.what()), ctx);
+            return any();
+        }
+    }
+
+    // 普通 set 字面量
+    try {
+        py::set s;
+        auto exprs = elementsCtx->expression();
+        for (auto expr : exprs) {
+            auto val = evaluateExpression(expr);
+            if (!val) {
+                reportError("Cannot evaluate set element", ctx);
+                return any();
+            }
+            s.add(val->toPythonObject());
+        }
+        return any(ScriptValue::fromPythonObject(s));
+    } catch (const py::error_already_set& e) {
+        reportError("Failed to build set: " + string(e.what()), ctx);
+        return any();
+    }
+}
+
+any AstVisitor::visitSetElements(PyScriptParser::SetElementsContext *ctx) {
+    // 元素处理在 visitSetLiteral 中完成
+    return any();
+}
+
+any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) {
+    if (defining_function_) {
+        return any(ScriptValue::createNull());
+    }
+    auto exprs = ctx->expression();
+    if (exprs.size() != 2 || !ctx->IDENTIFIER()) {
+        reportError("Invalid generator expression", ctx);
+        return any();
+    }
+    std::string body = exprs[0]->getText();
+    std::string iter = exprs[1]->getText();
+    std::string varName = ctx->IDENTIFIER()->getText();
+    std::string genText = "(" + body + " for " + varName + " in " + iter + ")";
+    try {
+        py::dict g = buildEvalGlobals(variable_manager_);
+        py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
+        py::object result = builtins.attr("eval")(genText, g, g);
+        return any(ScriptValue::fromPythonObject(result));
+    } catch (const py::error_already_set& e) {
+        reportError("Failed to evaluate generator expression: " + string(e.what()), ctx);
+        return any();
+    }
 }
 
 any AstVisitor::visitLiteral(PyScriptParser::LiteralContext *ctx) {

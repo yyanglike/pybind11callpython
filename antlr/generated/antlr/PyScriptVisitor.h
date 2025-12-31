@@ -109,7 +109,15 @@ public:
 
     virtual std::any visitDictLiteral(PyScriptParser::DictLiteralContext *context) = 0;
 
+    virtual std::any visitDictComprehension(PyScriptParser::DictComprehensionContext *context) = 0;
+
     virtual std::any visitDictItem(PyScriptParser::DictItemContext *context) = 0;
+
+    virtual std::any visitSetLiteral(PyScriptParser::SetLiteralContext *context) = 0;
+
+    virtual std::any visitSetElements(PyScriptParser::SetElementsContext *context) = 0;
+
+    virtual std::any visitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *context) = 0;
 
     virtual std::any visitLiteral(PyScriptParser::LiteralContext *context) = 0;
 

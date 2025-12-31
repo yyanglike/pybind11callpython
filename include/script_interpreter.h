@@ -131,6 +131,10 @@ public:
     std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override;
     std::any visitListLiteral(PyScriptParser::ListLiteralContext *ctx) override;
     std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override;
+    std::any visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) override;
+    std::any visitSetElements(PyScriptParser::SetElementsContext *ctx) override;
+    std::any visitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) override;
+    std::any visitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) override;
     std::any visitDictItem(PyScriptParser::DictItemContext *ctx) override;
     std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override;
     std::any visitListElements(PyScriptParser::ListElementsContext *ctx) override;

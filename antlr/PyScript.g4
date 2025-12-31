@@ -238,6 +238,8 @@ primary
     | LPAREN expression RPAREN
     | listLiteral
     | dictLiteral
+    | setLiteral
+    | generatorExpression
     | newExpression
     | lambdaExpression
     ;
@@ -298,12 +300,29 @@ listElements
     ;
 
 dictLiteral
-    : LBRACE (dictItem (COMMA dictItem)* COMMA?)? RBRACE
+    : LBRACE (dictComprehension | (dictItem (COMMA dictItem)* COMMA?)?) RBRACE
+    ;
+
+dictComprehension
+    : expression COLON expression FOR IDENTIFIER IN expression
     ;
 
 dictItem
     : expression COLON expression
     | DOUBLE_STAR expression
+    ;
+
+setLiteral
+    : LBRACE (setElements)? RBRACE
+    ;
+
+setElements
+    : expression (COMMA expression)* COMMA?
+    | expression FOR IDENTIFIER IN expression
+    ;
+
+generatorExpression
+    : LPAREN expression FOR IDENTIFIER IN expression RPAREN
     ;
 
 literal

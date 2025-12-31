@@ -51,7 +51,7 @@ bool ScriptInterpreter::execute(const string& script) {
     result_ = nullptr;
     
     try {
-        // 预处理：将 f-string 转为 __fstr__("f\"...\"") 形式，避免语法不支持
+        // 预处理：将 f-string 转为 __fstr__('f"...' 或三引号形式) 形式，避免语法不支持
         auto transform_fstrings = [](const std::string& in) -> std::string {
             std::string out;
             out.reserve(in.size());
@@ -59,8 +59,14 @@ bool ScriptInterpreter::execute(const string& script) {
             while (i < in.size()) {
                 char c = in[i];
                 if ((c == 'f' || c == 'F') && i + 1 < in.size() && (in[i + 1] == '"' || in[i + 1] == '\'')) {
+                    // 检测单引号/双引号/三引号
+                    bool triple = false;
                     char quote = in[i + 1];
                     size_t j = i + 2;
+                    if (j + 1 < in.size() && in[j] == quote && in[j + 1] == quote) {
+                        triple = true;
+                        j += 2;
+                    }
                     bool closed = false;
                     while (j < in.size()) {
                         char cc = in[j];
@@ -75,17 +81,21 @@ bool ScriptInterpreter::execute(const string& script) {
                         }
                         ++j;
                     }
-                    std::string raw = in.substr(i, j - i); // f"..."
-                    // escape for single-quoted wrapper
+                    std::string raw = in.substr(i, j - i); // f"...", f'''...''' 或 f"""..."""
+                    // 选择包裹引号：若原串用单引号（含三引号），则用双引号作为包裹，反之亦然
+                    char wrapper = (quote == '\'') ? '"' : '\'';
+                    // 对包裹引号和反斜线做转义
                     std::string escaped;
                     escaped.reserve(raw.size() * 2);
                     for (char rc : raw) {
-                        if (rc == '\\' || rc == '\'') escaped.push_back('\\');
+                        if (rc == '\\' || rc == wrapper) escaped.push_back('\\');
                         escaped.push_back(rc);
                     }
-                    out += "__fstr__('";
+                    out += "__fstr__(";
+                    out.push_back(wrapper);
                     out += escaped;
-                    out += "')";
+                    out.push_back(wrapper);
+                    out += ")";
                     i = j;
                     if (!closed) break;
                     continue;
@@ -317,6 +327,22 @@ any ScriptInterpreter::visitListLiteral(PyScriptParser::ListLiteralContext *ctx)
 any ScriptInterpreter::visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) {
     // 委托给AstVisitor处理
     return ast_visitor_.visitDictLiteral(ctx);
+}
+
+any ScriptInterpreter::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
+    return ast_visitor_.visitSetLiteral(ctx);
+}
+
+any ScriptInterpreter::visitSetElements(PyScriptParser::SetElementsContext *ctx) {
+    return ast_visitor_.visitSetElements(ctx);
+}
+
+any ScriptInterpreter::visitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) {
+    return ast_visitor_.visitGeneratorExpression(ctx);
+}
+
+any ScriptInterpreter::visitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) {
+    return ast_visitor_.visitDictComprehension(ctx);
 }
 
 any ScriptInterpreter::visitDottedName(PyScriptParser::DottedNameContext *ctx) {

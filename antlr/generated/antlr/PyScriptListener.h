@@ -149,8 +149,20 @@ public:
   virtual void enterDictLiteral(PyScriptParser::DictLiteralContext *ctx) = 0;
   virtual void exitDictLiteral(PyScriptParser::DictLiteralContext *ctx) = 0;
 
+  virtual void enterDictComprehension(PyScriptParser::DictComprehensionContext *ctx) = 0;
+  virtual void exitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) = 0;
+
   virtual void enterDictItem(PyScriptParser::DictItemContext *ctx) = 0;
   virtual void exitDictItem(PyScriptParser::DictItemContext *ctx) = 0;
+
+  virtual void enterSetLiteral(PyScriptParser::SetLiteralContext *ctx) = 0;
+  virtual void exitSetLiteral(PyScriptParser::SetLiteralContext *ctx) = 0;
+
+  virtual void enterSetElements(PyScriptParser::SetElementsContext *ctx) = 0;
+  virtual void exitSetElements(PyScriptParser::SetElementsContext *ctx) = 0;
+
+  virtual void enterGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) = 0;
+  virtual void exitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) = 0;
 
   virtual void enterLiteral(PyScriptParser::LiteralContext *ctx) = 0;
   virtual void exitLiteral(PyScriptParser::LiteralContext *ctx) = 0;

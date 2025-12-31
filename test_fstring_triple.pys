@@ -1,0 +1,7 @@
+name = "world"
+# 单行 f-string 带格式化
+name = "world"
+fmt = f"{3.14159:0>6.2f}"
+print(f"Hello {name}")
+print(fmt)
+

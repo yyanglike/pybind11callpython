@@ -1,0 +1,4 @@
+# 验证生成器表达式
+g = (i * i for i in range(4))
+print(list(g))
+
