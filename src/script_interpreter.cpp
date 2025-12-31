@@ -92,12 +92,14 @@ bool ScriptInterpreter::execute(const string& script) {
                     std::string raw = in.substr(i, j - i); // f"...", f'''...''' 或 f"""..."""
                     // 选择包裹引号：若原串用单引号（含三引号），则用双引号作为包裹，反之亦然
                     char wrapper = (quote == '\'') ? '"' : '\'';
-                    // 对包裹引号、反斜线以及换行做转义（换行转为 \n，避免单行字符串解析失败）
+                    // 对包裹引号、反斜线以及换行/回车做转义（换行转为 \n，避免单行字符串解析失败）
                     std::string escaped;
                     escaped.reserve(raw.size() * 2);
                     for (char rc : raw) {
                         if (rc == '\n') {
                             escaped += "\\n";
+                        } else if (rc == '\r') {
+                            escaped += "\\r";
                         } else {
                             if (rc == '\\' || rc == wrapper) escaped.push_back('\\');
                             escaped.push_back(rc);
@@ -109,7 +111,11 @@ bool ScriptInterpreter::execute(const string& script) {
                     out.push_back(wrapper);
                     out += ")";
                     i = j;
-                    if (!closed) break;
+                    if (!closed) {
+                        // 未闭合时保留剩余文本，避免截断
+                        out += in.substr(i);
+                        break;
+                    }
                     continue;
                 }
                 out.push_back(c);
