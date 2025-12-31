@@ -2853,8 +2853,24 @@ any AstVisitor::visitAwaitExpr(PyScriptParser::AwaitExprContext *ctx) {
             py::object obj = val->toPythonObject();
             if (py::hasattr(obj, "__await__")) {
                 py::object asyncio = py::module_::import("asyncio");
-                py::object res = asyncio.attr("run")(obj);
-                return any(ScriptValue::fromPythonObject(res));
+                try {
+                    py::object loop = asyncio.attr("get_event_loop")();
+                    bool running = py::cast<bool>(loop.attr("is_running")());
+                    if (running) {
+                        return any(ScriptValue::fromPythonObject(obj));
+                    } else {
+                        py::object res = asyncio.attr("run")(obj);
+                        return any(ScriptValue::fromPythonObject(res));
+                    }
+                } catch (const py::error_already_set&) {
+                    // 没有当前事件循环，创建新的
+                    py::object loop = asyncio.attr("new_event_loop")();
+                    asyncio.attr("set_event_loop")(loop);
+                    py::object res = loop.attr("run_until_complete")(obj);
+                    loop.attr("close")();
+                    asyncio.attr("set_event_loop")(py::none());
+                    return any(ScriptValue::fromPythonObject(res));
+                }
             }
         } catch (const py::error_already_set& e) {
             reportError("Await execution failed: " + string(e.what()), ctx);
@@ -2896,8 +2912,17 @@ any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
     std::vector<Entry> stack;
     stack.reserve(items.size());
 
+    auto call_exit = [](py::object exitFunc, py::object t, py::object v, py::object tb) -> bool {
+        py::object ret = exitFunc(t, v, tb);
+        return py::cast<bool>(ret);
+    };
+
+    py::object excType = py::none();
+    py::object excVal = py::none();
+    py::object excTb = py::none();
+    bool rethrow = false;
+
     try {
-        // Enter contexts
         for (auto item : items) {
             auto exprCtx = item->expression();
             if (!exprCtx) {
@@ -2924,7 +2949,6 @@ any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
             }
         }
 
-        // body
         auto bodySuite = ctx->suite();
         if (!bodySuite) {
             reportError("With statement missing body", ctx);
@@ -2932,33 +2956,41 @@ any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
         }
         visit(bodySuite);
     } catch (const py::error_already_set& e) {
-        // propagate, but ensure exit handlers run
-        for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
-            try {
-                it->exitFunc(py::none(), py::none(), py::none());
-            } catch (...) {
-            }
-        }
-        throw;
-    } catch (...) {
-        for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
-            try {
-                it->exitFunc(py::none(), py::none(), py::none());
-            } catch (...) {
-            }
-        }
-        throw;
+        excType = e.type();
+        excVal = e.value();
+        excTb = e.trace();
+        rethrow = true;
+    } catch (const std::exception& e) {
+        excType = py::none();
+        excVal = py::str(e.what());
+        excTb = py::none();
+        rethrow = true;
     }
 
-    // normal exit
+    bool suppress = false;
     for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
         try {
-            it->exitFunc(py::none(), py::none(), py::none());
+            if (call_exit(it->exitFunc, excType, excVal, excTb)) {
+                suppress = true;
+            }
         } catch (const py::error_already_set& e) {
             reportError("With __exit__ failed: " + string(e.what()), ctx);
             return any();
         }
     }
+
+    if (rethrow && !suppress) {
+        try {
+            if (!excVal.is_none()) {
+                std::string msg = py::str(excVal);
+                throw std::runtime_error(msg);
+            }
+        } catch (const std::exception& e) {
+            throw;
+        }
+        throw std::runtime_error("Exception in with block");
+    }
+
     return any();
 }
 
@@ -2972,42 +3004,46 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
         return any();
     }
     
-    // 执行try块
+    bool handled = false;
     try {
         visit(trySuite);
-        // 如果没有异常，检查是否有else块
         auto elseSuite = ctx->ELSE() ? ctx->suite(ctx->suite().size() - 1) : nullptr;
         if (elseSuite) {
-            // 执行else块
             visit(elseSuite);
         }
-    } catch (const std::exception& e) {
-        // 捕获C++异常
-        // 查找匹配的except子句
-        bool exceptionHandled = false;
+    } catch (const py::error_already_set& e) {
         for (auto exceptClause : ctx->exceptClause()) {
-            // 暂时不考虑异常类型匹配，直接执行第一个except块
             auto exceptSuite = exceptClause->suite();
             if (exceptSuite) {
                 visit(exceptSuite);
-                exceptionHandled = true;
+                handled = true;
                 break;
             }
         }
-        if (!exceptionHandled) {
-            // 重新抛出异常
+        if (!handled) {
+            throw;
+        }
+    } catch (const std::exception&) {
+        for (auto exceptClause : ctx->exceptClause()) {
+            auto exceptSuite = exceptClause->suite();
+            if (exceptSuite) {
+                visit(exceptSuite);
+                handled = true;
+                break;
+            }
+        }
+        if (!handled) {
             throw;
         }
     }
-    
-    // 如果有finally块，执行finally块
+
     if (ctx->FINALLY()) {
         auto finallySuite = ctx->suite(ctx->suite().size() - 1);
         if (finallySuite) {
             visit(finallySuite);
         }
     }
-    
+
     return any();
 }
 

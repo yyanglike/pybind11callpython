@@ -201,8 +201,51 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             return ScriptValue::createBoolean(left->toBoolean() || right->toBoolean());
         }
         
+        // 尝试统一回退到 Python 运算符
+        if (!left->isNull() && !right->isNull()) {
+            try {
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result;
+                if (op == "+") {
+                    result = py::module_::import("operator").attr("add")(lhs, rhs);
+                } else if (op == "-") {
+                    result = py::module_::import("operator").attr("sub")(lhs, rhs);
+                } else if (op == "*") {
+                    result = py::module_::import("operator").attr("mul")(lhs, rhs);
+                } else if (op == "/") {
+                    result = py::module_::import("operator").attr("truediv")(lhs, rhs);
+                } else if (op == "%") {
+                    result = py::module_::import("operator").attr("mod")(lhs, rhs);
+                } else if (op == "**") {
+                    result = py::module_::import("operator").attr("pow")(lhs, rhs);
+                } else if (op == "<") {
+                    result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LT));
+                } else if (op == ">") {
+                    result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GT));
+                } else if (op == "<=") {
+                    result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LE));
+                } else if (op == ">=") {
+                    result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GE));
+                } else if (op == "==") {
+                    result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_EQ));
+                } else if (op == "!=") {
+                    result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_NE));
+                }
+                if (result && !result.is_none()) {
+                    return ScriptValue::fromPythonObject(result);
+                }
+            } catch (const py::error_already_set& e) {
+                throw runtime_error("Binary operation error: " + string(e.what()));
+            } catch (const exception& e) {
+                throw runtime_error("Binary operation error: " + string(e.what()));
+            }
+        }
+        
         throw runtime_error("Unsupported binary operator: " + op);
         
+    } catch (const py::error_already_set& e) {
+        throw runtime_error("Binary operation error: " + string(e.what()));
     } catch (const exception& e) {
         throw runtime_error("Binary operation error: " + string(e.what()));
     }
