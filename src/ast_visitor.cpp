@@ -294,7 +294,9 @@ any AstVisitor::visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) 
 }
 
 any AstVisitor::visitCompoundStatement(PyScriptParser::CompoundStatementContext *ctx) {
-    if (ctx->functionDef()) {
+    if (ctx->decoratedDef()) {
+        return visit(ctx->decoratedDef());
+    } else if (ctx->functionDef()) {
         return visit(ctx->functionDef());
     } else if (ctx->asyncFunctionDef()) {
         return visit(ctx->asyncFunctionDef());
@@ -2900,7 +2902,9 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
         py::object cls = py::globals()[name.c_str()];
         variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
     } catch (const std::exception& e) {
-        reportError("Failed to define class: " + string(e.what()), ctx);
+        int line = ctx->getStart()->getLine();
+        int col = ctx->getStart()->getCharPositionInLine();
+        reportError("Failed to define class: " + string(e.what()), line, col);
         return any();
     }
     return any();
@@ -2925,8 +2929,18 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             text.push_back('\n');
         }
         py::exec(py::str(text), py::globals(), py::globals());
+        // 若为 class 定义，写回变量表
+        if (ctx->classDef()) {
+            std::string name = ctx->classDef()->IDENTIFIER()->getText();
+            if (py::globals().contains(name.c_str())) {
+                py::object cls = py::globals()[name.c_str()];
+                variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
+            }
+        }
     } catch (const std::exception& e) {
-        reportError("Failed to execute decorated definition: " + string(e.what()), ctx);
+        int line = ctx->getStart()->getLine();
+        int col = ctx->getStart()->getCharPositionInLine();
+        reportError("Failed to execute decorated definition: " + string(e.what()), line, col);
         return any();
     }
     return any();

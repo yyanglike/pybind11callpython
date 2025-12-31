@@ -1,0 +1,21 @@
+def deco(cls):
+    cls.decorated = True
+    return cls
+
+def method_deco(fn):
+    def wrapper(self, x):
+        return fn(self, x) * 2
+    return wrapper
+
+@deco
+class C:
+    def __init__(self, v):
+        self.v = v
+    @method_deco
+    def inc(self, x):
+        return self.v + x
+
+c = C(5)
+print("class_deco", getattr(c, "decorated", False), c.inc(3))
+
+

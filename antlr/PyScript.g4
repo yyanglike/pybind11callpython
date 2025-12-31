@@ -153,7 +153,7 @@ awaitExpr
     ;
 
 classDef
-    : CLASS IDENTIFIER (LPAREN expression (COMMA expression)* RPAREN)? (decorators)? COLON suite
+    : CLASS IDENTIFIER (LPAREN expression (COMMA expression)* COMMA? RPAREN)? (decorators)? COLON suite
     ;
 
 decoratedDef
