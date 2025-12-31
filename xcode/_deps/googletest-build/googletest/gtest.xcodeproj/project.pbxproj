@@ -1,0 +1,1315 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		12F9C492C30053AC2F529E53 /* ZERO_CHECK */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 405B4F24DE6943D19E21B37A /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
+			buildPhases = (
+				94B34FB554F1A7611CD98FA4 /* Generate CMakeFiles/ZERO_CHECK */,
+			);
+			dependencies = (
+			);
+			name = ZERO_CHECK;
+			productName = ZERO_CHECK;
+		};
+		75735EC50523097682C5F217 /* install */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = F39ADEBFAA7B406197393BD0 /* Build configuration list for PBXAggregateTarget "install" */;
+			buildPhases = (
+				93426DA6A4AC2C2AC9CE883C /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+				ED477A4942DA48D79935322A /* PBXTargetDependency */,
+			);
+			name = install;
+			productName = install;
+		};
+		78D46856494FBB52A569D995 /* package */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = E1E9E98EB4034A899160D5FA /* Build configuration list for PBXAggregateTarget "package" */;
+			buildPhases = (
+				571234464C2A5D0D43F1AB42 /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+				2DA012CEB01D4C71BB463255 /* PBXTargetDependency */,
+			);
+			name = package;
+			productName = package;
+		};
+		8156B5B6231D05018FE61D2C /* ALL_BUILD */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = D194340478D6408082ACCCE1 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildPhases = (
+				AF5893011A4CDF5A8432C463 /* Generate CMakeFiles/ALL_BUILD */,
+			);
+			dependencies = (
+				E00E7C23E9244B0BAB2CF726 /* PBXTargetDependency */,
+				5B2D49F9383042B78CC62BFE /* PBXTargetDependency */,
+				9E081FC70788401F9A6A6DDB /* PBXTargetDependency */,
+			);
+			name = ALL_BUILD;
+			productName = ALL_BUILD;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		1CB6D3A430CE4E3CAB50F7B5 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest_main.cc */ = {isa = PBXBuildFile; fileRef = E28C0FBAA89446A595C6ED39 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest_main.cc */; };
+		20C204F3160043B6B38CBDB0 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 9C239ECC8BA849CC8BD21D92 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */; };
+		78468F5BD340443C9881222D /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 7FFC5AD8204648EDAD84181B /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */; };
+		BBD6C3460A2843FC92969F59 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest-all.cc */ = {isa = PBXBuildFile; fileRef = A96D343044974072B46C2155 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest-all.cc */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildStyle section */
+		0CE8FF38D9F54FAA97EEFBF7 /* Release */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Release;
+		};
+		0FF0144819384F2C9D9B34BA /* RelWithDebInfo */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = RelWithDebInfo;
+		};
+		89C21427F6954A75A4FE409F /* MinSizeRel */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = MinSizeRel;
+		};
+		C3026074925444D3AEE124E4 /* Debug */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
+/* End PBXBuildStyle section */
+
+/* Begin PBXContainerItemProxy section */
+		328B9128D68846BC806491F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 336B54A0BD787A835A9ADC48;
+			remoteInfo = gtest;
+		};
+		3AFCA32D394D4F27A8FF2328 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8156B5B6231D05018FE61D2C;
+			remoteInfo = ALL_BUILD;
+		};
+		A116797E8CBB4CA5A468436E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 12F9C492C30053AC2F529E53;
+			remoteInfo = ZERO_CHECK;
+		};
+		B13C5113DB4549C595CB7E78 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8156B5B6231D05018FE61D2C;
+			remoteInfo = ALL_BUILD;
+		};
+		C519AE3309014816A2299E8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 12F9C492C30053AC2F529E53;
+			remoteInfo = ZERO_CHECK;
+		};
+		D78B65DA26554E7AA690DC28 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 336B54A0BD787A835A9ADC48;
+			remoteInfo = gtest;
+		};
+		D9E67F6873754CDC9BF2FF5C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 088B75C7F4E4923A4DE9AD15;
+			remoteInfo = gtest_main;
+		};
+		F6FFB721E3674BCC9DB58AF6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 33F67A806A4E4124B0B078CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 12F9C492C30053AC2F529E53;
+			remoteInfo = ZERO_CHECK;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		66BC0F7E9CE04A09806C2302 /* gtest_main */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libgtest_maind.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		7022ADD144E0435FA1AEF541 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		7FFC5AD8204648EDAD84181B /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		9C239ECC8BA849CC8BD21D92 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		A96D343044974072B46C2155 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest-all.cc */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = "gtest-all.cc"; path = "src/gtest-all.cc"; sourceTree = SOURCE_ROOT; };
+		B55A4B17B8984F8D991D4FA5 /* gtest */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libgtestd.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		E28C0FBAA89446A595C6ED39 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest_main.cc */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = gtest_main.cc; path = src/gtest_main.cc; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		32AE4DFD1478434C8CCF2BFC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		34C9742F349C49BBB4EEFED3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		22E54085648C4B49AC2A6573 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				E28C0FBAA89446A595C6ED39 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest_main.cc */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		73016901640C49E09EA6952B /* ALL_BUILD */ = {
+			isa = PBXGroup;
+			children = (
+				EE010B8D216D46E6BA063E7C /* CMake Rules */,
+				7022ADD144E0435FA1AEF541 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */,
+			);
+			name = ALL_BUILD;
+			sourceTree = "<group>";
+		};
+		7734ED76B2B940CCA67694BE /* gtest_main */ = {
+			isa = PBXGroup;
+			children = (
+				22E54085648C4B49AC2A6573 /* Source Files */,
+				7FFC5AD8204648EDAD84181B /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */,
+			);
+			name = gtest_main;
+			sourceTree = "<group>";
+		};
+		92541137955840409B3AFBB6 = {
+			isa = PBXGroup;
+			children = (
+				A136D92911D345138F5CD60E /* gtest */,
+				7734ED76B2B940CCA67694BE /* gtest_main */,
+				73016901640C49E09EA6952B /* ALL_BUILD */,
+				E59D83222A104CC586435742 /* Products */,
+				9A67DA2D072B467888F7F67C /* Frameworks */,
+				D00D724F9C56437FA6ACDDA1 /* Resources */,
+			);
+			sourceTree = "<group>";
+		};
+		9A67DA2D072B467888F7F67C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A136D92911D345138F5CD60E /* gtest */ = {
+			isa = PBXGroup;
+			children = (
+				D969F386AFC142FEAACE6D25 /* Source Files */,
+				9C239ECC8BA849CC8BD21D92 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/CMakeLists.txt */,
+			);
+			name = gtest;
+			sourceTree = "<group>";
+		};
+		D00D724F9C56437FA6ACDDA1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		D969F386AFC142FEAACE6D25 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				A96D343044974072B46C2155 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest-all.cc */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		E59D83222A104CC586435742 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B55A4B17B8984F8D991D4FA5 /* gtest */,
+				66BC0F7E9CE04A09806C2302 /* gtest_main */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EE010B8D216D46E6BA063E7C /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		088B75C7F4E4923A4DE9AD15 /* gtest_main */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8789F28468014F6584BAC693 /* Build configuration list for PBXNativeTarget "gtest_main" */;
+			buildPhases = (
+				EC1B86A45EA74B9F9D43193F /* Sources */,
+				34C9742F349C49BBB4EEFED3 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D81C58E372954E549E35CD1C /* PBXTargetDependency */,
+				E6AF309FE6274E34815923E1 /* PBXTargetDependency */,
+			);
+			name = gtest_main;
+			productName = gtest_main;
+			productReference = 66BC0F7E9CE04A09806C2302 /* gtest_main */;
+			productType = "com.apple.product-type.library.static";
+		};
+		336B54A0BD787A835A9ADC48 /* gtest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 83192578215A4B65A9E917BA /* Build configuration list for PBXNativeTarget "gtest" */;
+			buildPhases = (
+				FE14DA47C2704A3CB53FBA10 /* Sources */,
+				32AE4DFD1478434C8CCF2BFC /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D8C7DB19F52945A2A400368B /* PBXTargetDependency */,
+			);
+			name = gtest;
+			productName = gtest;
+			productReference = B55A4B17B8984F8D991D4FA5 /* gtest */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		33F67A806A4E4124B0B078CC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2620;
+			};
+			buildConfigurationList = 4FAB3BB643AA4170B10DBD43 /* Build configuration list for PBXProject "gtest" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				C3026074925444D3AEE124E4 /* Debug */,
+				0CE8FF38D9F54FAA97EEFBF7 /* Release */,
+				89C21427F6954A75A4FE409F /* MinSizeRel */,
+				0FF0144819384F2C9D9B34BA /* RelWithDebInfo */,
+			);
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 0;
+			mainGroup = 92541137955840409B3AFBB6;
+			projectDirPath = "../../googletest-src/googletest";
+			projectRoot = "";
+			targets = (
+				8156B5B6231D05018FE61D2C /* ALL_BUILD */,
+				12F9C492C30053AC2F529E53 /* ZERO_CHECK */,
+				336B54A0BD787A835A9ADC48 /* gtest */,
+				088B75C7F4E4923A4DE9AD15 /* gtest_main */,
+				75735EC50523097682C5F217 /* install */,
+				78D46856494FBB52A569D995 /* package */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3C0110FC8322DE7E50886E21 = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		571234464C2A5D0D43F1AB42 /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode
+  /opt/homebrew/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode
+  /opt/homebrew/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode
+  /opt/homebrew/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode
+  /opt/homebrew/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		661D9C604B3B91332E7543CC = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		87AF4882E018677E2624B544 = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		93426DA6A4AC2C2AC9CE883C /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  /opt/homebrew/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  /opt/homebrew/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  /opt/homebrew/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  /opt/homebrew/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		94B34FB554F1A7611CD98FA4 /* Generate CMakeFiles/ZERO_CHECK */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ZERO_CHECK";
+			outputPaths = (
+"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest/CMakeFiles/ZERO_CHECK"			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  make -f /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest/CMakeScripts/ReRunCMake.make
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  make -f /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest/CMakeScripts/ReRunCMake.make
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  make -f /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest/CMakeScripts/ReRunCMake.make
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  make -f /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest/CMakeScripts/ReRunCMake.make
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		9B50530E35CC49C82C2FACCF = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		AF5893011A4CDF5A8432C463 /* Generate CMakeFiles/ALL_BUILD */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ALL_BUILD";
+			outputPaths = (
+"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest/CMakeFiles/ALL_BUILD"			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-build/googletest
+  echo Build\\ all\\ projects
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EC1B86A45EA74B9F9D43193F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1CB6D3A430CE4E3CAB50F7B5 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest_main.cc */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE14DA47C2704A3CB53FBA10 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBD6C3460A2843FC92969F59 /* /Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/src/gtest-all.cc */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2DA012CEB01D4C71BB463255 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8156B5B6231D05018FE61D2C /* ALL_BUILD */;
+			targetProxy = 3AFCA32D394D4F27A8FF2328 /* PBXContainerItemProxy */;
+		};
+		5B2D49F9383042B78CC62BFE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 088B75C7F4E4923A4DE9AD15 /* gtest_main */;
+			targetProxy = D9E67F6873754CDC9BF2FF5C /* PBXContainerItemProxy */;
+		};
+		9E081FC70788401F9A6A6DDB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 12F9C492C30053AC2F529E53 /* ZERO_CHECK */;
+			targetProxy = A116797E8CBB4CA5A468436E /* PBXContainerItemProxy */;
+		};
+		D81C58E372954E549E35CD1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 336B54A0BD787A835A9ADC48 /* gtest */;
+			targetProxy = D78B65DA26554E7AA690DC28 /* PBXContainerItemProxy */;
+		};
+		D8C7DB19F52945A2A400368B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 12F9C492C30053AC2F529E53 /* ZERO_CHECK */;
+			targetProxy = C519AE3309014816A2299E8F /* PBXContainerItemProxy */;
+		};
+		E00E7C23E9244B0BAB2CF726 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 336B54A0BD787A835A9ADC48 /* gtest */;
+			targetProxy = 328B9128D68846BC806491F8 /* PBXContainerItemProxy */;
+		};
+		E6AF309FE6274E34815923E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 12F9C492C30053AC2F529E53 /* ZERO_CHECK */;
+			targetProxy = F6FFB721E3674BCC9DB58AF6 /* PBXContainerItemProxy */;
+		};
+		ED477A4942DA48D79935322A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8156B5B6231D05018FE61D2C /* ALL_BUILD */;
+			targetProxy = B13C5113DB4549C595CB7E78 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		04E8703E05644A5FB7944580 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk;
+				SYMROOT = /Users/yangyi/company/python/pybind11callpython/xcode/build;
+			};
+			name = Debug;
+		};
+		13C19791F2C24B0DB2BFCD8F /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		1730277AB66B4B838CA1D7D7 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = /Users/yangyi/company/python/pybind11callpython/xcode/build;
+			};
+			name = MinSizeRel;
+		};
+		190328FA53874368ACA731D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		1E44C555FE5D41879D271937 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/Debug;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                            -Wall -pedantic -W '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtestd;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		3033CC2E65E0495B919D4BC1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		49D82DA7F6DD40F2B46EC3DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/Debug;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                            -Wall -pedantic -W '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest_maind;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = ("/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest_main.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		4F4F81C8766847CC814C5F88 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		51E63B3843454A218C421B65 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		625D38F7F263450CB38395E4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = /Users/yangyi/company/python/pybind11callpython/xcode/build;
+			};
+			name = Release;
+		};
+		762CE5841F0D4887A4AA44B3 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		85D6716252994BDA9DD3BF13 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/RelWithDebInfo;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                       -DNDEBUG          -Wall -pedantic -W '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest_main;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = ("/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest_main.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		90A066024E4848CB8F741943 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/MinSizeRel;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                    -DNDEBUG     -DNDEBUG   -Wall -pedantic -W '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest_main;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = ("/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest_main.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		943203BC681F43D5B4CC383F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		94479A17349C424E87BE9D62 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		9C35365E9DAE4D168719D62A /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/MinSizeRel;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                    -DNDEBUG     -DNDEBUG   -Wall -pedantic -W '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		A12FD7664EA74CB7A82804F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/Release;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                    -DNDEBUG     -DNDEBUG  '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest_main;
+				SECTORDER_FLAGS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = ("/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest_main.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		A384845C2B884CFD9638AFDD /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		A515E3FD005E4DD59D258C1C /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		A699A64D8FEF4C62A034EFB9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/Release;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                    -DNDEBUG     -DNDEBUG  '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		B193421F0CFD4A11AA9B6668 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		B311977C973B411CB82FA7A3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		C6156BD0DF414E3185F0B9C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		D881DCB083144341AA2232DB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		E95539C7774B4BA68610B9CB /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		F6C64E51EB884189875593BA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		FBAA6F5D74A84D18B7951B88 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = /Users/yangyi/company/python/pybind11callpython/xcode/build;
+			};
+			name = RelWithDebInfo;
+		};
+		FD73C28F22A448C0970C67C1 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = /Users/yangyi/company/python/pybind11callpython/xcode/lib/RelWithDebInfo;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12",/Users/yangyi/company/python/pybind11callpython/include,/Users/yangyi/company/python/pybind11callpython/antlr/generated,/Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr,"/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/atn","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/dfa","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/misc","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/support","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/pattern","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/antlr4-src/runtime/Cpp/runtime/src/tree/xpath","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest/include","/Users/yangyi/company/python/pybind11callpython/xcode/_deps/googletest-src/googletest","$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CPLUSPLUSFLAGS = "   -Wall -pedantic -W -std=c++17                       -DNDEBUG          -Wall -pedantic -W '-std=c++17' -Wall -Wshadow -Werror -Wconversion -DGTEST_HAS_PTHREAD=1 -fexceptions -W -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wunused-parameter -Wcast-align -Wchar-subscripts -Winline -Wredundant-decls ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = gtest;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/yangyi/company/python/pybind11callpython/xcode/build/gtest.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		405B4F24DE6943D19E21B37A /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				190328FA53874368ACA731D2 /* Debug */,
+				943203BC681F43D5B4CC383F /* Release */,
+				B193421F0CFD4A11AA9B6668 /* MinSizeRel */,
+				762CE5841F0D4887A4AA44B3 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4FAB3BB643AA4170B10DBD43 /* Build configuration list for PBXProject "gtest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				04E8703E05644A5FB7944580 /* Debug */,
+				625D38F7F263450CB38395E4 /* Release */,
+				1730277AB66B4B838CA1D7D7 /* MinSizeRel */,
+				FBAA6F5D74A84D18B7951B88 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		83192578215A4B65A9E917BA /* Build configuration list for PBXNativeTarget "gtest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E44C555FE5D41879D271937 /* Debug */,
+				A699A64D8FEF4C62A034EFB9 /* Release */,
+				9C35365E9DAE4D168719D62A /* MinSizeRel */,
+				FD73C28F22A448C0970C67C1 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8789F28468014F6584BAC693 /* Build configuration list for PBXNativeTarget "gtest_main" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49D82DA7F6DD40F2B46EC3DE /* Debug */,
+				A12FD7664EA74CB7A82804F8 /* Release */,
+				90A066024E4848CB8F741943 /* MinSizeRel */,
+				85D6716252994BDA9DD3BF13 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D194340478D6408082ACCCE1 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D881DCB083144341AA2232DB /* Debug */,
+				51E63B3843454A218C421B65 /* Release */,
+				E95539C7774B4BA68610B9CB /* MinSizeRel */,
+				4F4F81C8766847CC814C5F88 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E1E9E98EB4034A899160D5FA /* Build configuration list for PBXAggregateTarget "package" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F6C64E51EB884189875593BA /* Debug */,
+				C6156BD0DF414E3185F0B9C4 /* Release */,
+				94479A17349C424E87BE9D62 /* MinSizeRel */,
+				A515E3FD005E4DD59D258C1C /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F39ADEBFAA7B406197393BD0 /* Build configuration list for PBXAggregateTarget "install" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B311977C973B411CB82FA7A3 /* Debug */,
+				3033CC2E65E0495B919D4BC1 /* Release */,
+				13C19791F2C24B0DB2BFCD8F /* MinSizeRel */,
+				A384845C2B884CFD9638AFDD /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 33F67A806A4E4124B0B078CC /* Project object */;
+}
