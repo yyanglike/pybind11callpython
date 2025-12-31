@@ -2904,7 +2904,8 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
     } catch (const std::exception& e) {
         int line = ctx->getStart()->getLine();
         int col = ctx->getStart()->getCharPositionInLine();
-        reportError("Failed to define class: " + string(e.what()), line, col);
+        reportError("Failed to define class: " + string(e.what()),
+                    ScriptErrorType::Runtime, ScriptErrorCode::Unknown, line, col);
         return any();
     }
     return any();
@@ -2940,7 +2941,8 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
     } catch (const std::exception& e) {
         int line = ctx->getStart()->getLine();
         int col = ctx->getStart()->getCharPositionInLine();
-        reportError("Failed to execute decorated definition: " + string(e.what()), line, col);
+        reportError("Failed to execute decorated definition: " + string(e.what()),
+                    ScriptErrorType::Runtime, ScriptErrorCode::Unknown, line, col);
         return any();
     }
     return any();

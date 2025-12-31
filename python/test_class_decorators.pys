@@ -1,5 +1,12 @@
 def deco(cls):
     cls.decorated = True
+    cls.calls = 0
+    orig_init = getattr(cls, "__init__", None)
+    def __init__(self, *args, **kwargs):
+        cls.calls += 1
+        if orig_init:
+            orig_init(self, *args, **kwargs)
+    cls.__init__ = __init__
     return cls
 
 def method_deco(fn):
@@ -17,5 +24,6 @@ class C:
 
 c = C(5)
 print("class_deco", getattr(c, "decorated", False), c.inc(3))
+print("class_deco_calls", getattr(C, "calls", None))
 
 

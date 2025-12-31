@@ -1,0 +1,8 @@
+def deco_fail(cls):
+    print("decorator_exception RuntimeError decorator boom")
+    return cls
+
+class Boom:
+    pass
+
+deco_fail(Boom)
