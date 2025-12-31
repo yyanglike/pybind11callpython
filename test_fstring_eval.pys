@@ -1,0 +1,4 @@
+name = "world"
+msg = f"Hello {name}"
+print(msg)
+

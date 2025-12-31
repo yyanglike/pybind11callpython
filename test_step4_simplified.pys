@@ -1,6 +1,30 @@
 def build_dataframe(n):
-    # 极简版本：返回空字典，避免解释器在复杂结构上报错
-    return {}
+    # 兼容当前解释器：仅使用简单循环/索引构造数据结构
+    if not n:
+        n = 5
+    # 构造列表
+    idx = []
+    squares = []
+    cubes = []
+    cat = []
+    i = 0
+    while i < n:
+        idx.append(i)
+        squares.append(i * i)
+        cubes.append(i * i * i)
+        if i % 2 == 0:
+            cat.append("even")
+        else:
+            cat.append("odd")
+        i = i + 1
+    # 模拟 DataFrame 的基本结构
+    return {
+        "data": {"x": idx, "x2": squares},
+        "x3": cubes,
+        "cat": cat,
+        "shape": (len(idx), 4),
+    }
 
 df = build_dataframe(5)
 print("DataFrame created successfully (simplified)")
+print("Summary:", df)

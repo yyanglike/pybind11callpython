@@ -51,8 +51,54 @@ bool ScriptInterpreter::execute(const string& script) {
     result_ = nullptr;
     
     try {
+        // 预处理：将 f-string 转为 __fstr__("f\"...\"") 形式，避免语法不支持
+        auto transform_fstrings = [](const std::string& in) -> std::string {
+            std::string out;
+            out.reserve(in.size());
+            size_t i = 0;
+            while (i < in.size()) {
+                char c = in[i];
+                if ((c == 'f' || c == 'F') && i + 1 < in.size() && (in[i + 1] == '"' || in[i + 1] == '\'')) {
+                    char quote = in[i + 1];
+                    size_t j = i + 2;
+                    bool closed = false;
+                    while (j < in.size()) {
+                        char cc = in[j];
+                        if (cc == '\\') {
+                            j += 2; // skip escaped
+                            continue;
+                        }
+                        if (cc == quote) {
+                            closed = true;
+                            ++j;
+                            break;
+                        }
+                        ++j;
+                    }
+                    std::string raw = in.substr(i, j - i); // f"..."
+                    // escape for single-quoted wrapper
+                    std::string escaped;
+                    escaped.reserve(raw.size() * 2);
+                    for (char rc : raw) {
+                        if (rc == '\\' || rc == '\'') escaped.push_back('\\');
+                        escaped.push_back(rc);
+                    }
+                    out += "__fstr__('";
+                    out += escaped;
+                    out += "')";
+                    i = j;
+                    if (!closed) break;
+                    continue;
+                }
+                out.push_back(c);
+                ++i;
+            }
+            return out;
+        };
+        std::string preprocessed = transform_fstrings(script);
+
         logger_.debug("Creating ANTLRInputStream...");
-        ANTLRInputStream input(script);
+        ANTLRInputStream input(preprocessed);
         logger_.debug("Creating PyScriptLexer...");
         PyScriptLexer lexer(&input);
         logger_.debug("Creating CommonTokenStream...");
@@ -72,24 +118,30 @@ bool ScriptInterpreter::execute(const string& script) {
         auto tree = parser.program();
         logger_.debug("Parse tree created successfully");
 
-        // 确保 sys.argv 存在且为非空列表，避免脚本访问 sys.argv 时为 None
+        // 提供 __fstr__ 辅助：使用 Python eval 计算 f-string
+        try {
+            auto fstr_func = py::cpp_function([this](py::str fmt) {
+                py::dict env = py::globals();
+                for (const auto& name : variable_manager_.getAllVariableNames()) {
+                    auto val = variable_manager_.getVariable(name);
+                    if (val) {
+                        env[name.c_str()] = val->toPythonObject();
+                    }
+                }
+                return py::eval(fmt, env, env);
+            });
+            py::globals()["__fstr__"] = fstr_func;
+            variable_manager_.setVariable("__fstr__", ScriptValue::fromPythonObject(fstr_func));
+        } catch (...) {
+            // 忽略
+        }
+
+        // 统一初始化 sys.argv，避免脚本访问 sys.argv 为 None/非列表
         try {
             py::module_ sys_mod = py::module_::import("sys");
-            py::object argv = sys_mod.attr("argv");
-            bool reset = false;
-            if (argv.is_none()) reset = true;
-            else if (!py::isinstance<py::list>(argv)) reset = true;
-            if (reset) {
-                py::list l;
-                l.append(py::cast(""));  // 占位脚本名
-                sys_mod.attr("argv") = l;
-            } else {
-                py::list l = argv.cast<py::list>();
-                if (l.empty()) {
-                    l.append(py::cast(""));
-                    sys_mod.attr("argv") = l;
-                }
-            }
+            py::list argv_list;
+            argv_list.append(py::cast(""));  // 占位脚本名
+            sys_mod.attr("argv") = argv_list;
         } catch (...) {
             // 忽略
         }

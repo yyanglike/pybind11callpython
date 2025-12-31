@@ -1,0 +1,9 @@
+# 验证缩进截取：函数体后有空行、dedent语句
+def foo():
+    x = 1
+    y = 2
+    z = x + y
+    return z
+
+print("foo ->", foo())
+

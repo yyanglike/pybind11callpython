@@ -1,0 +1,8 @@
+# 验证 sys.argv 已初始化且至少含脚本名占位
+import sys
+
+def check():
+    return isinstance(sys.argv, list) and len(sys.argv) >= 1
+
+print("argv ok:", check())
+
