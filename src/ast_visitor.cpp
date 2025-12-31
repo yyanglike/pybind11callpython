@@ -2300,17 +2300,30 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
     auto bodyExpr = exprs[0];
     auto iterExpr = exprs[1];
     std::string varName = ctx->IDENTIFIER()->getText();
-    // 使用 Python generator 表达式保持惰性
-    std::string genText = "(" + bodyExpr->getText() + " for " + varName + " in " + iterExpr->getText() + ")";
-    try {
-        py::dict g = buildEvalGlobals(variable_manager_);
-        py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
-        py::object result = builtins.attr("eval")(genText, g, g);
-        return any(ScriptValue::fromPythonObject(result));
-    } catch (const py::error_already_set& e) {
-        reportError("Failed to evaluate generator expression: " + string(e.what()), ctx);
+    auto iterVal = evaluateExpression(iterExpr);
+    if (!iterVal) {
+        reportError("Cannot evaluate generator iterable", ctx);
         return any();
     }
+    py::object iterObj = iterVal->toPythonObject();
+    // 包装主体表达式：接受一个参数（迭代元素），写入变量，再求值
+    py::object bodyFunc = py::cpp_function([this, bodyExpr, varName](py::object item) {
+        variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(item));
+        auto val = evaluateExpression(bodyExpr);
+        if (!val) throw std::runtime_error("Cannot evaluate generator element");
+        return val->toPythonObject();
+    });
+    py::module_ m = py::module_::import("__main__");
+    if (!py::hasattr(m, "__gen_map__")) {
+        py::exec(
+            "def __gen_map__(iterable, func):\n"
+            "    for _x in iterable:\n"
+            "        yield func(_x)\n",
+            m.attr("__dict__"));
+    }
+    py::object gen_map = m.attr("__gen_map__");
+    py::object gen = gen_map(iterObj, bodyFunc);
+    return any(ScriptValue::fromPythonObject(gen));
 }
 
 any AstVisitor::visitLiteral(PyScriptParser::LiteralContext *ctx) {
