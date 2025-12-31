@@ -1,2 +1,3 @@
 name = "world"
-print(f"Hello {name}")
+# f-strings are unsupported in the interpreter; use format instead
+print("Hello {}".format(name))

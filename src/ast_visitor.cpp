@@ -340,17 +340,17 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             return any();
         }
         
-        // 结束位置：选取 stopIndex 最大的真实 token（避免 EOF 或无效 token）
-        antlr4::Token* stopToken = startToken;
-        ssize_t maxStop = startToken->getStopIndex();
-        for (auto tok : allTokens) {
-            if (!tok) continue;
-            if (tok->getType() == antlr4::Token::EOF) continue;
-            auto s = static_cast<ssize_t>(tok->getStopIndex());
-            if (s > maxStop) {
-                maxStop = s;
+        // 结束位置：取最后一个非 EOF 的 token，确保包含函数体全部内容
+        antlr4::Token* stopToken = nullptr;
+        for (auto it = allTokens.rbegin(); it != allTokens.rend(); ++it) {
+            auto tok = *it;
+            if (tok && tok->getType() != antlr4::Token::EOF) {
                 stopToken = tok;
+                break;
             }
+        }
+        if (!stopToken) {
+            stopToken = startToken;
         }
         logger_.debug("Final stop token type: " + to_string(stopToken->getType()));
         logger_.debug("Stop token text: '" + stopToken->getText() + "'");
@@ -384,13 +384,86 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             return any();
         }
         
-        // 使用字符区间获取完整函数定义文本
-        ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
-        ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
-        if (stopIndex < startIndex) {
-            stopIndex = startIndex;
+        // 使用行缩进来确定函数体范围，避免虚拟token或缺失token导致截断
+        // 1. 拿到完整脚本文本
+        std::string fullText = inputStream->getText(misc::Interval(0, inputStream->size() - 1));
+        
+        // 2. 预计算每行的起始偏移
+        std::vector<size_t> lineOffsets;
+        lineOffsets.push_back(0);
+        for (size_t i = 0; i < fullText.size(); ++i) {
+            if (fullText[i] == '\n') {
+                lineOffsets.push_back(i + 1);
+            }
         }
-        string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
+        lineOffsets.push_back(fullText.size() + 1); // 便于计算最后一行的结束位置
+        
+        auto countIndent = [](const std::string& text, size_t offset) -> size_t {
+            size_t indent = 0;
+            while (offset < text.size()) {
+                char c = text[offset];
+                if (c == ' ') {
+                    ++indent;
+                } else if (c == '\t') {
+                    indent += 4; // 将tab折算为4个空格
+                } else {
+                    break;
+                }
+                ++offset;
+            }
+            return indent;
+        };
+        
+        size_t startLine = static_cast<size_t>(startToken->getLine() - 1);
+        if (startLine >= lineOffsets.size() - 1) {
+            logger_.error("Invalid start line for function " + ctx->IDENTIFIER()->getText());
+            defining_function_ = old_defining_function;
+            return any();
+        }
+        size_t startOffset = lineOffsets[startLine];
+        size_t baseIndent = countIndent(fullText, startOffset);
+        
+        // 3. 向后扫描，直到遇到缩进<=baseIndent的非空行
+        size_t endLine = startLine;
+        for (size_t line = startLine + 1; line + 1 < lineOffsets.size(); ++line) {
+            size_t lineStart = lineOffsets[line];
+            size_t lineEnd = lineOffsets[line + 1] - 1; // 包含换行符前的位置
+            std::string_view lineText(fullText.data() + lineStart, lineEnd - lineStart);
+            
+            // 跳过空行或仅包含空白的行
+            bool allSpace = true;
+            for (char c : lineText) {
+                if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
+                    allSpace = false;
+                    break;
+                }
+            }
+            if (allSpace) {
+                continue;
+            }
+            
+            size_t indent = countIndent(fullText, lineStart);
+            if (indent <= baseIndent) {
+                endLine = line - 1;
+                break;
+            } else {
+                endLine = line;
+            }
+        }
+        if (endLine < startLine) {
+            endLine = startLine;
+        }
+        
+        size_t stopOffset = lineOffsets[endLine + 1] - 1;
+        if (stopOffset >= fullText.size()) {
+            stopOffset = fullText.size() - 1;
+        }
+        
+        logger_.info("Function " + ctx->IDENTIFIER()->getText() + 
+                     " interval by indent: startOffset=" + to_string(startOffset) + 
+                     ", stopOffset=" + to_string(stopOffset));
+        
+        string funcDef = fullText.substr(startOffset, stopOffset - startOffset + 1);
         
         logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
         logger_.debug("First 200 chars: " + funcDef.substr(0, min((size_t)200, funcDef.length())));
