@@ -68,6 +68,30 @@ static py::dict buildEvalGlobals(VariableManager& variable_manager) {
     }
     return g;
 }
+
+// 统一将 ScriptValue 转换为 Python 可迭代对象（用于推导式/生成器）
+static py::iterator toIterator(const shared_ptr<ScriptValue>& val) {
+    if (!val) throw runtime_error("Iterator source is null");
+    if (val->isPythonObject()) {
+        return py::iter(val->toPythonObject());
+    }
+    if (val->isList()) {
+        py::list lst;
+        for (auto& item : val->getList()) {
+            lst.append(item ? item->toPythonObject() : py::none());
+        }
+        return py::iter(lst);
+    }
+    if (val->isDictionary()) {
+        py::list keys;
+        for (auto& kv : val->getDictionary()) {
+            keys.append(kv.first);
+        }
+        return py::iter(keys);
+    }
+    // 其他类型尝试转换为 Python 对象后迭代
+    return py::iter(val->toPythonObject());
+}
 // 构造函数
 AstVisitor::AstVisitor(VariableManager& variable_manager,
                        ErrorHandler& error_handler,
@@ -2158,20 +2182,40 @@ any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext 
         reportError("Invalid dict comprehension", ctx);
         return any();
     }
-    std::string keyText = exprs[0]->getText();
-    std::string valText = exprs[1]->getText();
-    std::string iterText = exprs[2]->getText();
+    auto keyExpr = exprs[0];
+    auto valExpr = exprs[1];
+    auto iterExpr = exprs[2];
     std::string varName = ctx->IDENTIFIER()->getText();
-    std::string comp = "{" + keyText + ": " + valText + " for " + varName + " in " + iterText + "}";
+
+    auto iterVal = evaluateExpression(iterExpr);
+    if (!iterVal) {
+        reportError("Cannot evaluate dict comprehension iterable", ctx);
+        return any();
+    }
+
+    auto dictVal = ScriptValue::createDictionary();
+    auto oldVar = variable_manager_.getVariable(varName);
     try {
-        py::dict g = buildEvalGlobals(variable_manager_);
-        py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
-        py::object result = builtins.attr("eval")(comp, g, g);
-        return any(ScriptValue::fromPythonObject(result));
+        for (auto item : toIterator(iterVal)) {
+            py::object obj = py::reinterpret_borrow<py::object>(item);
+            variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(obj));
+            auto keyVal = evaluateExpression(keyExpr);
+            auto valVal = evaluateExpression(valExpr);
+            if (!keyVal || !valVal) {
+                reportError("Cannot evaluate dict comprehension key/value", ctx);
+                return any();
+            }
+            std::string keyStr = keyVal->toString();
+            dictVal->setKey(keyStr, valVal);
+        }
     } catch (const py::error_already_set& e) {
         reportError("Failed to evaluate dict comprehension: " + string(e.what()), ctx);
         return any();
     }
+    if (oldVar) {
+        variable_manager_.setVariable(varName, oldVar);
+    }
+    return any(dictVal);
 }
 
 any AstVisitor::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
@@ -2184,26 +2228,40 @@ any AstVisitor::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
     if (!elementsCtx) {
         return any(ScriptValue::fromPythonObject(py::set()));
     }
+    // 推导式
     if (elementsCtx->IDENTIFIER() && elementsCtx->expression().size() >= 2) {
-        // 推导式：重建字符串，确保空格正确
         auto exprs = elementsCtx->expression();
-        if (exprs.size() != 2 || !elementsCtx->IDENTIFIER()) {
+        if (exprs.size() != 2) {
             reportError("Invalid set comprehension", ctx);
             return any();
         }
-        std::string elemText = exprs[0]->getText();
-        std::string iterText = exprs[1]->getText();
+        auto elemExpr = exprs[0];
+        auto iterExpr = exprs[1];
         std::string varName = elementsCtx->IDENTIFIER()->getText();
-        std::string comp = "{" + elemText + " for " + varName + " in " + iterText + "}";
+        auto iterVal = evaluateExpression(iterExpr);
+        if (!iterVal) {
+            reportError("Cannot evaluate set comprehension iterable", ctx);
+            return any();
+        }
+        py::set s;
+        auto oldVar = variable_manager_.getVariable(varName);
         try {
-            py::dict g = buildEvalGlobals(variable_manager_);
-            py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
-            py::object result = builtins.attr("eval")(comp, g, g);
-            return any(ScriptValue::fromPythonObject(result));
+            for (auto item : toIterator(iterVal)) {
+                py::object obj = py::reinterpret_borrow<py::object>(item);
+                variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(obj));
+                auto val = evaluateExpression(elemExpr);
+                if (!val) {
+                    reportError("Cannot evaluate set comprehension element", ctx);
+                    return any();
+                }
+                s.add(val->toPythonObject());
+            }
         } catch (const py::error_already_set& e) {
             reportError("Failed to evaluate set comprehension: " + string(e.what()), ctx);
             return any();
         }
+        if (oldVar) variable_manager_.setVariable(varName, oldVar);
+        return any(ScriptValue::fromPythonObject(s));
     }
 
     // 普通 set 字面量
@@ -2239,10 +2297,11 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
         reportError("Invalid generator expression", ctx);
         return any();
     }
-    std::string body = exprs[0]->getText();
-    std::string iter = exprs[1]->getText();
+    auto bodyExpr = exprs[0];
+    auto iterExpr = exprs[1];
     std::string varName = ctx->IDENTIFIER()->getText();
-    std::string genText = "(" + body + " for " + varName + " in " + iter + ")";
+    // 使用 Python generator 表达式保持惰性
+    std::string genText = "(" + bodyExpr->getText() + " for " + varName + " in " + iterExpr->getText() + ")";
     try {
         py::dict g = buildEvalGlobals(variable_manager_);
         py::object builtins = g.contains("__builtins__") ? g["__builtins__"] : py::module_::import("builtins");
@@ -2406,43 +2465,44 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
     
     // 检查是否为列表推导式
     if (ctx->FOR()) {
-        // 列表推导式: expression FOR IDENTIFIER IN expression
         logger_.debug("List comprehension detected");
         auto expressions = ctx->expression();
-        if (expressions.size() != 2) {
+        if (expressions.size() != 2 || !ctx->IDENTIFIER()) {
             reportError("Invalid list comprehension syntax", ctx);
             return any();
         }
-        
         auto outputExpr = expressions[0];
         auto iterExpr = expressions[1];
-        auto identifier = ctx->IDENTIFIER();
-        if (!identifier) {
-            reportError("Missing identifier in list comprehension", ctx);
+        string varName = ctx->IDENTIFIER()->getText();
+
+        auto iterVal = evaluateExpression(iterExpr);
+        if (!iterVal) {
+            reportError("Cannot evaluate list comprehension iterable", ctx);
             return any();
         }
-        
-        string outputText = outputExpr->getText();
-        string iterText = iterExpr->getText();
-        string varName = identifier->getText();
-        
-        // 构建列表推导式字符串
-        string compStr = "[" + outputText + " for " + varName + " in " + iterText + "]";
-        logger_.debug(std::string("List comprehension string: ") + compStr);
-        
-        // 在Python中执行列表推导式
+
+        auto listVal = ScriptValue::createList();
+        // 保存旧值
+        auto oldVar = variable_manager_.getVariable(varName);
         try {
-            py::dict globals = py::globals();
-            py::object builtins = py::module_::import("builtins");
-            // 确保globals包含builtins和range等内置函数
-            globals["__builtins__"] = builtins;
-            globals["range"] = builtins.attr("range");
-            py::object result = builtins.attr("eval")(compStr, globals, py::dict());
-            return any(ScriptValue::fromPythonObject(result));
+            for (auto item : toIterator(iterVal)) {
+                py::object obj = py::reinterpret_borrow<py::object>(item);
+                variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(obj));
+                auto outVal = evaluateExpression(outputExpr);
+                if (!outVal) {
+                    reportError("Cannot evaluate list comprehension element", ctx);
+                    return any();
+                }
+                listVal->append(outVal);
+            }
         } catch (const py::error_already_set& e) {
             reportError("Failed to evaluate list comprehension: " + string(e.what()), ctx);
             return any();
         }
+        if (oldVar) {
+            variable_manager_.setVariable(varName, oldVar);
+        }
+        return any(listVal);
     }
     
     // 普通列表元素，已在visitListLiteral中处理，这里返回空

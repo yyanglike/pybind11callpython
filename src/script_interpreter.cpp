@@ -74,22 +74,34 @@ bool ScriptInterpreter::execute(const string& script) {
                             j += 2; // skip escaped
                             continue;
                         }
-                        if (cc == quote) {
-                            closed = true;
-                            ++j;
-                            break;
+                        if (!triple) {
+                            if (cc == quote) {
+                                closed = true;
+                                ++j;
+                                break;
+                            }
+                        } else {
+                            if (cc == quote && j + 2 < in.size() && in[j + 1] == quote && in[j + 2] == quote) {
+                                closed = true;
+                                j += 3;
+                                break;
+                            }
                         }
                         ++j;
                     }
                     std::string raw = in.substr(i, j - i); // f"...", f'''...''' 或 f"""..."""
                     // 选择包裹引号：若原串用单引号（含三引号），则用双引号作为包裹，反之亦然
                     char wrapper = (quote == '\'') ? '"' : '\'';
-                    // 对包裹引号和反斜线做转义
+                    // 对包裹引号、反斜线以及换行做转义（换行转为 \n，避免单行字符串解析失败）
                     std::string escaped;
                     escaped.reserve(raw.size() * 2);
                     for (char rc : raw) {
-                        if (rc == '\\' || rc == wrapper) escaped.push_back('\\');
-                        escaped.push_back(rc);
+                        if (rc == '\n') {
+                            escaped += "\\n";
+                        } else {
+                            if (rc == '\\' || rc == wrapper) escaped.push_back('\\');
+                            escaped.push_back(rc);
+                        }
                     }
                     out += "__fstr__(";
                     out.push_back(wrapper);

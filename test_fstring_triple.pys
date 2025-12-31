@@ -1,7 +1,9 @@
 name = "world"
-# 单行 f-string 带格式化
+# 多行 f-string + 格式化说明符
 name = "world"
+msg = f"""Hello {name}
+line2"""
 fmt = f"{3.14159:0>6.2f}"
-print(f"Hello {name}")
+print(msg)
 print(fmt)
 
