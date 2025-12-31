@@ -359,22 +359,22 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         logger_.debug("Stop token start index: " + to_string(stopToken->getStartIndex()));
         logger_.debug("Stop token stop index: " + to_string(stopToken->getStopIndex()));
         
-        // 调试：打印令牌信息
-        logger_.info("Total tokens collected: " + to_string(allTokens.size()));
-        logger_.info("Real tokens count: " + to_string(realTokens.size()));
+        // 调试：打印令牌信息（改为debug，默认不输出）
+        logger_.debug("Total tokens collected: " + to_string(allTokens.size()));
+        logger_.debug("Real tokens count: " + to_string(realTokens.size()));
         
         // 打印所有真实令牌及其行号（最多前50个，避免日志过大）
         size_t limit = min(realTokens.size(), (size_t)50);
-        logger_.info("First " + to_string(limit) + " real tokens in function definition:");
+        logger_.debug("First " + to_string(limit) + " real tokens in function definition:");
         for (size_t i = 0; i < limit; ++i) {
             auto token = realTokens[i];
-            logger_.info("  [" + to_string(i) + "]: line " + to_string(token->getLine()) + 
+            logger_.debug("  [" + to_string(i) + "]: line " + to_string(token->getLine()) + 
                        ", col " + to_string(token->getCharPositionInLine()) + 
                        ", type " + to_string(token->getType()) + 
                        ", text: '" + token->getText() + "'");
         }
         if (realTokens.size() > limit) {
-            logger_.info("  ... and " + to_string(realTokens.size() - limit) + " more tokens");
+            logger_.debug("  ... and " + to_string(realTokens.size() - limit) + " more tokens");
         }
         
         auto inputStream = startToken->getInputStream();
