@@ -19,6 +19,27 @@ using namespace antlr4;
 using namespace std;
 using namespace script_interpreter;
 
+// 确保 sys.argv 为非空列表
+static void ensureSysArgv() {
+    try {
+        py::module_ sys = py::module_::import("sys");
+        py::object argv = sys.attr("argv");
+        py::list l;
+        if (argv.is_none() || !py::isinstance<py::list>(argv)) {
+            l.append(py::cast(""));
+            sys.attr("argv") = l;
+            return;
+        }
+        l = argv.cast<py::list>();
+        if (l.empty()) {
+            l.append(py::cast(""));
+            sys.attr("argv") = l;
+        }
+    } catch (...) {
+        // ignore
+    }
+}
+
 // 构造函数
 AstVisitor::AstVisitor(VariableManager& variable_manager,
                        ErrorHandler& error_handler,
@@ -145,6 +166,8 @@ shared_ptr<ScriptValue> AstVisitor::executeSuite(PyScriptParser::SuiteContext *c
 // ========== Visitor方法实现 ==========
 
 any AstVisitor::visitProgram(PyScriptParser::ProgramContext *ctx) {
+    ensureSysArgv();
+
     // 执行所有语句
     for (auto stmt : ctx->statement()) {
         this->visit(stmt);
@@ -317,34 +340,24 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             return any();
         }
         
-        // 确定函数体的结束位置：使用函数定义上下文的停止令牌，它应该包括整个函数定义（包括嵌套函数）
-        auto stopToken = ctx->getStop();
-        if (!stopToken) {
-            // 如果函数定义没有停止令牌，回退到suite的停止令牌
-            stopToken = suiteCtx->getStop();
-            logger_.warn("Function definition has no stop token, using suite stop token");
+        // 结束位置：选取 stopIndex 最大的真实 token（避免 EOF 或无效 token）
+        antlr4::Token* stopToken = startToken;
+        ssize_t maxStop = startToken->getStopIndex();
+        for (auto tok : allTokens) {
+            if (!tok) continue;
+            if (tok->getType() == antlr4::Token::EOF) continue;
+            auto s = static_cast<ssize_t>(tok->getStopIndex());
+            if (s > maxStop) {
+                maxStop = s;
+                stopToken = tok;
+            }
         }
-        
-        if (!stopToken) {
-            logger_.error("Cannot determine stop token for function definition");
-            defining_function_ = old_defining_function;
-            return any();
-        }
-        
-        // 注意：即使停止令牌是虚拟令牌（INDENT/DEDENT），我们也使用它，因为它的停止索引应该指向整个函数定义的结束位置
-        // 虚拟令牌（如DEDENT）的停止索引通常指向缩进级别的结束，这正是我们需要的
-        
         logger_.debug("Final stop token type: " + to_string(stopToken->getType()));
         logger_.debug("Stop token text: '" + stopToken->getText() + "'");
         logger_.debug("Stop token line: " + to_string(stopToken->getLine()));
         logger_.debug("Stop token char position: " + to_string(stopToken->getCharPositionInLine()));
         logger_.debug("Stop token start index: " + to_string(stopToken->getStartIndex()));
         logger_.debug("Stop token stop index: " + to_string(stopToken->getStopIndex()));
-        
-        // 验证停止令牌是否合理：应该在开始令牌之后
-        if (stopToken->getLine() < startToken->getLine()) {
-            logger_.warn("Stop token line < start token line, may not be correct");
-        }
         
         // 调试：打印令牌信息
         logger_.info("Total tokens collected: " + to_string(allTokens.size()));
@@ -374,6 +387,9 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         // 使用字符区间获取完整函数定义文本
         ssize_t startIndex = static_cast<ssize_t>(startToken->getStartIndex());
         ssize_t stopIndex = static_cast<ssize_t>(stopToken->getStopIndex());
+        if (stopIndex < startIndex) {
+            stopIndex = startIndex;
+        }
         string funcDef = inputStream->getText(misc::Interval(startIndex, stopIndex));
         
         logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
@@ -394,6 +410,18 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             } catch (...) {
                 // 忽略错误
             }
+        }
+
+        // 确保sys模块与argv存在，避免脚本访问sys.argv时为None
+        try {
+            py::module_ sys_module = py::module_::import("sys");
+            if (!globals.contains("sys")) {
+                globals["sys"] = sys_module;
+            }
+            // 无条件设置 argv，避免为 None
+            sys_module.attr("argv") = py::list();
+        } catch (...) {
+            // 忽略
         }
         
         // 注入已导入的模块，确保import语句可以找到模块
@@ -1014,6 +1042,7 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
 }
 
 any AstVisitor::visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) {
+    ensureSysArgv();
     auto value = evaluateExpression(ctx->expression());
     // 表达式语句的值可以忽略
     return any(value);

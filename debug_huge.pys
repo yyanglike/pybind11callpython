@@ -51,12 +51,9 @@ print("DEBUG: build_dataframe defined")
 def main():
     print("DEBUG: inside main")
     import sys
-    args = sys.argv
-    print("DEBUG: args =", args)
 
     n = 50
-    if len(args) > 1:
-        n = int(args[1])
+
     print("[pys] Building dataframe with n=", n)
     df = build_dataframe(n)
 
@@ -65,7 +62,11 @@ def main():
 
     summary = agg.to_dict()
     extra = { "meta": { "n": n, "source": "huge_complex_program.pys" } }
-
+    # 确保summary为dict，否则包装后再展开
+    if isinstance(summary, dict):
+        pass
+    else:
+        summary = { "summary": summary }
     merged = { **summary, **extra }
 
     print(json.dumps(merged, indent=2))

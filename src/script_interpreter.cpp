@@ -71,6 +71,28 @@ bool ScriptInterpreter::execute(const string& script) {
         logger_.debug("Parsing program...");
         auto tree = parser.program();
         logger_.debug("Parse tree created successfully");
+
+        // 确保 sys.argv 存在且为非空列表，避免脚本访问 sys.argv 时为 None
+        try {
+            py::module_ sys_mod = py::module_::import("sys");
+            py::object argv = sys_mod.attr("argv");
+            bool reset = false;
+            if (argv.is_none()) reset = true;
+            else if (!py::isinstance<py::list>(argv)) reset = true;
+            if (reset) {
+                py::list l;
+                l.append(py::cast(""));  // 占位脚本名
+                sys_mod.attr("argv") = l;
+            } else {
+                py::list l = argv.cast<py::list>();
+                if (l.empty()) {
+                    l.append(py::cast(""));
+                    sys_mod.attr("argv") = l;
+                }
+            }
+        } catch (...) {
+            // 忽略
+        }
         
         if (error_handler_.hasError()) {
             logger_.warn("Has error before visiting");
