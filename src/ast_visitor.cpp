@@ -23,6 +23,45 @@ static size_t hashString(const std::string& str) {
     return std::hash<std::string>{}(str);
 }
 
+// 增量哈希组合函数（用于组合多个哈希值）
+// 参考 boost::hash_combine 的实现
+static size_t hashCombine(size_t seed, size_t value) {
+    // 使用黄金比例相关的常数
+    return seed ^ (value + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
+
+// 计算变量状态的增量哈希（避免字符串拼接）
+static size_t computeVariableStateHash(script_interpreter::VariableManager& variable_manager, bool& has_python_objects) {
+    size_t hash = 0;
+    has_python_objects = false;
+    
+    for (const auto& varName : variable_manager.getAllVariableNames()) {
+        auto val = variable_manager.getVariable(varName);
+        if (val) {
+            try {
+                // 先哈希变量名
+                hash = hashCombine(hash, hashString(varName));
+                
+                if (val->isPythonObject()) {
+                    has_python_objects = true;
+                    // 对于 PythonObject，使用对象指针地址
+                    py::object obj = val->toPythonObject();
+                    size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
+                    hash = hashCombine(hash, obj_id);
+                } else {
+                    // 对于简单类型，使用值的哈希
+                    std::string val_str = val->toString();
+                    hash = hashCombine(hash, hashString(val_str));
+                }
+            } catch (...) {
+                // 忽略转换失败
+            }
+        }
+    }
+    
+    return hash;
+}
+
 using namespace antlr4;
 using namespace std;
 using namespace script_interpreter;
@@ -116,6 +155,12 @@ AstVisitor::AstVisitor(VariableManager& variable_manager,
       result_(nullptr),
       defining_function_(false),
       current_from_module_(py::none()) {
+    // 缓存 builtins 模块，避免每次函数定义都导入
+    try {
+        builtins_module_ = py::module_::import("builtins");
+    } catch (...) {
+        builtins_module_ = py::none();
+    }
 }
 
 // 报告错误
@@ -544,6 +589,11 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         
         // 提取函数名
         string funcName = ctx->IDENTIFIER()->getText();
+        
+        // 延迟缓存策略：跟踪函数定义次数
+        func_def_count_[funcName]++;
+        bool should_use_cache = cache_enabled_ && func_def_count_[funcName] > 1;
+        
         logger_.info(std::string("Function definition string length: ") + to_string(funcDef.length()));
         logger_.info(std::string("Function definition string:\n") + funcDef + "\n");
         
@@ -648,79 +698,64 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         // }
         
         try {
-            // 构建缓存键：包含函数源代码和当前变量的哈希值
-            // 这样如果外部变量变化，缓存键就会不同，避免使用旧的缓存
-            std::string cache_key_str = funcDef;
-            for (const auto& varName : variable_manager_.getAllVariableNames()) {
-                auto val = variable_manager_.getVariable(varName);
-                if (val) {
-                    try {
-                        cache_key_str += varName + ":";
-                        if (val->isPythonObject()) {
-                            // 对于 PythonObject（numpy、pandas等），使用对象 id 而不是 toString
-                            // 这样可以避免大型数组/DataFrame 的 toString() 开销
-                            // 并且更准确地识别对象变化
-                            py::object obj = val->toPythonObject();
-                            size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
-                            cache_key_str += "pyobj:" + std::to_string(obj_id);
-                        } else {
-                            // 对于简单类型，使用 toString()
-                            cache_key_str += val->toString();
-                        }
-                        cache_key_str += ";";
-                    } catch (...) {
-                        // 忽略转换失败
-                    }
+            // 两级缓存策略：
+            // 第一级：仅函数源代码哈希（快速路径，无变量依赖）
+            // 第二级：源代码哈希 + 变量状态哈希（完整路径，考虑变量变化）
+            
+            size_t source_hash = hashString(funcDef);
+            bool has_python_objects = false;
+            size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
+            size_t full_hash = hashCombine(source_hash, variable_state_hash);
+            
+            // 先检查快速路径（仅源代码匹配，且无 PythonObject）
+            py::object func;
+            bool cache_hit = false;
+            
+            if (should_use_cache && !has_python_objects) {
+                auto source_it = exec_cache_source_.find(source_hash);
+                if (source_it != exec_cache_source_.end()) {
+                    // 快速路径命中：仅源代码匹配，无变量依赖
+                    exec_cache_hits_++;
+                    func = source_it->second;
+                    cache_hit = true;
+                    logger_.debug("Function definition cache hit (source only) for: " + funcName);
                 }
             }
-            size_t cache_key = hashString(cache_key_str);
-            auto cache_it = exec_cache_.find(cache_key);
             
-            py::object func;
-            // 检查缓存是否启用
-            if (cache_enabled_ && cache_it != exec_cache_.end()) {
-                // 缓存命中：使用缓存的函数对象
-                // 注意：Python 的函数闭包机制会捕获变量的引用，所以即使对象 id 不变但内容变化了，
-                // 函数执行时仍然会访问当前 globals 中的变量引用，应该能访问到最新的内容
-                // 但为了安全起见，我们仍然重新执行定义以确保函数使用最新的 globals
-                // 这是因为缓存的函数对象的 __globals__ 指向旧的 globals 字典
+            // 如果快速路径未命中，检查完整路径
+            if (!cache_hit) {
+                auto cache_it = exec_cache_.find(full_hash);
                 
-                // 检查是否有 PythonObject 类型的变量（可能被 in-place 修改）
-                bool has_python_objects = false;
-                for (const auto& varName : variable_manager_.getAllVariableNames()) {
-                    auto val = variable_manager_.getVariable(varName);
-                    if (val && val->isPythonObject()) {
-                        has_python_objects = true;
-                        break;
-                    }
-                }
-                
-                if (has_python_objects) {
-                    // 如果有 PythonObject 类型变量，重新执行定义以确保使用最新的 globals
-                    // 这样可以处理对象 id 不变但内容变化的情况
-                    logger_.debug("Re-executing function definition due to PythonObject variables");
-                    exec_cache_misses_++;  // 实际上重新执行了，不算缓存命中
-                    py::object builtins_module = py::module_::import("builtins");
-                    builtins_module.attr("exec")(funcDef, globals, globals);
-                    func = globals[funcName.c_str()];
-                    exec_cache_[cache_key] = func;  // 更新缓存
-                } else {
-                    // 只有简单类型变量，可以使用缓存
+                // 检查缓存是否启用（延迟缓存策略：只在函数定义多次时才使用缓存）
+                if (should_use_cache && cache_it != exec_cache_.end()) {
+                    // 完整路径缓存命中
                     exec_cache_hits_++;
                     func = cache_it->second;
-                    logger_.debug("Function definition cache hit for: " + funcName);
+                    cache_hit = true;
+                    logger_.debug("Function definition cache hit (full) for: " + funcName);
                 }
-            } else {
-                // 缓存未命中：执行 exec 并缓存结果
+            }
+            
+            // 如果缓存未命中，执行 exec
+            if (!cache_hit) {
                 exec_cache_misses_++;
-                py::object builtins_module = py::module_::import("builtins");
-                builtins_module.attr("exec")(funcDef, globals, globals);
+                if (!builtins_module_.is_none()) {
+                    builtins_module_.attr("exec")(funcDef, globals, globals);
+                } else {
+                    py::exec(py::str(funcDef), globals, globals);
+                }
                 func = globals[funcName.c_str()];
                 
-                // 缓存结果（如果缓存启用）
-                if (cache_enabled_) {
-                    exec_cache_[cache_key] = func;
-                    logger_.debug("Function definition cached for: " + funcName);
+                // 缓存结果（延迟缓存策略：只在函数定义多次时才缓存）
+                if (should_use_cache) {
+                    if (!has_python_objects) {
+                        // 无 PythonObject，可以缓存到快速路径
+                        exec_cache_source_[source_hash] = func;
+                        logger_.debug("Function definition cached (source only) for: " + funcName);
+                    }
+                    // 同时缓存到完整路径
+                    exec_cache_[full_hash] = func;
+                    logger_.debug("Function definition cached (full) for: " + funcName);
                 }
             }
             
@@ -3353,48 +3388,51 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
         
         std::string name = ctx->IDENTIFIER()->getText();
         
-        // 构建缓存键：包含类源代码和当前变量的哈希值
-        std::string cache_key_str = text;
-        for (const auto& varName : variable_manager_.getAllVariableNames()) {
-            auto val = variable_manager_.getVariable(varName);
-            if (val) {
-                try {
-                    cache_key_str += varName + ":";
-                    if (val->isPythonObject()) {
-                        // 对于 PythonObject（numpy、pandas等），使用对象 id 而不是 toString
-                        py::object obj = val->toPythonObject();
-                        size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
-                        cache_key_str += "pyobj:" + std::to_string(obj_id);
-                    } else {
-                        // 对于简单类型，使用 toString()
-                        cache_key_str += val->toString();
-                    }
-                    cache_key_str += ";";
-                } catch (...) {
-                    // 忽略转换失败
-                }
-            }
-        }
-        size_t cache_key = hashString(cache_key_str);
-        auto cache_it = exec_cache_.find(cache_key);
+        // 两级缓存策略：使用增量哈希
+        size_t source_hash = hashString(text);
+        bool has_python_objects = false;
+        size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
+        size_t full_hash = hashCombine(source_hash, variable_state_hash);
         
         py::object cls;
-        // 检查缓存是否启用
-        if (cache_enabled_ && cache_it != exec_cache_.end()) {
-            // 缓存命中：直接使用缓存的结果
-            exec_cache_hits_++;
-            cls = cache_it->second;
-            logger_.debug("Class definition cache hit for: " + name);
-        } else {
-            // 缓存未命中或缓存禁用：执行 exec 并缓存结果（如果启用）
+        bool cache_hit = false;
+        
+        // 先检查快速路径（仅源代码匹配，且无 PythonObject）
+        if (cache_enabled_ && !has_python_objects) {
+            auto source_it = exec_cache_source_.find(source_hash);
+            if (source_it != exec_cache_source_.end()) {
+                exec_cache_hits_++;
+                cls = source_it->second;
+                cache_hit = true;
+                logger_.debug("Class definition cache hit (source only) for: " + name);
+            }
+        }
+        
+        // 如果快速路径未命中，检查完整路径
+        if (!cache_hit) {
+            auto cache_it = exec_cache_.find(full_hash);
+            if (cache_enabled_ && cache_it != exec_cache_.end()) {
+                exec_cache_hits_++;
+                cls = cache_it->second;
+                cache_hit = true;
+                logger_.debug("Class definition cache hit (full) for: " + name);
+            }
+        }
+        
+        // 如果缓存未命中，执行 exec
+        if (!cache_hit) {
             exec_cache_misses_++;
             py::exec(py::str(text), py::globals(), py::globals());
             cls = py::globals()[name.c_str()];
             
             // 缓存结果（如果缓存启用）
             if (cache_enabled_) {
-                exec_cache_[cache_key] = cls;
-                logger_.debug("Class definition cached for: " + name);
+                if (!has_python_objects) {
+                    exec_cache_source_[source_hash] = cls;
+                    logger_.debug("Class definition cached (source only) for: " + name);
+                }
+                exec_cache_[full_hash] = cls;
+                logger_.debug("Class definition cached (full) for: " + name);
             }
         }
         
@@ -3428,42 +3466,39 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             text.push_back('\n');
         }
         
-        // 构建缓存键：包含源代码和当前变量的哈希值
-        std::string cache_key_str = text;
-        for (const auto& varName : variable_manager_.getAllVariableNames()) {
-            auto val = variable_manager_.getVariable(varName);
-            if (val) {
-                try {
-                    cache_key_str += varName + ":";
-                    if (val->isPythonObject()) {
-                        // 对于 PythonObject（numpy、pandas等），使用对象 id 而不是 toString
-                        py::object obj = val->toPythonObject();
-                        size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
-                        cache_key_str += "pyobj:" + std::to_string(obj_id);
-                    } else {
-                        // 对于简单类型，使用 toString()
-                        cache_key_str += val->toString();
-                    }
-                    cache_key_str += ";";
-                } catch (...) {
-                    // 忽略转换失败
-                }
-            }
-        }
-        size_t cache_key = hashString(cache_key_str);
-        auto cache_it = exec_cache_.find(cache_key);
+        // 两级缓存策略：使用增量哈希
+        size_t source_hash = hashString(text);
+        bool has_python_objects = false;
+        size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
+        size_t full_hash = hashCombine(source_hash, variable_state_hash);
         
         bool cached = false;
-        // 检查缓存是否启用
-        if (cache_enabled_ && cache_it != exec_cache_.end()) {
-            // 缓存命中：直接使用缓存的结果
-            exec_cache_hits_++;
-            cached = true;
-            logger_.debug("Decorated definition cache hit");
-        } else {
-            // 缓存未命中或缓存禁用：执行 exec 并缓存结果（如果启用）
-            exec_cache_misses_++;
-            py::exec(py::str(text), py::globals(), py::globals());
+        py::object cached_cls;
+        
+        // 先检查快速路径（仅源代码匹配，且无 PythonObject）
+        if (cache_enabled_ && !has_python_objects) {
+            auto source_it = exec_cache_source_.find(source_hash);
+            if (source_it != exec_cache_source_.end()) {
+                exec_cache_hits_++;
+                cached = true;
+                cached_cls = source_it->second;
+                logger_.debug("Decorated definition cache hit (source only)");
+            }
+        }
+        
+        // 如果快速路径未命中，检查完整路径
+        if (!cached) {
+            auto cache_it = exec_cache_.find(full_hash);
+            if (cache_enabled_ && cache_it != exec_cache_.end()) {
+                exec_cache_hits_++;
+                cached = true;
+                cached_cls = cache_it->second;
+                logger_.debug("Decorated definition cache hit (full)");
+            } else {
+                // 缓存未命中或缓存禁用：执行 exec 并缓存结果（如果启用）
+                exec_cache_misses_++;
+                py::exec(py::str(text), py::globals(), py::globals());
+            }
         }
         
         // 若为 class 定义，写回变量表
@@ -3471,14 +3506,18 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             std::string name = ctx->classDef()->IDENTIFIER()->getText();
             py::object cls;
             if (cached) {
-                cls = cache_it->second;
+                cls = cached_cls;
             } else {
                 if (py::globals().contains(name.c_str())) {
                     cls = py::globals()[name.c_str()];
                     // 缓存结果（如果缓存启用）
                     if (cache_enabled_) {
-                        exec_cache_[cache_key] = cls;
-                        logger_.debug("Decorated class definition cached for: " + name);
+                        if (!has_python_objects) {
+                            exec_cache_source_[source_hash] = cls;
+                            logger_.debug("Decorated class definition cached (source only) for: " + name);
+                        }
+                        exec_cache_[full_hash] = cls;
+                        logger_.debug("Decorated class definition cached (full) for: " + name);
                     }
                 }
             }
@@ -3713,5 +3752,5 @@ void AstVisitor::resetPerformanceStats() {
     iter_py_count_.store(0);
     exec_cache_hits_.store(0);
     exec_cache_misses_.store(0);
-    // 注意：不清空 exec_cache_，保留缓存以便后续使用
+    // 注意：不清空 exec_cache_ 和 exec_cache_source_，保留缓存以便后续使用
 }

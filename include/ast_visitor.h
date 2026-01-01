@@ -249,9 +249,16 @@ private:
     
     // 函数/类定义执行结果缓存（基于源代码哈希）
     bool cache_enabled_{true};                                 ///< 缓存开关（默认启用）
-    std::unordered_map<size_t, py::object> exec_cache_;      ///< 缓存 py::exec 的结果
+    std::unordered_map<size_t, py::object> exec_cache_;      ///< 缓存 py::exec 的结果（完整路径：源代码+变量状态）
+    std::unordered_map<size_t, py::object> exec_cache_source_; ///< 源代码缓存（快速路径：仅源代码）
     mutable std::atomic<size_t> exec_cache_hits_{0};          ///< 缓存命中次数
     mutable std::atomic<size_t> exec_cache_misses_{0};        ///< 缓存未命中次数
+    
+    // 缓存的模块（避免重复导入）
+    py::object builtins_module_;                               ///< 缓存的 builtins 模块
+    
+    // 延迟缓存策略：跟踪函数定义次数
+    std::unordered_map<std::string, size_t> func_def_count_;  ///< 函数定义次数计数器
     
     /**
      * @brief 处理切片参数
