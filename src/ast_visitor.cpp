@@ -31,11 +31,17 @@ static size_t hashCombine(size_t seed, size_t value) {
 }
 
 // 计算变量状态的增量哈希（避免字符串拼接）
+// 优化：直接对值进行哈希，避免toString()的字符串创建开销
 static size_t computeVariableStateHash(script_interpreter::VariableManager& variable_manager, bool& has_python_objects) {
     size_t hash = 0;
     has_python_objects = false;
     
-    for (const auto& varName : variable_manager.getAllVariableNames()) {
+    // 优化：直接遍历variables_，避免getAllVariableNames()的vector创建和排序
+    // 注意：需要确保变量顺序一致，所以仍然需要排序
+    // 但可以通过缓存变量名列表来优化
+    auto var_names = variable_manager.getAllVariableNames();
+    
+    for (const auto& varName : var_names) {
         auto val = variable_manager.getVariable(varName);
         if (val) {
             try {
@@ -49,9 +55,40 @@ static size_t computeVariableStateHash(script_interpreter::VariableManager& vari
                     size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
                     hash = hashCombine(hash, obj_id);
                 } else {
-                    // 对于简单类型，使用值的哈希
-                    std::string val_str = val->toString();
-                    hash = hashCombine(hash, hashString(val_str));
+                    // 优化：对于简单类型，直接计算哈希，避免toString()创建字符串
+                    switch (val->getType()) {
+                        case ScriptValue::Type::Integer: {
+                            auto int_val = val->getInteger();
+                            hash = hashCombine(hash, std::hash<long long>{}(int_val));
+                            break;
+                        }
+                        case ScriptValue::Type::Double: {
+                            auto double_val = val->getDouble();
+                            hash = hashCombine(hash, std::hash<double>{}(double_val));
+                            break;
+                        }
+                        case ScriptValue::Type::Boolean: {
+                            auto bool_val = val->getBoolean();
+                            hash = hashCombine(hash, std::hash<bool>{}(bool_val));
+                            break;
+                        }
+                        case ScriptValue::Type::String: {
+                            // 字符串类型仍然需要hashString
+                            hash = hashCombine(hash, hashString(val->getString()));
+                            break;
+                        }
+                        case ScriptValue::Type::Null: {
+                            // Null类型使用固定哈希值
+                            hash = hashCombine(hash, 0xdeadbeef);
+                            break;
+                        }
+                        default: {
+                            // 对于其他类型（List, Dict等），使用toString()作为后备
+                            std::string val_str = val->toString();
+                            hash = hashCombine(hash, hashString(val_str));
+                            break;
+                        }
+                    }
                 }
             } catch (...) {
                 // 忽略转换失败
@@ -702,7 +739,16 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             // 第一级：仅函数源代码哈希（快速路径，无变量依赖）
             // 第二级：源代码哈希 + 变量状态哈希（完整路径，考虑变量变化）
             
-            size_t source_hash = hashString(funcDef);
+            // 优化：缓存源代码哈希，避免重复计算
+            size_t source_hash;
+            auto source_hash_it = source_hash_cache_.find(funcDef);
+            if (source_hash_it != source_hash_cache_.end()) {
+                source_hash = source_hash_it->second;
+            } else {
+                source_hash = hashString(funcDef);
+                source_hash_cache_[funcDef] = source_hash;
+            }
+            
             bool has_python_objects = false;
             size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
             size_t full_hash = hashCombine(source_hash, variable_state_hash);
@@ -3389,7 +3435,16 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
         std::string name = ctx->IDENTIFIER()->getText();
         
         // 两级缓存策略：使用增量哈希
-        size_t source_hash = hashString(text);
+        // 优化：缓存源代码哈希
+        size_t source_hash;
+        auto source_hash_it = source_hash_cache_.find(text);
+        if (source_hash_it != source_hash_cache_.end()) {
+            source_hash = source_hash_it->second;
+        } else {
+            source_hash = hashString(text);
+            source_hash_cache_[text] = source_hash;
+        }
+        
         bool has_python_objects = false;
         size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
         size_t full_hash = hashCombine(source_hash, variable_state_hash);
@@ -3467,7 +3522,16 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
         }
         
         // 两级缓存策略：使用增量哈希
-        size_t source_hash = hashString(text);
+        // 优化：缓存源代码哈希
+        size_t source_hash;
+        auto source_hash_it = source_hash_cache_.find(text);
+        if (source_hash_it != source_hash_cache_.end()) {
+            source_hash = source_hash_it->second;
+        } else {
+            source_hash = hashString(text);
+            source_hash_cache_[text] = source_hash;
+        }
+        
         bool has_python_objects = false;
         size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
         size_t full_hash = hashCombine(source_hash, variable_state_hash);
