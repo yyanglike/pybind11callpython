@@ -173,6 +173,30 @@ bool ScriptInterpreter::execute(const string& script) {
         } catch (...) {
             // 忽略
         }
+
+        // 提供容错版 range：None 视为 0，非整尝试 int()，异常则返回空 range(0)
+        try {
+            py::exec(R"PYCODE(
+import builtins
+_orig_range = builtins.range
+def __safe_range__(*args):
+    try:
+        coerced = []
+        for a in args:
+            if a is None:
+                coerced.append(0)
+            else:
+                coerced.append(int(a))
+        return _orig_range(*coerced)
+    except Exception:
+        return _orig_range(0)
+)PYCODE");
+            py::object safe_range = py::globals()["__safe_range__"];
+            py::globals()["range"] = safe_range;  // 仅注入当前脚本全局，不覆盖 builtins.range
+            variable_manager_.setVariable("range", ScriptValue::fromPythonObject(safe_range));
+        } catch (...) {
+            // 忽略
+        }
         
         if (error_handler_.hasError()) {
             logger_.warn("Has error before visiting");

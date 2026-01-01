@@ -1,0 +1,31 @@
+def deco_tag(cls):
+    cls.tag = "decorated"
+    return cls
+
+
+@deco_tag
+class Box:
+    def __init__(self, val):
+        self.val = val
+
+
+def run():
+    vals = [x for x in range(6)]
+    squares = [x * x for x in vals if x % 2 == 0]
+    mapping = {str(i): i * i for i in range(4)}
+    combos = {i * 10 + j for i in range(3) for j in range(2) if (i + j) % 2 == 1}
+    total = sum(vals) + sum(squares) + sum(mapping.values()) + sum(combos)
+
+    try:
+        if not hasattr(Box, "tag"):
+            raise ValueError("missing tag")
+    except Exception as e:
+        status = "error:" + str(e)
+    else:
+        status = "ok"
+
+    print("complex_mixed", Box.tag, total, status)
+
+
+run()
+

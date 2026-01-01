@@ -1155,12 +1155,8 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             objectValue->setAt(static_cast<size_t>(index), rightValue);
             return any(rightValue);
         } else if (objectValue->isDictionary()) {
-            // 使用ScriptValue的setKey方法
-            if (!indexValue->isString()) {
-                reportError("Dictionary key must be a string", ctx);
-                return any();
-            }
-            string key = indexValue->getString();
+            // 使用ScriptValue的setKey方法；允许非字符串键，统一转为字符串存储
+            string key = indexValue->toString();
             objectValue->setKey(key, rightValue);
             return any(rightValue);
         } else {
@@ -1931,11 +1927,7 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
             }
             return list[index];
         } else if (target->isDictionary()) {
-            if (!indexValue->isString()) {
-                reportError("Dictionary key must be a string", ctx);
-                return nullptr;
-            }
-            string key = indexValue->getString();
+            string key = indexValue->toString();
             auto& dict = target->getDictionary();
             auto it = dict.find(key);
             if (it == dict.end()) {

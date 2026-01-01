@@ -56,6 +56,27 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() + right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
+        } else if (op == "&") {
+            if (left->isInteger() && right->isInteger()) {
+                return ScriptValue::createInteger(left->getInteger() & right->getInteger());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("and_")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
+        } else if (op == "|") {
+            if (left->isInteger() && right->isInteger()) {
+                return ScriptValue::createInteger(left->getInteger() | right->getInteger());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("or_")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
+        } else if (op == "^") {
+            if (left->isInteger() && right->isInteger()) {
+                return ScriptValue::createInteger(left->getInteger() ^ right->getInteger());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("xor")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
         } else if (op == "-") {
             if (left->isNumber() && right->isNumber()) {
                 if (left->isInteger() && right->isInteger()) {
@@ -269,6 +290,15 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
             }
         } else if (op == "!") {
             return ScriptValue::createBoolean(!value->toBoolean());
+        } else if (op == "+") {
+            if (value->isInteger() || value->isDouble() || value->isBoolean() || value->isString()) {
+                return value;
+            } else if (value->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("pos")(value->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            } else {
+                return value; // treat as no-op
+            }
         }
         
         throw runtime_error("Unsupported unary operator: " + op);
