@@ -1,6 +1,6 @@
 # 完整优化总结
 
-## 已完成的全部优化（共10项）
+## 已完成的全部优化（共12项）
 
 ### ✅ 高优先级优化（3项）
 
@@ -49,6 +49,16 @@
 10. **优化 lambda 函数中的 builtins**
     - 使用缓存的 builtins_module_，避免重复导入
 
+11. **缓存变量名列表**
+    - 在 `AstVisitor` 中添加 `cached_var_names_` 和 `cached_var_count_`
+    - 如果变量数量未变化，复用缓存的变量名列表
+    - 避免重复调用 `getAllVariableNames()` 创建和排序vector
+
+12. **缓存模块名列表**
+    - 在 `AstVisitor` 中添加 `cached_module_names_` 和 `cached_module_count_`
+    - 如果模块数量未变化，复用缓存的模块名列表
+    - 避免重复调用 `getAllModuleNames()` 创建和排序vector
+
 ## 代码变更总结
 
 ### 新增函数
@@ -60,14 +70,19 @@
 - `builtins_module_`: 缓存的 builtins 模块
 - `sys_module_`: 缓存的 sys 模块
 - `func_def_count_`: 函数定义次数计数器
+- `cached_var_names_`: 缓存的变量名列表
+- `cached_module_names_`: 缓存的模块名列表
+- `cached_var_count_`: 缓存的变量数量（用于失效检测）
+- `cached_module_count_`: 缓存的模块数量（用于失效检测）
 - `source_hash_cache_`: 源代码哈希缓存
 
 ### 优化的方法
-- `visitFunctionDef()`: 两级缓存、增量哈希、源代码哈希缓存、优化toString、使用缓存的builtins/sys模块
-- `visitClassDef()`: 两级缓存、增量哈希、源代码哈希缓存
-- `visitDecoratedDef()`: 两级缓存、增量哈希、源代码哈希缓存
+- `visitFunctionDef()`: 两级缓存、增量哈希、源代码哈希缓存、优化toString、使用缓存的builtins/sys模块、使用缓存的变量/模块名列表
+- `visitClassDef()`: 两级缓存、增量哈希、源代码哈希缓存、使用缓存的变量名列表
+- `visitDecoratedDef()`: 两级缓存、增量哈希、源代码哈希缓存、使用缓存的变量名列表
 - `visitLambdaExpression()`: 使用缓存的builtins模块
 - `buildEvalGlobals()`: 接受builtins_module参数
+- `computeVariableStateHash()`: 接受缓存的变量名列表作为参数
 
 ## 性能优化效果
 
