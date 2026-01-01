@@ -32,14 +32,12 @@ static size_t hashCombine(size_t seed, size_t value) {
 
 // 计算变量状态的增量哈希（避免字符串拼接）
 // 优化：直接对值进行哈希，避免toString()的字符串创建开销
-static size_t computeVariableStateHash(script_interpreter::VariableManager& variable_manager, bool& has_python_objects) {
+// 优化：接受缓存的变量名列表，避免重复创建和排序
+static size_t computeVariableStateHash(script_interpreter::VariableManager& variable_manager, 
+                                       const std::vector<std::string>& var_names,
+                                       bool& has_python_objects) {
     size_t hash = 0;
     has_python_objects = false;
-    
-    // 优化：直接遍历variables_，避免getAllVariableNames()的vector创建和排序
-    // 注意：需要确保变量顺序一致，所以仍然需要排序
-    // 但可以通过缓存变量名列表来优化
-    auto var_names = variable_manager.getAllVariableNames();
     
     for (const auto& varName : var_names) {
         auto val = variable_manager.getVariable(varName);
@@ -138,6 +136,8 @@ static py::dict buildEvalGlobals(VariableManager& variable_manager, py::object b
     } catch (...) {
     }
     // 注入变量
+    // 注意：buildEvalGlobals是static函数，无法访问缓存的变量名列表
+    // 这里仍然需要调用getAllVariableNames()，但调用频率较低
     for (const auto& name : variable_manager.getAllVariableNames()) {
         auto val = variable_manager.getVariable(name);
         if (val) {
@@ -148,6 +148,7 @@ static py::dict buildEvalGlobals(VariableManager& variable_manager, py::object b
         }
     }
     // 注入模块
+    // 注意：buildEvalGlobals是static函数，无法访问缓存的模块名列表
     for (const auto& modName : variable_manager.getAllModuleNames()) {
         try {
             py::module_ m = variable_manager.getModule(modName);
@@ -680,7 +681,13 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         }
         
         // 注入已导入的模块，确保import语句可以找到模块
-        for (const auto& moduleName : variable_manager_.getAllModuleNames()) {
+        // 优化：使用缓存的模块名列表
+        size_t current_module_count = variable_manager_.getModuleCount();
+        if (cached_module_names_.empty() || cached_module_count_ != current_module_count) {
+            cached_module_names_ = variable_manager_.getAllModuleNames();
+            cached_module_count_ = current_module_count;
+        }
+        for (const auto& moduleName : cached_module_names_) {
             py::module_ module = variable_manager_.getModule(moduleName);
             if (module) {
                 // 将模块注入全局作用域，使用其原始名称
@@ -747,7 +754,8 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         }
         
         // 注入脚本变量到 globals，确保函数定义时可以访问外部变量
-        for (const auto& varName : variable_manager_.getAllVariableNames()) {
+        // 优化：使用缓存的变量名列表（已在上面更新）
+        for (const auto& varName : cached_var_names_) {
             auto val = variable_manager_.getVariable(varName);
             if (val) {
                 try {
@@ -781,8 +789,15 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
                 source_hash_cache_[funcDef] = source_hash;
             }
             
+            // 优化：使用缓存的变量名列表，避免重复创建和排序
+            size_t current_var_count = variable_manager_.getVariableCount();
+            if (cached_var_names_.empty() || cached_var_count_ != current_var_count) {
+                cached_var_names_ = variable_manager_.getAllVariableNames();
+                cached_var_count_ = current_var_count;
+            }
+            
             bool has_python_objects = false;
-            size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
+            size_t variable_state_hash = computeVariableStateHash(variable_manager_, cached_var_names_, has_python_objects);
             size_t full_hash = hashCombine(source_hash, variable_state_hash);
             
             // 先检查快速路径（仅源代码匹配，且无 PythonObject）
@@ -3479,8 +3494,15 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
             source_hash_cache_[text] = source_hash;
         }
         
+        // 优化：使用缓存的变量名列表
+        size_t current_var_count = variable_manager_.getVariableCount();
+        if (cached_var_names_.empty() || cached_var_count_ != current_var_count) {
+            cached_var_names_ = variable_manager_.getAllVariableNames();
+            cached_var_count_ = current_var_count;
+        }
+        
         bool has_python_objects = false;
-        size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
+        size_t variable_state_hash = computeVariableStateHash(variable_manager_, cached_var_names_, has_python_objects);
         size_t full_hash = hashCombine(source_hash, variable_state_hash);
         
         py::object cls;
@@ -3566,8 +3588,15 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             source_hash_cache_[text] = source_hash;
         }
         
+        // 优化：使用缓存的变量名列表
+        size_t current_var_count = variable_manager_.getVariableCount();
+        if (cached_var_names_.empty() || cached_var_count_ != current_var_count) {
+            cached_var_names_ = variable_manager_.getAllVariableNames();
+            cached_var_count_ = current_var_count;
+        }
+        
         bool has_python_objects = false;
-        size_t variable_state_hash = computeVariableStateHash(variable_manager_, has_python_objects);
+        size_t variable_state_hash = computeVariableStateHash(variable_manager_, cached_var_names_, has_python_objects);
         size_t full_hash = hashCombine(source_hash, variable_state_hash);
         
         bool cached = false;

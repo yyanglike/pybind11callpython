@@ -262,6 +262,12 @@ private:
     // 延迟缓存策略：跟踪函数定义次数
     std::unordered_map<std::string, size_t> func_def_count_;  ///< 函数定义次数计数器
     
+    // 缓存的变量/模块名列表（避免重复创建和排序）
+    mutable std::vector<std::string> cached_var_names_;      ///< 缓存的变量名列表
+    mutable std::vector<std::string> cached_module_names_;    ///< 缓存的模块名列表
+    mutable size_t cached_var_count_{0};                      ///< 缓存的变量数量（用于失效检测）
+    mutable size_t cached_module_count_{0};                   ///< 缓存的模块数量（用于失效检测）
+    
     /**
      * @brief 处理切片参数
      * @param ctx 切片参数上下文
