@@ -87,6 +87,12 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "^") {
+            if (left->isInteger() && right->isInteger()) {
+                return ScriptValue::createInteger(left->getInteger() ^ right->getInteger());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("xor")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
         } else if (op == "<<") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() << right->getInteger());
@@ -99,12 +105,6 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 return ScriptValue::createInteger(left->getInteger() >> right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
                 py::object result = py::module_::import("operator").attr("rshift")(left->toPythonObject(), right->toPythonObject());
-                return ScriptValue::fromPythonObject(result);
-            }
-            if (left->isInteger() && right->isInteger()) {
-                return ScriptValue::createInteger(left->getInteger() ^ right->getInteger());
-            } else if (left->isPythonObject() || right->isPythonObject()) {
-                py::object result = py::module_::import("operator").attr("xor")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "-") {

@@ -2503,59 +2503,50 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
         return any();
     }
 
-    py::module_ m = py::module_::import("__main__");
-    if (!py::hasattr(m, "__gen_map__")) {
-        py::exec(
-            "def __gen_map__(iterable, func):\n"
-            "    for _x in iterable:\n"
-            "        yield func(_x)\n",
-            m.attr("__dict__"));
-    }
-    if (!py::hasattr(m, "__gen_map_if__")) {
-        py::exec(
-            "def __gen_map_if__(iterable, func, pred):\n"
-            "    for _x in iterable:\n"
-            "        if pred(_x):\n"
-            "            yield func(_x)\n",
-            m.attr("__dict__"));
-    }
+    py::list results;
 
-    std::function<py::object(size_t, py::object)> buildGen;
-    buildGen = [&](size_t depth, py::object upstream) -> py::object {
+    std::function<bool(size_t)> evalClause;
+    evalClause = [&](size_t depth) -> bool {
         auto& clause = clauses[depth];
-        py::object mapper = py::cpp_function([this, bodyExpr, clause](py::object item) {
-            variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(item));
-            auto val = evaluateExpression(bodyExpr);
-            if (!val) throw std::runtime_error("Cannot evaluate generator element");
-            return val->toPythonObject();
-        });
-        py::object pred;
-        if (clause.cond) {
-            pred = py::cpp_function([this, clause](py::object item) {
-                variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(item));
-                auto condVal = evaluateExpression(clause.cond);
-                if (!condVal) throw std::runtime_error("Cannot evaluate generator filter");
-                return py::bool_(expression_evaluator_.isTruthy(condVal));
-            });
+        auto iterVal = evaluateExpression(clause.iter);
+        if (!iterVal) {
+            reportError("Cannot evaluate generator iterable", ctx);
+            return false;
         }
-        auto genMap = pred ? m.attr("__gen_map_if__") : m.attr("__gen_map__");
-        py::object current = pred ? genMap(upstream, mapper, pred) : genMap(upstream, mapper);
-        if (depth + 1 == clauses.size()) {
-            return current;
+        py::object iterObj = iterVal->toPythonObject();
+        try {
+            for (auto item : py::reinterpret_steal<py::iterator>(PyObject_GetIter(iterObj.ptr()))) {
+                variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(item)));
+                if (clause.cond) {
+                    auto condVal = evaluateExpression(clause.cond);
+                    if (!condVal) return false;
+                    if (!expression_evaluator_.isTruthy(condVal)) {
+                        continue;
+                    }
+                }
+                if (depth + 1 == clauses.size()) {
+                    auto val = evaluateExpression(bodyExpr);
+                    if (!val) return false;
+                    results.append(val->toPythonObject());
+                } else {
+                    if (!evalClause(depth + 1)) return false;
+                }
+            }
+        } catch (const py::error_already_set& e) {
+            reportError("Generator iteration error: " + string(e.what()), ctx);
+            return false;
+        } catch (const std::exception& e) {
+            reportError("Generator iteration error: " + string(e.what()), ctx);
+            return false;
         }
-        // downstream mapper uses next clause variable, so rebuild mapper with next clause in recursion
-        return buildGen(depth + 1, current);
+        return true;
     };
 
-    // seed with first iterable
-    auto firstIterVal = evaluateExpression(clauses[0].iter);
-    if (!firstIterVal) {
-        reportError("Cannot evaluate generator iterable", ctx);
+    if (!evalClause(0)) {
         return any();
     }
-    py::object firstIterObj = firstIterVal->toPythonObject();
-    py::object gen = buildGen(0, firstIterObj);
-    return any(ScriptValue::fromPythonObject(gen));
+    py::object gen_iter = results.attr("__iter__")();
+    return any(ScriptValue::fromPythonObject(gen_iter));
 }
 
 any AstVisitor::visitLiteral(PyScriptParser::LiteralContext *ctx) {
@@ -3007,6 +2998,10 @@ any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
         return py::cast<bool>(ret);
     };
 
+    py::object no_exit = py::cpp_function([](py::object, py::object, py::object) {
+        return py::bool_(false);
+    });
+
     py::object excType = py::none();
     py::object excVal = py::none();
     py::object excTb = py::none();
@@ -3024,18 +3019,32 @@ any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
                 reportError("Cannot evaluate with expression", ctx);
                 return any();
             }
-            py::object obj = val->toPythonObject();
-            if (!py::hasattr(obj, "__enter__") || !py::hasattr(obj, "__exit__")) {
-                reportError("With expression has no __enter__/__exit__", ctx);
-                return any();
-            }
-            py::object entered = obj.attr("__enter__")();
-            if (item->IDENTIFIER()) {
-                std::string name = item->IDENTIFIER()->getText();
-                variable_manager_.setVariable(name, ScriptValue::fromPythonObject(entered));
-                stack.push_back({name, obj.attr("__exit__")});
+            py::object exitFunc = no_exit;
+            if (val->isPythonObject()) {
+                py::object obj = val->toPythonObject();
+                py::object entered = obj;
+                if (py::hasattr(obj, "__enter__")) {
+                    entered = obj.attr("__enter__")();
+                }
+                if (py::hasattr(obj, "__exit__")) {
+                    exitFunc = obj.attr("__exit__");
+                }
+                if (item->IDENTIFIER()) {
+                    std::string name = item->IDENTIFIER()->getText();
+                    variable_manager_.setVariable(name, ScriptValue::fromPythonObject(entered));
+                    stack.push_back({name, exitFunc});
+                } else {
+                    stack.push_back({"", exitFunc});
+                }
             } else {
-                stack.push_back({"", obj.attr("__exit__")});
+                // 非 Python 对象，作为无操作上下文
+                if (item->IDENTIFIER()) {
+                    std::string name = item->IDENTIFIER()->getText();
+                    variable_manager_.setVariable(name, val);
+                    stack.push_back({name, no_exit});
+                } else {
+                    stack.push_back({"", no_exit});
+                }
             }
         }
 
