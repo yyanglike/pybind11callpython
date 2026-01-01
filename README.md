@@ -7,8 +7,12 @@
 ```
 pybind11callpython/
 ├── CMakeLists.txt
+├── setup.sh                  # 一键设置脚本（推荐）
+├── Makefile                  # 便捷命令
+├── requirements.txt          # Python依赖
 ├── build.sh                  # 构建脚本（保留）
-├── cleanup.sh
+├── install.sh                # 安装脚本（可选）
+├── Dockerfile                # Docker支持
 ├── antlr/                    # 语法定义（PyScript.g4）
 ├── antlr/generated/          # ANTLR 生成文件（构建后产生）
 ├── include/                  # 头文件（解释器、AST 访问器等）
@@ -18,23 +22,72 @@ pybind11callpython/
 └── README.md                 # 本文档
 ```
 
-> 编译脚本 `build.sh` 请保留；也可使用手工 CMake 构建（见下）。
-
 ### 构建要求
-- CMake ≥ 3.15，C++17 编译器
-- Python 3.12（内嵌运行），pybind11 已作为子目录
-- ANTLR4 工具（生成语法）：`antlr4 -Dlanguage=Cpp -visitor -o antlr/generated antlr/PyScript.g4 2>&1`
+- **CMake** ≥ 3.15，C++17 编译器（g++/clang++）
+- **Python** 3.12+（内嵌运行）
+- **ANTLR4** 工具（用于生成语法解析器）
+- **Git**（用于克隆pybind11）
 
-### 一键构建
+### 快速开始（推荐）
+
+#### 方法1: 使用一键设置脚本（最简单）
 ```bash
-./build.sh
+# 一键设置：创建虚拟环境、安装依赖、构建项目
+./setup.sh
+
+# 运行脚本
+./build/run_pys_script python/test_hello.pys
 ```
 
-### 手动构建
+#### 方法2: 使用Makefile（便捷）
 ```bash
+# 一键设置
+make setup
+
+# 运行脚本
+make run SCRIPT=python/test_hello.pys
+
+# 运行测试
+make test
+
+# 查看所有命令
+make help
+```
+
+#### 方法3: 手动构建（传统方式）
+```bash
+# 1. 创建虚拟环境
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. 安装Python依赖
+pip install -r requirements.txt
+
+# 3. 生成ANTLR代码
+antlr4 -Dlanguage=Cpp -visitor -o antlr/generated antlr/PyScript.g4
+
+# 4. 构建项目
 mkdir -p build && cd build
 cmake ..
 cmake --build . --target run_pys_script
+```
+
+### 安装到系统（可选）
+
+安装后可以在任何地方使用 `pyscript` 命令：
+
+```bash
+# 方法1: 使用安装脚本
+sudo ./install.sh
+
+# 方法2: 使用Makefile
+make install
+
+# 使用
+pyscript python/test_hello.pys
+
+# 卸载
+make uninstall
 ```
 
 ## 运行 `.pys` 脚本
@@ -71,10 +124,68 @@ for f in *.pys python/*.pys; do ./build/run_pys_script "$f" || break; done
 - 未覆盖：async/await 等异步语法；对 None 参与某些一元/关系运算仍需谨慎（将产生脚本错误）。
 - 并发：单实例非线程安全；若多线程使用，请为每线程独立创建解释器实例并在进入 Python 时获取 GIL。
 
+## 部署说明
+
+### 虚拟环境管理
+
+项目使用Python虚拟环境来隔离依赖。虚拟环境会自动创建在 `.venv/` 目录。
+
+**激活虚拟环境**：
+```bash
+source .venv/bin/activate
+```
+
+**退出虚拟环境**：
+```bash
+deactivate
+```
+
+### Docker部署（可选）
+
+```bash
+# 构建Docker镜像
+docker build -t pyscript-interpreter .
+
+# 运行容器
+docker run --rm pyscript-interpreter python/test_hello.pys
+
+# 挂载本地脚本目录
+docker run --rm -v $(pwd)/python:/scripts pyscript-interpreter /scripts/test_hello.pys
+```
+
+### 依赖管理
+
+Python依赖定义在 `requirements.txt` 中。主要依赖包括：
+- `numpy` - 数值计算（测试脚本使用）
+- `pandas` - 数据处理（测试脚本使用）
+
+**安装依赖**：
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+**更新依赖**：
+```bash
+pip install --upgrade -r requirements.txt
+```
+
+### 环境变量
+
+可以通过环境变量控制行为：
+
+- `PYS_CACHE=0` - 禁用缓存（等同于 `--no-cache`）
+- `PYS_CACHE=1` - 启用缓存（默认）
+- `PYS_STATS=1` - 显示性能统计（等同于 `--stats`）
+
 ## 故障排查
-- 构建缺少 ANTLR 生成物：先运行 ANTLR 命令生成 `antlr/generated/`，再重建。
-- 运行时报 f-string/生成器语法：确认脚本路径与预处理开启，必要时在日志级别调高（logger 配置在源码中）。
-- sys.argv 为 None：确认使用 `run_pys_script` 启动，运行器会自动注入占位 argv。
+
+- **构建缺少 ANTLR 生成物**：先运行 `make antlr` 或 `antlr4 -Dlanguage=Cpp -visitor -o antlr/generated antlr/PyScript.g4`，再重建。
+- **Python版本不匹配**：确保使用Python 3.12+，检查 `python3 --version`
+- **虚拟环境问题**：删除 `.venv` 目录，重新运行 `./setup.sh`
+- **运行时报 f-string/生成器语法**：确认脚本路径与预处理开启，必要时在日志级别调高（logger 配置在源码中）。
+- **sys.argv 为 None**：确认使用 `run_pys_script` 启动，运行器会自动注入占位 argv。
+- **找不到模块**：确保虚拟环境已激活，且已安装所需依赖
 
 ## 参考文档
 - `docs/compatibility_plan.md`：特性兼容性与回归计划

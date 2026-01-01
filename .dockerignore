@@ -1,0 +1,49 @@
+# Docker忽略文件
+
+# 构建目录
+build/
+build_*/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 文档和测试
+docs/
+*.md
+!README.md
+
+# 测试文件
+test_*.cpp
+test_*.pys
+*_test.pys
+
+# 部署相关
+deploy/
+dist/
+*.tar.gz
+*.zip
+
+# 日志和临时文件
+*.log
+*.tmp
+*.cache
+__pycache__/
+*.pyc
+
+# 其他
+.DS_Store
+*.patch
+
