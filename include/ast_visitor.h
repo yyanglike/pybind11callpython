@@ -12,6 +12,8 @@
 #include <memory>
 #include <vector>
 #include <any>
+#include <unordered_map>
+#include <functional>
 #include <pybind11/pybind11.h>
 #include "script_value.h"
 #include "variable_manager.h"
@@ -198,6 +200,17 @@ public:
      */
     std::shared_ptr<ScriptValue> executeSuite(PyScriptParser::SuiteContext *ctx);
     
+    /**
+     * @brief 获取性能计数器统计信息
+     * @return 计数器统计字符串
+     */
+    std::string getPerformanceStats() const;
+    
+    /**
+     * @brief 重置性能计数器
+     */
+    void resetPerformanceStats();
+    
 private:
     // 模块引用
     VariableManager& variable_manager_;
@@ -209,6 +222,18 @@ private:
     // 执行状态
     std::shared_ptr<ScriptValue> result_; ///< 执行结果
     bool defining_function_;               ///< 是否正在定义函数
+    
+    // 性能计数器（用于优化分析）
+    mutable std::atomic<size_t> py_call_count_{0};           ///< Python函数调用次数
+    mutable std::atomic<size_t> sv_to_py_count_{0};          ///< ScriptValue->py::object转换次数
+    mutable std::atomic<size_t> py_to_sv_count_{0};          ///< py::object->ScriptValue转换次数
+    mutable std::atomic<size_t> iter_direct_count_{0};        ///< 直接迭代次数（快路径）
+    mutable std::atomic<size_t> iter_py_count_{0};            ///< Python迭代次数（慢路径）
+    
+    // 函数/类定义执行结果缓存（基于源代码哈希）
+    std::unordered_map<size_t, py::object> exec_cache_;      ///< 缓存 py::exec 的结果
+    mutable std::atomic<size_t> exec_cache_hits_{0};          ///< 缓存命中次数
+    mutable std::atomic<size_t> exec_cache_misses_{0};        ///< 缓存未命中次数
     
     /**
      * @brief 处理切片参数

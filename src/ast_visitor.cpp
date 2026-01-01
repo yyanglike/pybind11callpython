@@ -9,11 +9,19 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
+#include <atomic>
+#include <functional>
 #include "dynamic_python_caller.h"
+
+// 简单的字符串哈希函数（用于缓存键）
+static size_t hashString(const std::string& str) {
+    return std::hash<std::string>{}(str);
+}
 
 using namespace antlr4;
 using namespace std;
@@ -70,6 +78,7 @@ static py::dict buildEvalGlobals(VariableManager& variable_manager) {
 }
 
 // 统一将 ScriptValue 转换为 Python 可迭代对象（用于推导式/生成器）
+// 注意：此函数保留用于需要 Python 迭代器的场景（如生成器表达式）
 static py::iterator toIterator(const shared_ptr<ScriptValue>& val) {
     if (!val) throw runtime_error("Iterator source is null");
     if (val->isPythonObject()) {
@@ -92,6 +101,7 @@ static py::iterator toIterator(const shared_ptr<ScriptValue>& val) {
     // 其他类型尝试转换为 Python 对象后迭代
     return py::iter(val->toPythonObject());
 }
+
 // 构造函数
 AstVisitor::AstVisitor(VariableManager& variable_manager,
                        ErrorHandler& error_handler,
@@ -219,7 +229,7 @@ shared_ptr<ScriptValue> AstVisitor::executeSuite(PyScriptParser::SuiteContext *c
 
 any AstVisitor::visitProgram(PyScriptParser::ProgramContext *ctx) {
     ensureSysArgv();
-
+    
     // 执行所有语句
     for (auto stmt : ctx->statement()) {
         this->visit(stmt);
@@ -256,7 +266,7 @@ any AstVisitor::visitSimpleStatement(PyScriptParser::SimpleStatementContext *ctx
     }
 
     // 执行语句
-    for (auto stmt : smallStatements) {
+        for (auto stmt : smallStatements) {
         visit(stmt);
         if (error_handler_.hasError()) {
             break;
@@ -401,7 +411,7 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         if (realTokens.empty()) {
             logger_.error("No real tokens found in function definition");
             defining_function_ = old_defining_function;
-            return any();
+    return any();
         }
         
         // 结束位置：取最后一个非 EOF 的 token，确保包含函数体全部内容
@@ -617,6 +627,19 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             }
         }
         
+        // 注入脚本变量到 globals，确保函数定义时可以访问外部变量
+        for (const auto& varName : variable_manager_.getAllVariableNames()) {
+            auto val = variable_manager_.getVariable(varName);
+            if (val) {
+                try {
+                    globals[varName.c_str()] = val->toPythonObject();
+                    logger_.debug("注入变量到全局作用域: " + varName);
+                } catch (...) {
+                    // 忽略转换失败
+                }
+            }
+        }
+        
         // 调试：打印globals中的所有键
         // logger_.info("Globals keys before exec:");
         // for (auto item : globals) {
@@ -625,9 +648,79 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         // }
         
         try {
-            py::object builtins_module = py::module_::import("builtins");
-            builtins_module.attr("exec")(funcDef, globals, globals);
-            py::object func = globals[funcName.c_str()];
+            // 构建缓存键：包含函数源代码和当前变量的哈希值
+            // 这样如果外部变量变化，缓存键就会不同，避免使用旧的缓存
+            std::string cache_key_str = funcDef;
+            for (const auto& varName : variable_manager_.getAllVariableNames()) {
+                auto val = variable_manager_.getVariable(varName);
+                if (val) {
+                    try {
+                        cache_key_str += varName + ":";
+                        if (val->isPythonObject()) {
+                            // 对于 PythonObject（numpy、pandas等），使用对象 id 而不是 toString
+                            // 这样可以避免大型数组/DataFrame 的 toString() 开销
+                            // 并且更准确地识别对象变化
+                            py::object obj = val->toPythonObject();
+                            size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
+                            cache_key_str += "pyobj:" + std::to_string(obj_id);
+                        } else {
+                            // 对于简单类型，使用 toString()
+                            cache_key_str += val->toString();
+                        }
+                        cache_key_str += ";";
+                    } catch (...) {
+                        // 忽略转换失败
+                    }
+                }
+            }
+            size_t cache_key = hashString(cache_key_str);
+            auto cache_it = exec_cache_.find(cache_key);
+            
+            py::object func;
+            if (cache_it != exec_cache_.end()) {
+                // 缓存命中：使用缓存的函数对象
+                // 注意：Python 的函数闭包机制会捕获变量的引用，所以即使对象 id 不变但内容变化了，
+                // 函数执行时仍然会访问当前 globals 中的变量引用，应该能访问到最新的内容
+                // 但为了安全起见，我们仍然重新执行定义以确保函数使用最新的 globals
+                // 这是因为缓存的函数对象的 __globals__ 指向旧的 globals 字典
+                
+                // 检查是否有 PythonObject 类型的变量（可能被 in-place 修改）
+                bool has_python_objects = false;
+                for (const auto& varName : variable_manager_.getAllVariableNames()) {
+                    auto val = variable_manager_.getVariable(varName);
+                    if (val && val->isPythonObject()) {
+                        has_python_objects = true;
+                        break;
+                    }
+                }
+                
+                if (has_python_objects) {
+                    // 如果有 PythonObject 类型变量，重新执行定义以确保使用最新的 globals
+                    // 这样可以处理对象 id 不变但内容变化的情况
+                    logger_.debug("Re-executing function definition due to PythonObject variables");
+                    exec_cache_misses_++;  // 实际上重新执行了，不算缓存命中
+                    py::object builtins_module = py::module_::import("builtins");
+                    builtins_module.attr("exec")(funcDef, globals, globals);
+                    func = globals[funcName.c_str()];
+                    exec_cache_[cache_key] = func;  // 更新缓存
+                } else {
+                    // 只有简单类型变量，可以使用缓存
+                    exec_cache_hits_++;
+                    func = cache_it->second;
+                    logger_.debug("Function definition cache hit for: " + funcName);
+                }
+            } else {
+                // 缓存未命中：执行 exec 并缓存结果
+                exec_cache_misses_++;
+                py::object builtins_module = py::module_::import("builtins");
+                builtins_module.attr("exec")(funcDef, globals, globals);
+                func = globals[funcName.c_str()];
+                
+                // 缓存结果（注意：这里缓存的是函数对象本身，而不是 globals）
+                // 由于函数对象可能依赖于 globals，我们需要确保缓存的函数仍然可用
+                exec_cache_[cache_key] = func;
+                logger_.debug("Function definition cached for: " + funcName);
+            }
             
             variable_manager_.setVariable(funcName, ScriptValue::fromPythonObject(func));
             logger_.info(std::string("Function defined: ") + funcName);
@@ -1157,8 +1250,8 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         } else if (objectValue->isDictionary()) {
             // 若键为字符串，沿用原始字典存储；否则将字典转为Python dict后再赋值
             if (indexValue->isString()) {
-                string key = indexValue->getString();
-                objectValue->setKey(key, rightValue);
+            string key = indexValue->getString();
+            objectValue->setKey(key, rightValue);
                 return any(rightValue);
             }
             // 转为 Python dict 并升级为 PythonObject
@@ -1780,6 +1873,20 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                     });
                     currentValue = ScriptValue::fromPythonObject(fn);
                     continue;
+                } else if (memberName == "insert") {
+                    py::object fn = py::cpp_function([self](py::args args) {
+                        if (py::len(args) != 2) throw std::runtime_error("insert expects 2 args");
+                        long long idx = py::cast<long long>(args[0]);
+                        auto val = ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(args[1]));
+                        auto& list = const_cast<std::vector<std::shared_ptr<ScriptValue>>&>(self->getList());
+                        long long n = static_cast<long long>(list.size());
+                        if (idx < 0) idx = 0;
+                        if (idx > n) idx = n;
+                        list.insert(list.begin() + idx, val);
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
                 } else if (memberName == "clear") {
                     py::object fn = py::cpp_function([self](py::args) {
                         auto& list = const_cast<std::vector<std::shared_ptr<ScriptValue>>&>(self->getList());
@@ -1801,6 +1908,43 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                         auto it = dict.find(key);
                         if (it != dict.end() && it->second) return it->second->toPythonObject();
                         if (py::len(args) == 2) return py::reinterpret_borrow<py::object>(args[1]);
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "pop") {
+                    py::object fn = py::cpp_function([self](py::args args) {
+                        if (py::len(args) < 1 || py::len(args) > 2) throw std::runtime_error("pop expects 1 or 2 args");
+                        std::string key = py::str(args[0]);
+                        auto& dict = const_cast<std::unordered_map<std::string, std::shared_ptr<ScriptValue>>&>(self->getDictionary());
+                        auto it = dict.find(key);
+                        if (it != dict.end()) {
+                            auto val = it->second;
+                            dict.erase(it);
+                            return val ? val->toPythonObject() : py::none();
+                        }
+                        if (py::len(args) == 2) return py::reinterpret_borrow<py::object>(args[1]);
+                        throw std::runtime_error("pop key not found");
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "popitem") {
+                    py::object fn = py::cpp_function([self](py::args) {
+                        auto& dict = const_cast<std::unordered_map<std::string, std::shared_ptr<ScriptValue>>&>(self->getDictionary());
+                        if (dict.empty()) throw std::runtime_error("popitem(): dictionary is empty");
+                        auto it = dict.begin(); // unordered_map 无序，取首元素
+                        py::tuple pair(2);
+                        pair[0] = py::str(it->first);
+                        pair[1] = it->second ? it->second->toPythonObject() : py::none();
+                        dict.erase(it);
+                        return pair;
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "clear") {
+                    py::object fn = py::cpp_function([self](py::args) {
+                        auto& dict = const_cast<std::unordered_map<std::string, std::shared_ptr<ScriptValue>>&>(self->getDictionary());
+                        dict.clear();
                         return py::none();
                     });
                     currentValue = ScriptValue::fromPythonObject(fn);
@@ -1847,6 +1991,48 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                     });
                     currentValue = ScriptValue::fromPythonObject(fn);
                     continue;
+                }
+            }
+            // 原生 set 快路径（脚本 set 为 Python 对象）
+            if (currentValue->isPythonObject()) {
+                try {
+                    py::object obj = currentValue->getPythonObject();
+                    if (py::isinstance<py::set>(obj)) {
+                        if (memberName == "add") {
+                            py::object fn = py::cpp_function([obj](py::args args) {
+                                if (py::len(args) != 1) throw std::runtime_error("add expects 1 arg");
+                                obj.attr("add")(py::reinterpret_borrow<py::object>(args[0]));
+                                return py::none();
+                            });
+                            currentValue = ScriptValue::fromPythonObject(fn);
+                            continue;
+                        } else if (memberName == "update") {
+                            py::object fn = py::cpp_function([obj](py::args args) {
+                                if (py::len(args) != 1) throw std::runtime_error("update expects 1 iterable");
+                                obj.attr("update")(py::reinterpret_borrow<py::object>(args[0]));
+                                return py::none();
+                            });
+                            currentValue = ScriptValue::fromPythonObject(fn);
+                            continue;
+                        } else if (memberName == "discard") {
+                            py::object fn = py::cpp_function([obj](py::args args) {
+                                if (py::len(args) != 1) throw std::runtime_error("discard expects 1 arg");
+                                obj.attr("discard")(py::reinterpret_borrow<py::object>(args[0]));
+                                return py::none();
+                            });
+                            currentValue = ScriptValue::fromPythonObject(fn);
+                            continue;
+                        } else if (memberName == "clear") {
+                            py::object fn = py::cpp_function([obj](py::args) {
+                                obj.attr("clear")();
+                                return py::none();
+                            });
+                            currentValue = ScriptValue::fromPythonObject(fn);
+                            continue;
+                        }
+                    }
+                } catch (...) {
+                    // ignore and fallthrough
                 }
             }
 
@@ -1979,16 +2165,20 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 py::tuple pyArgs(args.size());
                 for (size_t i = 0; i < args.size(); ++i) {
                     pyArgs[i] = args[i]->toPythonObject();
+                    sv_to_py_count_++;
                 }
                 
                 // 构建关键字参数字典
                 py::dict pyKwargs;
                 for (auto& kv : kwargs) {
                     pyKwargs[kv.first.c_str()] = kv.second->toPythonObject();
+                    sv_to_py_count_++;
                 }
                 
                 // 调用函数
+                py_call_count_++;
                 py::object result = DynamicPythonCaller::callFunction(pyFunc, py::args(pyArgs), py::kwargs(pyKwargs));
+                py_to_sv_count_++;
                 currentValue = ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
                 reportError("Python function call error: " + string(e.what()), callOp);
@@ -2065,14 +2255,14 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
             return list[index];
         } else if (target->isDictionary()) {
             if (indexValue->isString()) {
-                string key = indexValue->getString();
-                auto& dict = target->getDictionary();
-                auto it = dict.find(key);
-                if (it == dict.end()) {
-                    reportError("Dictionary key not found: " + key, ctx);
-                    return nullptr;
-                }
-                return it->second;
+            string key = indexValue->getString();
+            auto& dict = target->getDictionary();
+            auto it = dict.find(key);
+            if (it == dict.end()) {
+                reportError("Dictionary key not found: " + key, ctx);
+                return nullptr;
+            }
+            return it->second;
             }
             // 升级为 Python dict 以支持任意可哈希键
             py::dict pyDict;
@@ -2422,18 +2612,58 @@ any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext 
             return false;
         }
         try {
-            for (auto item : toIterator(iterVal)) {
-                py::object obj = py::reinterpret_borrow<py::object>(item);
-                variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
-                if (clause.cond) {
-                    auto condVal = evaluateExpression(clause.cond);
-                    if (!condVal) {
-                        reportError("Cannot evaluate dict comprehension filter", ctx);
-                        return false;
+            bool useDirect = false;
+            if (iterVal->isList()) {
+                // 直接迭代快路径
+                iter_direct_count_++;
+                useDirect = true;
+                for (auto& item : iterVal->getList()) {
+                    variable_manager_.setVariable(clause.var, item);
+                    if (clause.cond) {
+                        auto condVal = evaluateExpression(clause.cond);
+                        if (!condVal) {
+                            reportError("Cannot evaluate dict comprehension filter", ctx);
+                            return false;
+                        }
+                        if (!expression_evaluator_.isTruthy(condVal)) continue;
                     }
-                    if (!expression_evaluator_.isTruthy(condVal)) continue;
+                    if (!evalClause(depth + 1)) return false;
                 }
-                if (!evalClause(depth + 1)) return false;
+            } else if (iterVal->isDictionary()) {
+                // 直接迭代字典 keys
+                iter_direct_count_++;
+                useDirect = true;
+                for (auto& kv : iterVal->getDictionary()) {
+                    auto keyVal = ScriptValue::createString(kv.first);
+                    variable_manager_.setVariable(clause.var, keyVal);
+                    if (clause.cond) {
+                        auto condVal = evaluateExpression(clause.cond);
+                        if (!condVal) {
+                            reportError("Cannot evaluate dict comprehension filter", ctx);
+                            return false;
+                        }
+                        if (!expression_evaluator_.isTruthy(condVal)) continue;
+                    }
+                    if (!evalClause(depth + 1)) return false;
+                }
+            }
+            if (!useDirect) {
+                // Python 迭代慢路径
+                iter_py_count_++;
+                for (auto item : toIterator(iterVal)) {
+                    py::object obj = py::reinterpret_borrow<py::object>(item);
+                    py_to_sv_count_++;
+                    variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                    if (clause.cond) {
+                        auto condVal = evaluateExpression(clause.cond);
+                        if (!condVal) {
+                            reportError("Cannot evaluate dict comprehension filter", ctx);
+                            return false;
+                        }
+                        if (!expression_evaluator_.isTruthy(condVal)) continue;
+                    }
+                    if (!evalClause(depth + 1)) return false;
+                }
             }
         } catch (const py::error_already_set& e) {
             reportError("Failed to evaluate dict comprehension: " + string(e.what()), ctx);
@@ -2528,18 +2758,58 @@ any AstVisitor::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
                 return false;
             }
             try {
-                for (auto item : toIterator(iterVal)) {
-                    py::object obj = py::reinterpret_borrow<py::object>(item);
-                    variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
-                    if (clause.cond) {
-                        auto condVal = evaluateExpression(clause.cond);
-                        if (!condVal) {
-                            reportError("Cannot evaluate set comprehension filter", ctx);
-                            return false;
+                bool useDirect = false;
+                if (iterVal->isList()) {
+                    // 直接迭代快路径
+                    iter_direct_count_++;
+                    useDirect = true;
+                    for (auto& item : iterVal->getList()) {
+                        variable_manager_.setVariable(clause.var, item);
+                        if (clause.cond) {
+                            auto condVal = evaluateExpression(clause.cond);
+                            if (!condVal) {
+                                reportError("Cannot evaluate set comprehension filter", ctx);
+                                return false;
+                            }
+                            if (!expression_evaluator_.isTruthy(condVal)) continue;
                         }
-                        if (!expression_evaluator_.isTruthy(condVal)) continue;
+                        if (!evalClause(depth + 1)) return false;
                     }
-                    if (!evalClause(depth + 1)) return false;
+                } else if (iterVal->isDictionary()) {
+                    // 直接迭代字典 keys
+                    iter_direct_count_++;
+                    useDirect = true;
+                    for (auto& kv : iterVal->getDictionary()) {
+                        auto keyVal = ScriptValue::createString(kv.first);
+                        variable_manager_.setVariable(clause.var, keyVal);
+                        if (clause.cond) {
+                            auto condVal = evaluateExpression(clause.cond);
+                            if (!condVal) {
+                                reportError("Cannot evaluate set comprehension filter", ctx);
+                                return false;
+                            }
+                            if (!expression_evaluator_.isTruthy(condVal)) continue;
+                        }
+                        if (!evalClause(depth + 1)) return false;
+                    }
+                }
+                if (!useDirect) {
+                    // Python 迭代慢路径
+                    iter_py_count_++;
+                    for (auto item : toIterator(iterVal)) {
+                        py::object obj = py::reinterpret_borrow<py::object>(item);
+                        py_to_sv_count_++;
+                        variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                        if (clause.cond) {
+                            auto condVal = evaluateExpression(clause.cond);
+                            if (!condVal) {
+                                reportError("Cannot evaluate set comprehension filter", ctx);
+                                return false;
+                            }
+                            if (!expression_evaluator_.isTruthy(condVal)) continue;
+                        }
+                        if (!evalClause(depth + 1)) return false;
+                    }
                 }
             } catch (const py::error_already_set& e) {
                 reportError("Failed to evaluate set comprehension: " + string(e.what()), ctx);
@@ -2868,7 +3138,7 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
             reportError("Invalid list comprehension syntax", ctx);
             return any();
         }
-
+        
         auto listVal = ScriptValue::createList();
         std::vector<std::shared_ptr<ScriptValue>> oldVars;
         oldVars.reserve(clauses.size());
@@ -2893,23 +3163,67 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
                 return false;
             }
             try {
-                for (auto item : toIterator(iterVal)) {
-                    py::object obj = py::reinterpret_borrow<py::object>(item);
-                    variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
-                    if (clause.cond) {
-                        auto condVal = evaluateExpression(clause.cond);
-                        if (!condVal) {
-                            reportError("Cannot evaluate list comprehension filter", ctx);
-                            return false;
+                bool useDirect = false;
+                if (iterVal->isList()) {
+                    // 直接迭代快路径
+                    iter_direct_count_++;
+                    useDirect = true;
+                    for (auto& item : iterVal->getList()) {
+                        variable_manager_.setVariable(clause.var, item);
+                        if (clause.cond) {
+                            auto condVal = evaluateExpression(clause.cond);
+                            if (!condVal) {
+                                reportError("Cannot evaluate list comprehension filter", ctx);
+                                return false;
+                            }
+                            if (!expression_evaluator_.isTruthy(condVal)) {
+                                continue;
+                            }
                         }
-                        if (!expression_evaluator_.isTruthy(condVal)) {
-                            continue;
-                        }
+                        if (!evalClause(depth + 1)) return false;
                     }
-                    if (!evalClause(depth + 1)) return false;
+                } else if (iterVal->isDictionary()) {
+                    // 直接迭代字典 keys
+                    iter_direct_count_++;
+                    useDirect = true;
+                    for (auto& kv : iterVal->getDictionary()) {
+                        auto keyVal = ScriptValue::createString(kv.first);
+                        variable_manager_.setVariable(clause.var, keyVal);
+                        if (clause.cond) {
+                            auto condVal = evaluateExpression(clause.cond);
+                            if (!condVal) {
+                                reportError("Cannot evaluate list comprehension filter", ctx);
+                                return false;
+                            }
+                            if (!expression_evaluator_.isTruthy(condVal)) {
+                                continue;
+                            }
+                        }
+                        if (!evalClause(depth + 1)) return false;
+                    }
                 }
-            } catch (const py::error_already_set& e) {
-                reportError("Failed to evaluate list comprehension: " + string(e.what()), ctx);
+                if (!useDirect) {
+                    // Python 迭代慢路径
+                    iter_py_count_++;
+                    for (auto item : toIterator(iterVal)) {
+                        py::object obj = py::reinterpret_borrow<py::object>(item);
+                        py_to_sv_count_++;
+                        variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                        if (clause.cond) {
+                            auto condVal = evaluateExpression(clause.cond);
+                            if (!condVal) {
+                                reportError("Cannot evaluate list comprehension filter", ctx);
+                                return false;
+                            }
+                            if (!expression_evaluator_.isTruthy(condVal)) {
+                                continue;
+                            }
+                        }
+                        if (!evalClause(depth + 1)) return false;
+                    }
+                }
+        } catch (const py::error_already_set& e) {
+            reportError("Failed to evaluate list comprehension: " + string(e.what()), ctx);
                 return false;
             }
             return true;
@@ -3034,9 +3348,51 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
         if (text.empty() || text.back() != '\n') {
             text.push_back('\n');
         }
-        py::exec(py::str(text), py::globals(), py::globals());
+        
         std::string name = ctx->IDENTIFIER()->getText();
-        py::object cls = py::globals()[name.c_str()];
+        
+        // 构建缓存键：包含类源代码和当前变量的哈希值
+        std::string cache_key_str = text;
+        for (const auto& varName : variable_manager_.getAllVariableNames()) {
+            auto val = variable_manager_.getVariable(varName);
+            if (val) {
+                try {
+                    cache_key_str += varName + ":";
+                    if (val->isPythonObject()) {
+                        // 对于 PythonObject（numpy、pandas等），使用对象 id 而不是 toString
+                        py::object obj = val->toPythonObject();
+                        size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
+                        cache_key_str += "pyobj:" + std::to_string(obj_id);
+                    } else {
+                        // 对于简单类型，使用 toString()
+                        cache_key_str += val->toString();
+                    }
+                    cache_key_str += ";";
+                } catch (...) {
+                    // 忽略转换失败
+                }
+            }
+        }
+        size_t cache_key = hashString(cache_key_str);
+        auto cache_it = exec_cache_.find(cache_key);
+        
+        py::object cls;
+        if (cache_it != exec_cache_.end()) {
+            // 缓存命中：直接使用缓存的结果
+            exec_cache_hits_++;
+            cls = cache_it->second;
+            logger_.debug("Class definition cache hit for: " + name);
+        } else {
+            // 缓存未命中：执行 exec 并缓存结果
+            exec_cache_misses_++;
+            py::exec(py::str(text), py::globals(), py::globals());
+            cls = py::globals()[name.c_str()];
+            
+            // 缓存结果
+            exec_cache_[cache_key] = cls;
+            logger_.debug("Class definition cached for: " + name);
+        }
+        
         variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
     } catch (const std::exception& e) {
         int line = ctx->getStart()->getLine();
@@ -3066,12 +3422,59 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
         if (text.empty() || text.back() != '\n') {
             text.push_back('\n');
         }
-        py::exec(py::str(text), py::globals(), py::globals());
+        
+        // 构建缓存键：包含源代码和当前变量的哈希值
+        std::string cache_key_str = text;
+        for (const auto& varName : variable_manager_.getAllVariableNames()) {
+            auto val = variable_manager_.getVariable(varName);
+            if (val) {
+                try {
+                    cache_key_str += varName + ":";
+                    if (val->isPythonObject()) {
+                        // 对于 PythonObject（numpy、pandas等），使用对象 id 而不是 toString
+                        py::object obj = val->toPythonObject();
+                        size_t obj_id = reinterpret_cast<size_t>(obj.ptr());
+                        cache_key_str += "pyobj:" + std::to_string(obj_id);
+                    } else {
+                        // 对于简单类型，使用 toString()
+                        cache_key_str += val->toString();
+                    }
+                    cache_key_str += ";";
+                } catch (...) {
+                    // 忽略转换失败
+                }
+            }
+        }
+        size_t cache_key = hashString(cache_key_str);
+        auto cache_it = exec_cache_.find(cache_key);
+        
+        bool cached = false;
+        if (cache_it != exec_cache_.end()) {
+            // 缓存命中：直接使用缓存的结果
+            exec_cache_hits_++;
+            cached = true;
+            logger_.debug("Decorated definition cache hit");
+        } else {
+            // 缓存未命中：执行 exec 并缓存结果
+            exec_cache_misses_++;
+            py::exec(py::str(text), py::globals(), py::globals());
+        }
+        
         // 若为 class 定义，写回变量表
         if (ctx->classDef()) {
             std::string name = ctx->classDef()->IDENTIFIER()->getText();
-            if (py::globals().contains(name.c_str())) {
-                py::object cls = py::globals()[name.c_str()];
+            py::object cls;
+            if (cached) {
+                cls = cache_it->second;
+            } else {
+                if (py::globals().contains(name.c_str())) {
+                    cls = py::globals()[name.c_str()];
+                    // 缓存结果
+                    exec_cache_[cache_key] = cls;
+                    logger_.debug("Decorated class definition cached for: " + name);
+                }
+            }
+            if (cls) {
                 variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
             }
         }
@@ -3259,18 +3662,48 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
             throw;
         }
     }
-
+    
     if (ctx->FINALLY()) {
         auto finallySuite = ctx->suite(ctx->suite().size() - 1);
         if (finallySuite) {
             visit(finallySuite);
         }
     }
-
+    
     return any();
 }
 
 any AstVisitor::visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) {
     // except子句已经在visitTryStatement中处理，这里返回空
     return any();
+}
+
+std::string AstVisitor::getPerformanceStats() const {
+    std::ostringstream oss;
+    size_t cache_hits = exec_cache_hits_.load();
+    size_t cache_misses = exec_cache_misses_.load();
+    size_t cache_total = cache_hits + cache_misses;
+    double cache_hit_rate = cache_total > 0 ? (100.0 * cache_hits / cache_total) : 0.0;
+    
+    oss << "Performance Stats:\n"
+        << "  Python calls: " << py_call_count_.load() << "\n"
+        << "  ScriptValue->py::object conversions: " << sv_to_py_count_.load() << "\n"
+        << "  py::object->ScriptValue conversions: " << py_to_sv_count_.load() << "\n"
+        << "  Direct iterations (fast path): " << iter_direct_count_.load() << "\n"
+        << "  Python iterations (slow path): " << iter_py_count_.load() << "\n"
+        << "  Exec cache hits: " << cache_hits << "\n"
+        << "  Exec cache misses: " << cache_misses << "\n"
+        << "  Exec cache hit rate: " << std::fixed << std::setprecision(1) << cache_hit_rate << "%\n";
+    return oss.str();
+}
+
+void AstVisitor::resetPerformanceStats() {
+    py_call_count_.store(0);
+    sv_to_py_count_.store(0);
+    py_to_sv_count_.store(0);
+    iter_direct_count_.store(0);
+    iter_py_count_.store(0);
+    exec_cache_hits_.store(0);
+    exec_cache_misses_.store(0);
+    // 注意：不清空 exec_cache_，保留缓存以便后续使用
 }

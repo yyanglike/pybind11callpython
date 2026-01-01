@@ -90,6 +90,10 @@ public:
     std::optional<ScriptError> getLastError() const { return error_handler_.getLastError(); }
     std::vector<ScriptError> getAllErrors() const { return error_handler_.getAllErrors(); }
     
+    // 性能统计接口
+    std::string getPerformanceStats() const { return ast_visitor_.getPerformanceStats(); }
+    void resetPerformanceStats() { ast_visitor_.resetPerformanceStats(); }
+    
     // Visitor接口实现 - 根据新的语法规则更新
     std::any visitProgram(PyScriptParser::ProgramContext *ctx) override;
     std::any visitStatement(PyScriptParser::StatementContext *ctx) override;

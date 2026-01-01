@@ -18,14 +18,38 @@ namespace py = pybind11;
 using namespace script_interpreter;
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        s_logger.error("Usage: run_pys_script <script.pys> [args...]");
+    bool show_stats = false;
+    std::string script_path;
+    std::vector<std::string> script_args;
+    
+    // 解析命令行参数
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--stats" || arg == "-s") {
+            show_stats = true;
+        } else if (arg == "--help" || arg == "-h") {
+            std::cout << "Usage: run_pys_script [--stats|-s] <script.pys> [args...]\n"
+                      << "Options:\n"
+                      << "  --stats, -s    Show performance statistics after execution\n"
+                      << "  --help, -h     Show this help message\n";
+            return 0;
+        } else if (script_path.empty()) {
+            script_path = arg;
+        } else {
+            script_args.emplace_back(arg);
+        }
+    }
+    
+    if (script_path.empty()) {
+        s_logger.error("Usage: run_pys_script [--stats|-s] <script.pys> [args...]");
         return 2;
     }
-
-    const std::string script_path = argv[1];
-    std::vector<std::string> script_args;
-    for (int i = 1; i < argc; ++i) script_args.emplace_back(argv[i]);
+    
+    // 也检查环境变量
+    const char* env_stats = std::getenv("PYS_STATS");
+    if (env_stats && (std::string(env_stats) == "1" || std::string(env_stats) == "true")) {
+        show_stats = true;
+    }
 
     // Disable Python sitecustomize module to avoid circular import errors
     setenv("PYTHONNOUSERSITE", "1", 1);
@@ -97,6 +121,11 @@ int main(int argc, char **argv) {
             } catch (...) {
                 // ignore conversion errors
             }
+        }
+        
+        // 显示性能统计数据（如果启用）
+        if (show_stats) {
+            std::cout << "\n" << interp.getPerformanceStats() << std::endl;
         }
 
     } catch (const std::exception &ex) {
