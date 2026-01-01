@@ -257,6 +257,7 @@ private:
     
     // 缓存的模块（避免重复导入）
     py::object builtins_module_;                               ///< 缓存的 builtins 模块
+    py::object sys_module_;                                    ///< 缓存的 sys 模块
     
     // 延迟缓存策略：跟踪函数定义次数
     std::unordered_map<std::string, size_t> func_def_count_;  ///< 函数定义次数计数器

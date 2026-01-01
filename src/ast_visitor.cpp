@@ -125,11 +125,16 @@ static void ensureSysArgv() {
 }
 
 // 构建用于 eval 的全局字典，包含 builtins、已定义变量与模块
-static py::dict buildEvalGlobals(VariableManager& variable_manager) {
+// 优化：接受builtins_module参数，避免重复导入
+static py::dict buildEvalGlobals(VariableManager& variable_manager, py::object builtins_module = py::none()) {
     py::dict g = py::globals();
     try {
-        py::object builtins = py::module_::import("builtins");
-        g["__builtins__"] = builtins;
+        if (!builtins_module.is_none()) {
+            g["__builtins__"] = builtins_module;
+        } else {
+            py::object builtins = py::module_::import("builtins");
+            g["__builtins__"] = builtins;
+        }
     } catch (...) {
     }
     // 注入变量
@@ -192,11 +197,16 @@ AstVisitor::AstVisitor(VariableManager& variable_manager,
       result_(nullptr),
       defining_function_(false),
       current_from_module_(py::none()) {
-    // 缓存 builtins 模块，避免每次函数定义都导入
+    // 缓存 builtins 和 sys 模块，避免每次函数定义都导入
     try {
         builtins_module_ = py::module_::import("builtins");
     } catch (...) {
         builtins_module_ = py::none();
+    }
+    try {
+        sys_module_ = py::module_::import("sys");
+    } catch (...) {
+        sys_module_ = py::none();
     }
 }
 
@@ -637,18 +647,29 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         // 在Python中执行函数定义
         py::dict globals = py::globals();
         // 确保globals包含__builtins__
+        // 优化：使用缓存的builtins模块
         if (!globals.contains("__builtins__")) {
-            try {
-                py::module_ builtins = py::module_::import("builtins");
-                globals["__builtins__"] = builtins;
-            } catch (...) {
-                // 忽略错误
+            if (!builtins_module_.is_none()) {
+                globals["__builtins__"] = builtins_module_;
+            } else {
+                try {
+                    py::module_ builtins = py::module_::import("builtins");
+                    globals["__builtins__"] = builtins;
+                } catch (...) {
+                    // 忽略错误
+                }
             }
         }
 
         // 确保sys模块与argv存在，避免脚本访问sys.argv时为None
+        // 优化：使用缓存的sys模块
         try {
-            py::module_ sys_module = py::module_::import("sys");
+            py::module_ sys_module;
+            if (!sys_module_.is_none()) {
+                sys_module = sys_module_;
+            } else {
+                sys_module = py::module_::import("sys");
+            }
             if (!globals.contains("sys")) {
                 globals["sys"] = sys_module;
             }
@@ -669,8 +690,14 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         }
         
         // 确保sys.modules中的模块在globals中可用，使得函数定义中的import语句能够找到它们
+        // 优化：使用缓存的sys模块
         try {
-            py::module_ sys_module = py::module_::import("sys");
+            py::module_ sys_module;
+            if (!sys_module_.is_none()) {
+                sys_module = sys_module_;
+            } else {
+                sys_module = py::module_::import("sys");
+            }
             py::dict sys_modules = sys_module.attr("modules");
             for (auto item : sys_modules) {
                 std::string mod_name = py::str(item.first).cast<std::string>();
@@ -705,12 +732,17 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         }
         
         // 确保range函数在globals中可用，因为函数体中可能使用它
+        // 优化：使用缓存的builtins模块
         if (!globals.contains("range")) {
-            try {
-                py::object builtins = py::module_::import("builtins");
-                globals["range"] = builtins.attr("range");
-            } catch (...) {
-                // 忽略失败
+            if (!builtins_module_.is_none()) {
+                globals["range"] = builtins_module_.attr("range");
+            } else {
+                try {
+                    py::object builtins = py::module_::import("builtins");
+                    globals["range"] = builtins.attr("range");
+                } catch (...) {
+                    // 忽略失败
+                }
             }
         }
         
@@ -3366,7 +3398,9 @@ any AstVisitor::visitLambdaExpression(PyScriptParser::LambdaExpressionContext *c
     // 在Python中执行lambda定义
     try {
         py::dict locals;
-        py::object builtins = py::module_::import("builtins");
+        // 优化：使用缓存的builtins模块
+        py::object builtins = builtins_module_.is_none() ? 
+            py::module_::import("builtins") : builtins_module_;
         py::object lambdaFunc = builtins.attr("eval")(lambdaStr, py::globals(), locals);
         return any(ScriptValue::fromPythonObject(lambdaFunc));
     } catch (const py::error_already_set& e) {
