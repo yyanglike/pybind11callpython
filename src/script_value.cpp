@@ -12,9 +12,10 @@ ScriptValue::ScriptValue(const ScriptValue& other) {
 
 // 移动构造函数
 ScriptValue::ScriptValue(ScriptValue&& other) noexcept 
-    : value_(move(other.value_)), type_(other.type_) {
+    : value_(std::move(other.value_)), type_(other.type_) {
     other.type_ = Type::Null;
     other.value_ = nullptr;
+    py_cache_ = py::none();
 }
 
 // 赋值运算符
@@ -30,10 +31,11 @@ ScriptValue& ScriptValue::operator=(const ScriptValue& other) {
 ScriptValue& ScriptValue::operator=(ScriptValue&& other) noexcept {
     if (this != &other) {
         cleanup();
-        value_ = move(other.value_);
+        value_ = std::move(other.value_);
         type_ = other.type_;
         other.type_ = Type::Null;
         other.value_ = nullptr;
+        py_cache_ = py::none();
     }
     return *this;
 }
@@ -57,11 +59,13 @@ void ScriptValue::cleanup() {
     }
     value_ = nullptr;
     type_ = Type::Null;
+    py_cache_ = py::none();
 }
 
 // 从其他对象拷贝
 void ScriptValue::copyFrom(const ScriptValue& other) {
     type_ = other.type_;
+    py_cache_ = py::none();
     
     switch (type_) {
         case Type::Null:
@@ -295,42 +299,49 @@ void ScriptValue::setInteger(long long val) {
     cleanup();
     type_ = Type::Integer;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 void ScriptValue::setDouble(double val) {
     cleanup();
     type_ = Type::Double;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 void ScriptValue::setBoolean(bool val) {
     cleanup();
     type_ = Type::Boolean;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 void ScriptValue::setString(const string& val) {
     cleanup();
     type_ = Type::String;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 void ScriptValue::setPythonObject(py::object val) {
     cleanup();
     type_ = Type::PythonObject;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 void ScriptValue::setList(const vector<shared_ptr<ScriptValue>>& val) {
     cleanup();
     type_ = Type::List;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 void ScriptValue::setDictionary(const unordered_map<string, shared_ptr<ScriptValue>>& val) {
     cleanup();
     type_ = Type::Dictionary;
     value_ = val;
+    py_cache_ = py::none();
 }
 
 // 列表操作方法
@@ -544,6 +555,7 @@ shared_ptr<ScriptValue> ScriptValue::createDictionary() {
 
 // Python对象转换
 shared_ptr<ScriptValue> ScriptValue::fromPythonObject(py::object obj) {
+    constexpr size_t kDeepCopyThreshold = 64; // 避免对大型容器做深拷贝
     if (obj.is_none()) {
         return createNull();
     } else if (py::isinstance<py::int_>(obj)) {
@@ -555,12 +567,22 @@ shared_ptr<ScriptValue> ScriptValue::fromPythonObject(py::object obj) {
     } else if (py::isinstance<py::str>(obj)) {
         return createString(obj.cast<string>());
     } else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
+        try {
+            if (py::len(obj) > kDeepCopyThreshold) {
+                return createPythonObject(obj);
+            }
+        } catch (...) {}
         auto result = createList();
         for (auto item : obj) {
             result->append(fromPythonObject(py::reinterpret_borrow<py::object>(item)));
         }
         return result;
     } else if (py::isinstance<py::dict>(obj)) {
+        try {
+            if (py::len(obj) > kDeepCopyThreshold) {
+                return createPythonObject(obj);
+            }
+        } catch (...) {}
         auto result = createDictionary();
         py::dict pyDict = obj.cast<py::dict>();
         for (auto item : pyDict) {
@@ -576,19 +598,28 @@ shared_ptr<ScriptValue> ScriptValue::fromPythonObject(py::object obj) {
 }
 
 py::object ScriptValue::toPythonObject() const {
+    if (type_ != Type::List && type_ != Type::Dictionary && !py_cache_.is_none()) {
+        return py_cache_;
+    }
     switch (type_) {
         case Type::Null:
-            return py::none();
+            py_cache_ = py::none();
+            return py_cache_;
         case Type::Integer:
-            return py::cast(getInteger());
+            py_cache_ = py::cast(getInteger());
+            return py_cache_;
         case Type::Double:
-            return py::cast(getDouble());
+            py_cache_ = py::cast(getDouble());
+            return py_cache_;
         case Type::Boolean:
-            return py::cast(getBoolean());
+            py_cache_ = py::cast(getBoolean());
+            return py_cache_;
         case Type::String:
-            return py::cast(getString());
+            py_cache_ = py::cast(getString());
+            return py_cache_;
         case Type::PythonObject:
-            return getPythonObject();
+            py_cache_ = getPythonObject();
+            return py_cache_;
         case Type::List: {
             py::list pyList;
             for (const auto& item : getList()) {
@@ -612,6 +643,7 @@ py::object ScriptValue::toPythonObject() const {
             return pyDict;
         }
         default:
-            return py::none();
+            py_cache_ = py::none();
+            return py_cache_;
     }
 }

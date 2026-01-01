@@ -77,6 +77,11 @@ public:
         const std::string& op,
         std::shared_ptr<ScriptValue> value);
     
+    // 容器辅助
+    std::shared_ptr<ScriptValue> lenOf(const std::shared_ptr<ScriptValue>& value);
+    std::shared_ptr<ScriptValue> contains(const std::shared_ptr<ScriptValue>& container,
+                                          const std::shared_ptr<ScriptValue>& needle);
+    
     /**
      * @brief 判断值的真值性
      * @param value 要判断的值

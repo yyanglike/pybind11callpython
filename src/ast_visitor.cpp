@@ -1738,6 +1738,118 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
     for (auto postfixOp : postfixOps) {
         if (auto attrOp = dynamic_cast<PyScriptParser::AttributeAccessOpContext*>(postfixOp)) {
             string memberName = attrOp->IDENTIFIER()->getText();
+            // 原生 list 快路径
+            if (currentValue->isList()) {
+                auto self = currentValue;
+                if (memberName == "append") {
+                    py::object fn = py::cpp_function([self](py::args args) {
+                        if (py::len(args) != 1) throw std::runtime_error("append expects 1 arg");
+                        self->append(ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(args[0])));
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "extend") {
+                    py::object fn = py::cpp_function([self](py::args args) {
+                        if (py::len(args) != 1) throw std::runtime_error("extend expects 1 iterable");
+                        py::object iterable = py::reinterpret_borrow<py::object>(args[0]);
+                        for (auto item : iterable) {
+                            self->append(ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(item)));
+                        }
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "pop") {
+                    py::object fn = py::cpp_function([self](py::args args) {
+                        auto& list = const_cast<std::vector<std::shared_ptr<ScriptValue>>&>(self->getList());
+                        if (list.empty()) throw std::runtime_error("pop from empty list");
+                        long long idx = -1;
+                        if (py::len(args) == 1) {
+                            idx = py::cast<long long>(args[0]);
+                        } else if (py::len(args) > 1) {
+                            throw std::runtime_error("pop expects at most 1 arg");
+                        }
+                        if (idx < 0) idx = static_cast<long long>(list.size()) + idx;
+                        if (idx < 0 || idx >= static_cast<long long>(list.size())) {
+                            throw std::runtime_error("pop index out of range");
+                        }
+                        auto val = list[static_cast<size_t>(idx)];
+                        list.erase(list.begin() + idx);
+                        return val ? val->toPythonObject() : py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "clear") {
+                    py::object fn = py::cpp_function([self](py::args) {
+                        auto& list = const_cast<std::vector<std::shared_ptr<ScriptValue>>&>(self->getList());
+                        list.clear();
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                }
+            }
+            // 原生 dict 快路径
+            if (currentValue->isDictionary()) {
+                auto self = currentValue;
+                if (memberName == "get") {
+                    py::object fn = py::cpp_function([self](py::args args) -> py::object {
+                        if (py::len(args) < 1 || py::len(args) > 2) throw std::runtime_error("get expects 1 or 2 args");
+                        std::string key = py::str(args[0]);
+                        auto& dict = self->getDictionary();
+                        auto it = dict.find(key);
+                        if (it != dict.end() && it->second) return it->second->toPythonObject();
+                        if (py::len(args) == 2) return py::reinterpret_borrow<py::object>(args[1]);
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "update") {
+                    py::object fn = py::cpp_function([self](py::args args) {
+                        if (py::len(args) != 1) throw std::runtime_error("update expects 1 mapping");
+                        py::object obj = py::reinterpret_borrow<py::object>(args[0]);
+                        auto& dict = const_cast<std::unordered_map<std::string, std::shared_ptr<ScriptValue>>&>(self->getDictionary());
+                        if (py::isinstance<py::dict>(obj)) {
+                            py::dict d = obj.cast<py::dict>();
+                            for (auto item : d) {
+                                std::string k = py::str(item.first);
+                                dict[k] = ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(item.second));
+                            }
+                        } else {
+                            for (auto item : obj) {
+                                py::object pair = py::reinterpret_borrow<py::object>(item);
+                                auto seq = py::reinterpret_borrow<py::sequence>(pair);
+                                if (seq.size() != 2) throw std::runtime_error("update expects iterable of pairs");
+                                std::string k = py::str(seq[0]);
+                                dict[k] = ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(seq[1]));
+                            }
+                        }
+                        return py::none();
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "keys") {
+                    py::object fn = py::cpp_function([self](py::args) {
+                        py::list keys;
+                        for (auto& kv : self->getDictionary()) keys.append(kv.first);
+                        return keys;
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "values") {
+                    py::object fn = py::cpp_function([self](py::args) {
+                        py::list vals;
+                        for (auto& kv : self->getDictionary()) {
+                            vals.append(kv.second ? kv.second->toPythonObject() : py::none());
+                        }
+                        return vals;
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                }
+            }
+
             auto member = python_bridge_.getMember(currentValue, memberName);
             if (!member) {
                 // 如果成员不存在，返回null而不是报错，以允许脚本继续执行
@@ -1850,6 +1962,18 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
             
             try {
                 py::object pyFunc = currentValue->getPythonObject();
+
+                // len 内联优化：无 kwargs，单参数且目标为内置 len
+                if (kwargs.empty() && args.size() == 1) {
+                    try {
+                        if (py::hasattr(pyFunc, "__name__") && std::string(py::str(pyFunc.attr("__name__"))) == "len") {
+                            currentValue = expression_evaluator_.lenOf(args[0]);
+                            continue;
+                        }
+                    } catch (...) {
+                        // ignore and fall through to normal call
+                    }
+                }
                 
                 // 构建参数元组
                 py::tuple pyArgs(args.size());

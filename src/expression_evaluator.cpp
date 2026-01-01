@@ -246,10 +246,20 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::fromPythonObject(result);
             }
+        } else if (op == "in") {
+            return contains(right, left);
         } else if (op == "&&") {
-            return ScriptValue::createBoolean(left->toBoolean() && right->toBoolean());
+            // 逻辑与，短路
+            if (!isTruthy(left)) {
+                return ScriptValue::createBoolean(false);
+            }
+            return ScriptValue::createBoolean(isTruthy(right));
         } else if (op == "||") {
-            return ScriptValue::createBoolean(left->toBoolean() || right->toBoolean());
+            // 逻辑或，短路
+            if (isTruthy(left)) {
+                return ScriptValue::createBoolean(true);
+            }
+            return ScriptValue::createBoolean(isTruthy(right));
         }
         
         // 尝试统一回退到 Python 运算符
@@ -345,6 +355,59 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
     } catch (const exception& e) {
         throw runtime_error("Unary operation error: " + string(e.what()));
     }
+}
+
+shared_ptr<ScriptValue> ExpressionEvaluator::lenOf(const shared_ptr<ScriptValue>& value) {
+    if (!value) return ScriptValue::createNull();
+    if (value->isList()) {
+        return ScriptValue::createInteger(static_cast<long long>(value->listSize()));
+    }
+    if (value->isDictionary()) {
+        return ScriptValue::createInteger(static_cast<long long>(value->getDictionary().size()));
+    }
+    if (value->isString()) {
+        return ScriptValue::createInteger(static_cast<long long>(value->getString().size()));
+    }
+    if (value->isPythonObject()) {
+        try {
+            py::object obj = value->toPythonObject();
+            return ScriptValue::createInteger(static_cast<long long>(py::len(obj)));
+        } catch (const py::error_already_set& e) {
+            reportError("len() failed: " + string(e.what()));
+            return ScriptValue::createNull();
+        }
+    }
+    return ScriptValue::createNull();
+}
+
+shared_ptr<ScriptValue> ExpressionEvaluator::contains(const shared_ptr<ScriptValue>& container,
+                                                      const shared_ptr<ScriptValue>& needle) {
+    if (!container) return ScriptValue::createBoolean(false);
+    if (container->isList()) {
+        for (auto& item : container->getList()) {
+            if (item && needle && *item == *needle) return ScriptValue::createBoolean(true);
+            if (!item && !needle) return ScriptValue::createBoolean(true);
+        }
+        return ScriptValue::createBoolean(false);
+    }
+    if (container->isDictionary()) {
+        std::string key = needle ? needle->toString() : "";
+        return ScriptValue::createBoolean(container->getDictionary().count(key) > 0);
+    }
+    if (container->isString()) {
+        if (!needle || !needle->isString()) return ScriptValue::createBoolean(false);
+        return ScriptValue::createBoolean(container->getString().find(needle->getString()) != std::string::npos);
+    }
+    if (container->isPythonObject()) {
+        try {
+            py::object res = py::module_::import("operator").attr("contains")(container->toPythonObject(), needle ? needle->toPythonObject() : py::none());
+            return ScriptValue::fromPythonObject(res);
+        } catch (const py::error_already_set& e) {
+            reportError("contains failed: " + string(e.what()));
+            return ScriptValue::createBoolean(false);
+        }
+    }
+    return ScriptValue::createBoolean(false);
 }
 
 bool ExpressionEvaluator::isTruthy(shared_ptr<ScriptValue> value) const {

@@ -134,6 +134,7 @@ public:
 private:
     ValueVariant value_;
     Type type_;
+    mutable py::object py_cache_ = py::none(); // cache for primitive toPythonObject
     
     // 辅助方法
     void cleanup();

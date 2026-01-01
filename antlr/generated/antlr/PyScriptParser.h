@@ -791,6 +791,8 @@ public:
     antlr4::tree::TerminalNode* GT(size_t i);
     std::vector<antlr4::tree::TerminalNode *> GE();
     antlr4::tree::TerminalNode* GE(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> IN();
+    antlr4::tree::TerminalNode* IN(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

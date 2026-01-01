@@ -263,7 +263,7 @@ equality
     ;
 
 comparison
-    : additive ((LT | LE | GT | GE) additive)*
+    : additive ((LT | LE | GT | GE | IN) additive)*
     ;
 
 additive
