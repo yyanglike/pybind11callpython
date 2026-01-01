@@ -677,7 +677,8 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             auto cache_it = exec_cache_.find(cache_key);
             
             py::object func;
-            if (cache_it != exec_cache_.end()) {
+            // 检查缓存是否启用
+            if (cache_enabled_ && cache_it != exec_cache_.end()) {
                 // 缓存命中：使用缓存的函数对象
                 // 注意：Python 的函数闭包机制会捕获变量的引用，所以即使对象 id 不变但内容变化了，
                 // 函数执行时仍然会访问当前 globals 中的变量引用，应该能访问到最新的内容
@@ -716,10 +717,11 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
                 builtins_module.attr("exec")(funcDef, globals, globals);
                 func = globals[funcName.c_str()];
                 
-                // 缓存结果（注意：这里缓存的是函数对象本身，而不是 globals）
-                // 由于函数对象可能依赖于 globals，我们需要确保缓存的函数仍然可用
-                exec_cache_[cache_key] = func;
-                logger_.debug("Function definition cached for: " + funcName);
+                // 缓存结果（如果缓存启用）
+                if (cache_enabled_) {
+                    exec_cache_[cache_key] = func;
+                    logger_.debug("Function definition cached for: " + funcName);
+                }
             }
             
             variable_manager_.setVariable(funcName, ScriptValue::fromPythonObject(func));
@@ -3377,20 +3379,23 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
         auto cache_it = exec_cache_.find(cache_key);
         
         py::object cls;
-        if (cache_it != exec_cache_.end()) {
+        // 检查缓存是否启用
+        if (cache_enabled_ && cache_it != exec_cache_.end()) {
             // 缓存命中：直接使用缓存的结果
             exec_cache_hits_++;
             cls = cache_it->second;
             logger_.debug("Class definition cache hit for: " + name);
         } else {
-            // 缓存未命中：执行 exec 并缓存结果
+            // 缓存未命中或缓存禁用：执行 exec 并缓存结果（如果启用）
             exec_cache_misses_++;
             py::exec(py::str(text), py::globals(), py::globals());
             cls = py::globals()[name.c_str()];
             
-            // 缓存结果
-            exec_cache_[cache_key] = cls;
-            logger_.debug("Class definition cached for: " + name);
+            // 缓存结果（如果缓存启用）
+            if (cache_enabled_) {
+                exec_cache_[cache_key] = cls;
+                logger_.debug("Class definition cached for: " + name);
+            }
         }
         
         variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
@@ -3449,13 +3454,14 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
         auto cache_it = exec_cache_.find(cache_key);
         
         bool cached = false;
-        if (cache_it != exec_cache_.end()) {
+        // 检查缓存是否启用
+        if (cache_enabled_ && cache_it != exec_cache_.end()) {
             // 缓存命中：直接使用缓存的结果
             exec_cache_hits_++;
             cached = true;
             logger_.debug("Decorated definition cache hit");
         } else {
-            // 缓存未命中：执行 exec 并缓存结果
+            // 缓存未命中或缓存禁用：执行 exec 并缓存结果（如果启用）
             exec_cache_misses_++;
             py::exec(py::str(text), py::globals(), py::globals());
         }
@@ -3469,9 +3475,11 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             } else {
                 if (py::globals().contains(name.c_str())) {
                     cls = py::globals()[name.c_str()];
-                    // 缓存结果
-                    exec_cache_[cache_key] = cls;
-                    logger_.debug("Decorated class definition cached for: " + name);
+                    // 缓存结果（如果缓存启用）
+                    if (cache_enabled_) {
+                        exec_cache_[cache_key] = cls;
+                        logger_.debug("Decorated class definition cached for: " + name);
+                    }
                 }
             }
             if (cls) {

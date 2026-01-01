@@ -211,6 +211,23 @@ public:
      */
     void resetPerformanceStats();
     
+    /**
+     * @brief 启用/禁用函数/类定义缓存
+     * @param enabled 是否启用缓存
+     */
+    void setCacheEnabled(bool enabled) { cache_enabled_ = enabled; }
+    
+    /**
+     * @brief 获取缓存启用状态
+     * @return 是否启用缓存
+     */
+    bool isCacheEnabled() const { return cache_enabled_; }
+    
+    /**
+     * @brief 清空缓存
+     */
+    void clearCache() { exec_cache_.clear(); }
+    
 private:
     // 模块引用
     VariableManager& variable_manager_;
@@ -231,6 +248,7 @@ private:
     mutable std::atomic<size_t> iter_py_count_{0};            ///< Python迭代次数（慢路径）
     
     // 函数/类定义执行结果缓存（基于源代码哈希）
+    bool cache_enabled_{true};                                 ///< 缓存开关（默认启用）
     std::unordered_map<size_t, py::object> exec_cache_;      ///< 缓存 py::exec 的结果
     mutable std::atomic<size_t> exec_cache_hits_{0};          ///< 缓存命中次数
     mutable std::atomic<size_t> exec_cache_misses_{0};        ///< 缓存未命中次数

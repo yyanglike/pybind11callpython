@@ -6,7 +6,7 @@
 
 ## 统计指标说明
 
-性能统计包含以下5个指标：
+性能统计包含以下8个指标：
 
 1. **Python calls**: Python 函数调用次数
    - 统计所有通过 `DynamicPythonCaller::callFunction` 调用的 Python 函数
@@ -24,6 +24,15 @@
 5. **Python iterations (slow path)**: Python 迭代次数（慢路径）
    - 统计需要通过 `py::iter()` 进行迭代的次数
    - 适用于 PythonObject 类型或其他需要 Python 迭代器的场景
+
+6. **Exec cache hits**: 函数/类定义缓存命中次数
+   - 统计使用缓存的函数/类定义次数
+
+7. **Exec cache misses**: 函数/类定义缓存未命中次数
+   - 统计重新执行 `py::exec` 的次数
+
+8. **Exec cache hit rate**: 缓存命中率
+   - 计算公式：`(cache_hits / (cache_hits + cache_misses)) * 100%`
 
 ## 使用方法
 
@@ -43,6 +52,58 @@
 PYS_STATS=1 ./build/run_pys_script python/test_hello.pys
 ```
 
+## 缓存控制
+
+### 缓存开关选项
+
+函数/类定义缓存默认启用，但可以通过以下方式控制：
+
+#### 命令行选项
+
+```bash
+# 禁用缓存
+./build/run_pys_script --no-cache python/test_hello.pys
+
+# 启用缓存（默认）
+./build/run_pys_script --cache python/test_hello.pys
+```
+
+#### 环境变量
+
+```bash
+# 禁用缓存
+PYS_CACHE=0 ./build/run_pys_script python/test_hello.pys
+
+# 启用缓存
+PYS_CACHE=1 ./build/run_pys_script python/test_hello.pys
+```
+
+#### 程序化控制
+
+在 C++ 代码中：
+
+```cpp
+ScriptInterpreter interp;
+
+// 禁用缓存
+interp.setCacheEnabled(false);
+
+// 启用缓存
+interp.setCacheEnabled(true);
+
+// 检查缓存状态
+bool enabled = interp.isCacheEnabled();
+
+// 清空缓存
+interp.clearCache();
+```
+
+### 使用建议
+
+1. **开发/调试阶段**：建议禁用缓存（`--no-cache`），确保每次函数定义都重新执行，避免缓存导致的问题
+2. **生产环境**：启用缓存（默认），提高性能
+3. **数据对比**：先禁用缓存验证正确性，确认无误后再启用缓存进行性能优化
+
 ### 方法3：程序化访问
 
 在 C++ 代码中直接访问：
@@ -51,6 +112,10 @@ PYS_STATS=1 ./build/run_pys_script python/test_hello.pys
 #include "script_interpreter.h"
 
 ScriptInterpreter interp;
+
+// 控制缓存（可选）
+interp.setCacheEnabled(false);  // 禁用缓存进行调试
+
 interp.executeFile("script.pys");
 
 // 获取性能统计

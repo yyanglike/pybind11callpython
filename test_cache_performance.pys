@@ -1,0 +1,48 @@
+# 专门用于测试缓存性能的脚本
+# 包含多次重复定义的函数，缓存应该能带来明显性能提升
+
+def f1():
+    import numpy as np
+    return np.array([1, 2, 3]).sum()
+
+def f2():
+    import pandas as pd
+    return pd.DataFrame({'a': [1, 2]}).sum().sum()
+
+def f3():
+    import sys
+    return sys.platform
+
+# 重复定义相同的函数（缓存应该生效）
+def f1():
+    import numpy as np
+    return np.array([1, 2, 3]).sum()
+
+def f2():
+    import pandas as pd
+    return pd.DataFrame({'a': [1, 2]}).sum().sum()
+
+def f3():
+    import sys
+    return sys.platform
+
+# 再次重复定义
+def f1():
+    import numpy as np
+    return np.array([1, 2, 3]).sum()
+
+def f2():
+    import pandas as pd
+    return pd.DataFrame({'a': [1, 2]}).sum().sum()
+
+def f3():
+    import sys
+    return sys.platform
+
+# 调用函数
+r1 = f1()
+r2 = f2()
+r3 = f3()
+
+print("Results:", r1, r2, r3)
+

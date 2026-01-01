@@ -94,6 +94,11 @@ public:
     std::string getPerformanceStats() const { return ast_visitor_.getPerformanceStats(); }
     void resetPerformanceStats() { ast_visitor_.resetPerformanceStats(); }
     
+    // 缓存控制接口
+    void setCacheEnabled(bool enabled) { ast_visitor_.setCacheEnabled(enabled); }
+    bool isCacheEnabled() const { return ast_visitor_.isCacheEnabled(); }
+    void clearCache() { ast_visitor_.clearCache(); }
+    
     // Visitor接口实现 - 根据新的语法规则更新
     std::any visitProgram(PyScriptParser::ProgramContext *ctx) override;
     std::any visitStatement(PyScriptParser::StatementContext *ctx) override;

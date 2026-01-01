@@ -19,6 +19,7 @@ using namespace script_interpreter;
 
 int main(int argc, char **argv) {
     bool show_stats = false;
+    bool cache_enabled = true;  // 默认启用缓存
     std::string script_path;
     std::vector<std::string> script_args;
     
@@ -27,11 +28,17 @@ int main(int argc, char **argv) {
         std::string arg = argv[i];
         if (arg == "--stats" || arg == "-s") {
             show_stats = true;
+        } else if (arg == "--no-cache" || arg == "-n") {
+            cache_enabled = false;
+        } else if (arg == "--cache" || arg == "-c") {
+            cache_enabled = true;
         } else if (arg == "--help" || arg == "-h") {
-            std::cout << "Usage: run_pys_script [--stats|-s] <script.pys> [args...]\n"
+            std::cout << "Usage: run_pys_script [OPTIONS] <script.pys> [args...]\n"
                       << "Options:\n"
-                      << "  --stats, -s    Show performance statistics after execution\n"
-                      << "  --help, -h     Show this help message\n";
+                      << "  --stats, -s        Show performance statistics after execution\n"
+                      << "  --no-cache, -n     Disable function/class definition caching\n"
+                      << "  --cache, -c        Enable function/class definition caching (default)\n"
+                      << "  --help, -h         Show this help message\n";
             return 0;
         } else if (script_path.empty()) {
             script_path = arg;
@@ -41,7 +48,7 @@ int main(int argc, char **argv) {
     }
     
     if (script_path.empty()) {
-        s_logger.error("Usage: run_pys_script [--stats|-s] <script.pys> [args...]");
+        s_logger.error("Usage: run_pys_script [OPTIONS] <script.pys> [args...]");
         return 2;
     }
     
@@ -49,6 +56,16 @@ int main(int argc, char **argv) {
     const char* env_stats = std::getenv("PYS_STATS");
     if (env_stats && (std::string(env_stats) == "1" || std::string(env_stats) == "true")) {
         show_stats = true;
+    }
+    
+    const char* env_cache = std::getenv("PYS_CACHE");
+    if (env_cache) {
+        std::string cache_str = env_cache;
+        if (cache_str == "0" || cache_str == "false" || cache_str == "off") {
+            cache_enabled = false;
+        } else if (cache_str == "1" || cache_str == "true" || cache_str == "on") {
+            cache_enabled = true;
+        }
     }
 
     // Disable Python sitecustomize module to avoid circular import errors
@@ -105,6 +122,12 @@ int main(int argc, char **argv) {
 
         // Instantiate interpreter and execute the .pys file
         ScriptInterpreter interp;
+        
+        // 设置缓存开关
+        interp.setCacheEnabled(cache_enabled);
+        if (!cache_enabled) {
+            s_logger.info("Function/class definition caching is disabled");
+        }
 
         bool ok = interp.executeFile(script_path);
         if (!ok) {
