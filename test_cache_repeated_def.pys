@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# Test cache performance for repeated function definitions
+
+# Define the same function multiple times (cache should help here)
+def compute(x):
+    return x * x + 1
+
+def compute(x):
+    return x * x + 1
+
+def compute(x):
+    return x * x + 1
+
+def compute(x):
+    return x * x + 1
+
+def compute(x):
+    return x * x + 1
+
+# Call the function multiple times
+result1 = compute(10)
+result2 = compute(20)
+result3 = compute(30)
+result4 = compute(40)
+result5 = compute(50)
+
+print("Results:", result1, result2, result3, result4, result5)
+
+# Define another function multiple times
+def add(a, b):
+    return a + b
+
+def add(a, b):
+    return a + b
+
+def add(a, b):
+    return a + b
+
+# Call it
+sum1 = add(1, 2)
+sum2 = add(3, 4)
+sum3 = add(5, 6)
+
+print("Sums:", sum1, sum2, sum3)
+
+# More complex function with multiple definitions
+def process(n):
+    total = 0
+    i = 0
+    while i < n:
+        total = total + i
+        i = i + 1
+    return total
+
+def process(n):
+    total = 0
+    i = 0
+    while i < n:
+        total = total + i
+        i = i + 1
+    return total
+
+def process(n):
+    total = 0
+    i = 0
+    while i < n:
+        total = total + i
+        i = i + 1
+    return total
+
+# Call it
+p1 = process(10)
+p2 = process(20)
+p3 = process(30)
+
+print("Process results:", p1, p2, p3)

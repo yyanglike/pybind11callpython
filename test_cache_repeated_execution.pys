@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""
+Test cache performance for repeated function execution
+
+This test verifies:
+1. Define a relatively complex function
+2. Call this function multiple times
+3. Compare execution time with cache enabled vs disabled
+
+Expected result:
+- With cache enabled, function definition is cached, multiple calls should be faster
+- With cache disabled, each call may need to redefine the function (if function is redefined in loop)
+"""
+
+import time
+
+# Define a relatively complex function with some computation
+def complex_function(n):
+    """Perform some computation to simulate actual workload"""
+    result = 0
+    for i in range(n):
+        result += i * i
+        if i % 100 == 0:
+            result = result % 1000000  # Avoid overflow
+    return result
+
+# Test 1: Call the same function multiple times (function defined outside loop)
+print("=== Test 1: Multiple calls to same function (defined outside loop) ===")
+start_time = time.time()
+
+# Define function (only once)
+def test_func1(x):
+    return x * x + 1
+
+# Call multiple times
+total = 0
+for i in range(10000):
+    total += test_func1(i)
+
+end_time = time.time()
+elapsed1 = end_time - start_time
+print(f"Test 1 execution time: {elapsed1:.6f}s")
+print(f"Test 1 result: {total}")
+
+# Test 2: Define and call function multiple times in loop (simulates repeated definition scenario)
+print("\n=== Test 2: Define and call function multiple times in loop (triggers cache) ===")
+start_time = time.time()
+
+total2 = 0
+for i in range(100):
+    # Redefine function in each loop iteration (this triggers cache mechanism)
+    def test_func2(x):
+        return x * x + 2
+    
+    # Call function
+    for j in range(100):
+        total2 += test_func2(j)
+
+end_time = time.time()
+elapsed2 = end_time - start_time
+print(f"Test 2 execution time: {elapsed2:.6f}s")
+print(f"Test 2 result: {total2}")
+
+# Test 3: Complex function definition and calls
+print("\n=== Test 3: Complex function definition and calls ===")
+start_time = time.time()
+
+def complex_calculation(a, b, c):
+    """Perform complex calculation"""
+    result = 0
+    for i in range(a):
+        for j in range(b):
+            result += i * j + c
+            if result > 1000000:
+                result = result % 1000000
+    return result
+
+total3 = 0
+for i in range(50):
+    total3 += complex_calculation(10, 10, i)
+
+end_time = time.time()
+elapsed3 = end_time - start_time
+print(f"Test 3 execution time: {elapsed3:.6f}s")
+print(f"Test 3 result: {total3}")
+
+# Test 4: Nested function definition
+print("\n=== Test 4: Nested function definition and calls ===")
+start_time = time.time()
+
+def outer_func(n):
+    def inner_func(x):
+        return x * x + n
+    return inner_func
+
+total4 = 0
+for i in range(100):
+    func = outer_func(i)
+    for j in range(10):
+        total4 += func(j)
+
+end_time = time.time()
+elapsed4 = end_time - start_time
+print(f"Test 4 execution time: {elapsed4:.6f}s")
+print(f"Test 4 result: {total4}")
+
+# Test 5: Use complex function for large computation
+print("\n=== Test 5: Use complex function for large computation ===")
+start_time = time.time()
+
+total5 = 0
+for i in range(1000):
+    result = complex_function(100)
+    total5 += result
+
+end_time = time.time()
+elapsed5 = end_time - start_time
+print(f"Test 5 execution time: {elapsed5:.6f}s")
+print(f"Test 5 result: {total5}")
+
+# Summary
+print("\n=== Performance Test Summary ===")
+print(f"Test 1 (single definition, multiple calls): {elapsed1:.6f}s")
+print(f"Test 2 (repeated definition, multiple calls): {elapsed2:.6f}s")
+print(f"Test 3 (complex function): {elapsed3:.6f}s")
+print(f"Test 4 (nested function): {elapsed4:.6f}s")
+print(f"Test 5 (large computation): {elapsed5:.6f}s")
+total_time = elapsed1 + elapsed2 + elapsed3 + elapsed4 + elapsed5
+print(f"Total execution time: {total_time:.6f}s")
+
+print("\nNote:")
+print("- Test 2 triggers cache mechanism (function is defined multiple times)")
+print("- Other tests mainly verify function call performance")
+print("- Compare execution time with --cache and --no-cache options")
