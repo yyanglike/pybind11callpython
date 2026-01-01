@@ -12,6 +12,32 @@ using namespace std;
 
 using namespace script_interpreter;
 
+py::object ScriptInterpreter::evalInlineExpression(const std::string& expr_text) {
+    try {
+        ANTLRInputStream input(expr_text);
+        PyScriptLexer lexer(&input);
+        CommonTokenStream tokens(&lexer);
+        tokens.fill();
+        PyScriptParser parser(&tokens);
+        parser.removeErrorListeners();
+        auto exprCtx = parser.expression();
+        auto anyVal = ast_visitor_.visit(exprCtx);
+        if (anyVal.has_value()) {
+            try {
+                auto sv = any_cast<std::shared_ptr<ScriptValue>>(anyVal);
+                if (sv) {
+                    return sv->toPythonObject();
+                }
+            } catch (const bad_any_cast&) {
+                // ignore
+            }
+        }
+    } catch (...) {
+        // ignore and fallthrough
+    }
+    return py::none();
+}
+
 // 构造函数
 ScriptInterpreter::ScriptInterpreter()
     : result_(nullptr),
@@ -149,14 +175,102 @@ bool ScriptInterpreter::execute(const string& script) {
         // 提供 __fstr__ 辅助：使用 Python eval 计算 f-string
         try {
             auto fstr_func = py::cpp_function([this](py::str fmt) {
-                py::dict env = py::globals();
-                for (const auto& name : variable_manager_.getAllVariableNames()) {
-                    auto val = variable_manager_.getVariable(name);
-                    if (val) {
-                        env[name.c_str()] = val->toPythonObject();
+                std::string raw = py::cast<std::string>(fmt);
+                // 去掉前缀 f/F 及引号，保留内容
+                size_t pos = 0;
+                if (!raw.empty() && (raw[0] == 'f' || raw[0] == 'F')) {
+                    pos = 1;
+                }
+                if (pos >= raw.size()) return fmt;
+                char quote = raw[pos];
+                bool triple = false;
+                if (pos + 2 < raw.size() && raw[pos] == raw[pos + 1] && raw[pos] == raw[pos + 2]) {
+                    triple = true;
+                }
+                size_t start = pos + (triple ? 3 : 1);
+                size_t end = raw.size();
+                if (end >= (triple ? 3 : 1)) {
+                    end -= (triple ? 3 : 1);
+                }
+                std::string content = raw.substr(start, end - start);
+
+                std::string result;
+                result.reserve(content.size());
+                size_t i = 0;
+                auto eval_expr = [this](const std::string& expr) -> py::object {
+                    return evalInlineExpression(expr);
+                };
+                while (i < content.size()) {
+                    char c = content[i];
+                    if (c == '{') {
+                        if (i + 1 < content.size() && content[i + 1] == '{') {
+                            result.push_back('{');
+                            i += 2;
+                            continue;
+                        }
+                        size_t j = i + 1;
+                        int depth = 1;
+                        while (j < content.size() && depth > 0) {
+                            if (content[j] == '{') depth++;
+                            else if (content[j] == '}') depth--;
+                            j++;
+                        }
+                        size_t expr_end = j - 1; // position of closing }
+                        std::string expr_raw = content.substr(i + 1, expr_end - (i + 1));
+                        // 解析转换和格式
+                        std::string expr_part = expr_raw;
+                        std::string fmt_part;
+                        std::string conv_part;
+                        // 找到顶层的 '!' 或 ':' 分隔
+                        int brace_depth = 0;
+                        for (size_t k = 0; k < expr_raw.size(); ++k) {
+                            char ek = expr_raw[k];
+                            if (ek == '{') brace_depth++;
+                            else if (ek == '}') brace_depth--;
+                            if (brace_depth == 0 && (ek == '!' || ek == ':')) {
+                                expr_part = expr_raw.substr(0, k);
+                                if (ek == '!') {
+                                    if (k + 1 < expr_raw.size()) {
+                                        conv_part = std::string(1, expr_raw[k + 1]);
+                                        if (k + 2 < expr_raw.size() && expr_raw[k + 2] == ':') {
+                                            fmt_part = expr_raw.substr(k + 3);
+                                        }
+                                    }
+                                } else { // ':'
+                                    fmt_part = expr_raw.substr(k + 1);
+                                }
+                                break;
+                            }
+                        }
+                        py::object val = eval_expr(expr_part);
+                        try {
+                            if (!conv_part.empty()) {
+                                if (conv_part == "r") val = py::repr(val);
+                                else if (conv_part == "s") val = py::str(val);
+                                else if (conv_part == "a") val = py::reinterpret_borrow<py::object>(PyObject_ASCII(val.ptr()));
+                            }
+                            if (!fmt_part.empty()) {
+                                std::string pat = "{:" + fmt_part + "}";
+                                py::str formatted = py::str(pat).attr("format")(val);
+                                result += std::string(formatted);
+                            } else {
+                                result += std::string(py::str(val));
+                            }
+                        } catch (...) {
+                            result += "{ERR}";
+                        }
+                        i = j;
+                        continue;
+                    } else if (c == '}' && i + 1 < content.size() && content[i + 1] == '}') {
+                        result.push_back('}');
+                        i += 2;
+                        continue;
+                    } else {
+                        result.push_back(c);
+                        ++i;
                     }
                 }
-                return py::eval(fmt, env, env);
+                return py::str(result);
             });
             py::globals()["__fstr__"] = fstr_func;
             variable_manager_.setVariable("__fstr__", ScriptValue::fromPythonObject(fstr_func));

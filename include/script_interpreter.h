@@ -195,6 +195,9 @@ private:
     // 表达式求值辅助方法（委托给expression_evaluator_）
     std::shared_ptr<ScriptValue> evaluateExpression(PyScriptParser::ExpressionContext *ctx);
     std::shared_ptr<ScriptValue> executeSuite(PyScriptParser::SuiteContext *ctx);
+
+    // 内联表达式求值（f-string 支持，避免 py::eval）
+    py::object evalInlineExpression(const std::string& expr_text);
 };
 
 } // namespace script_interpreter

@@ -1,0 +1,18 @@
+a = 3
+b = 5
+pi = 3.14159
+s = "hi\nΩ"  # include non-ascii to exercise !a
+test_dict = {"k": 1, 2: 3}
+
+print("f_add", f"{a+b}")
+print("f_mul", f"{a*b}")
+print("f_div", f"{b/2}")
+print("f_mod", f"{b%2}")
+print("f_pow", f"{a**2}")
+print("f_fmt", f"{pi:.2f}")
+print("f_repr", f"{s!r}")
+print("f_ascii", f"{s!a}")
+print("f_nested_len", f"{len(test_dict)}")
+print("f_escape", f"{{{a}}}")
+print("f_combo", f"{a}+{b}={a+b}")
+

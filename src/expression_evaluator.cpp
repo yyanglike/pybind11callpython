@@ -56,6 +56,22 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() + right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
+        } else if (op == "//") {
+            if (left->isNumber() && right->isNumber()) {
+                double divisor = right->toDouble();
+                if (abs(divisor) < 1e-10) {
+                    throw runtime_error("Division by zero");
+                }
+                double res = std::floor(left->toDouble() / divisor);
+                // if both are integers and division exact, keep integer
+                if (left->isInteger() && right->isInteger()) {
+                    return ScriptValue::createInteger(static_cast<long long>(res));
+                }
+                return ScriptValue::createDouble(res);
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("floordiv")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
         } else if (op == "&") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() & right->getInteger());
@@ -71,6 +87,20 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "^") {
+        } else if (op == "<<") {
+            if (left->isInteger() && right->isInteger()) {
+                return ScriptValue::createInteger(left->getInteger() << right->getInteger());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("lshift")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
+        } else if (op == ">>") {
+            if (left->isInteger() && right->isInteger()) {
+                return ScriptValue::createInteger(left->getInteger() >> right->getInteger());
+            } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("rshift")(left->toPythonObject(), right->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            }
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() ^ right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -298,6 +328,15 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
                 return ScriptValue::fromPythonObject(result);
             } else {
                 return value; // treat as no-op
+            }
+        } else if (op == "~") {
+            if (value->isInteger()) {
+                return ScriptValue::createInteger(~value->getInteger());
+            } else if (value->isPythonObject()) {
+                py::object result = py::module_::import("operator").attr("invert")(value->toPythonObject());
+                return ScriptValue::fromPythonObject(result);
+            } else {
+                throw runtime_error("Unary ~ operator not supported for this type");
             }
         }
         

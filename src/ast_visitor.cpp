@@ -1155,9 +1155,22 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             objectValue->setAt(static_cast<size_t>(index), rightValue);
             return any(rightValue);
         } else if (objectValue->isDictionary()) {
-            // 使用ScriptValue的setKey方法；允许非字符串键，统一转为字符串存储
-            string key = indexValue->toString();
-            objectValue->setKey(key, rightValue);
+            // 若键为字符串，沿用原始字典存储；否则将字典转为Python dict后再赋值
+            if (indexValue->isString()) {
+                string key = indexValue->getString();
+                objectValue->setKey(key, rightValue);
+                return any(rightValue);
+            }
+            // 转为 Python dict 并升级为 PythonObject
+            py::dict pyDict;
+            for (const auto& kv : objectValue->getDictionary()) {
+                pyDict[py::str(kv.first)] = kv.second->toPythonObject();
+            }
+            py::object pyObj = pyDict;
+            py::object pyIndex = indexValue->toPythonObject();
+            py::object pyRight = rightValue->toPythonObject();
+            pyObj[pyIndex] = pyRight;
+            objectValue->setPythonObject(pyObj);
             return any(rightValue);
         } else {
             // 如果对象是null或空，可能是函数定义阶段，返回null
@@ -1927,14 +1940,31 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
             }
             return list[index];
         } else if (target->isDictionary()) {
-            string key = indexValue->toString();
-            auto& dict = target->getDictionary();
-            auto it = dict.find(key);
-            if (it == dict.end()) {
-                reportError("Dictionary key not found: " + key, ctx);
+            if (indexValue->isString()) {
+                string key = indexValue->getString();
+                auto& dict = target->getDictionary();
+                auto it = dict.find(key);
+                if (it == dict.end()) {
+                    reportError("Dictionary key not found: " + key, ctx);
+                    return nullptr;
+                }
+                return it->second;
+            }
+            // 升级为 Python dict 以支持任意可哈希键
+            py::dict pyDict;
+            for (const auto& kv : target->getDictionary()) {
+                pyDict[py::str(kv.first)] = kv.second->toPythonObject();
+            }
+            py::object pyObj = pyDict;
+            py::object pyIndex = indexValue->toPythonObject();
+            try {
+                py::object result = pyObj[pyIndex];
+                target->setPythonObject(pyObj);
+                return ScriptValue::fromPythonObject(result);
+            } catch (const py::error_already_set& e) {
+                reportError("Python subscript error: " + string(e.what()), ctx);
                 return nullptr;
             }
-            return it->second;
         } else {
             reportError("Subscript not supported for this type", ctx);
             return nullptr;
