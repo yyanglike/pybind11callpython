@@ -100,6 +100,12 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
         }
         
         try {
+            // 检查对象是否有效
+            if (!pyObj.ptr() || pyObj.is_none()) {
+                s_logger.error("[PythonBridge] getMember: Python object is None or invalid");
+                return nullptr;
+            }
+            
             if (py::isinstance<py::module_>(pyObj)) {
                 py::module_ module = pyObj.cast<py::module_>();
                 py::object member = module.attr(memberName.c_str());
@@ -108,7 +114,9 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
                 py::object member = pyObj.attr(memberName.c_str());
                 return ScriptValue::fromPythonObject(member);
             }
-        } catch (const py::error_already_set&) {
+        } catch (const py::error_already_set& e) {
+            // 清除 Python 错误状态，避免影响后续操作
+            PyErr_Clear();
             // 属性不存在，检查是否是Python内置方法
             // 对于Python对象，检查是否有__str__、__repr__等方法
             if (memberName == "__str__" || memberName == "__repr__") {
@@ -116,9 +124,17 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
                     py::object member = pyObj.attr(memberName.c_str());
                     return ScriptValue::fromPythonObject(member);
                 } catch (const py::error_already_set&) {
+                    // 清除错误状态
+                    PyErr_Clear();
                     // 方法不存在
                 }
             }
+        } catch (const std::exception& e) {
+            s_logger.error(std::string("[PythonBridge] getMember exception: ") + e.what());
+            return nullptr;
+        } catch (...) {
+            s_logger.error("[PythonBridge] getMember: Unknown exception");
+            return nullptr;
         }
     }
 

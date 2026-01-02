@@ -242,7 +242,17 @@ bool ScriptInterpreter::execute(const string& script) {
         
         // 填充token流
         logger_.debug("Filling tokens...");
-        tokens.fill();
+        try {
+            tokens.fill();
+        } catch (const std::exception& e) {
+            logger_.error(std::string("Error filling tokens: ") + e.what());
+            reportError("Lexer error: " + string(e.what()), ScriptErrorType::Syntax, ScriptErrorCode::Unknown);
+            return false;
+        } catch (...) {
+            logger_.error("Unknown error filling tokens");
+            reportError("Lexer error: Unknown exception", ScriptErrorType::Syntax, ScriptErrorCode::Unknown);
+            return false;
+        }
         
         logger_.debug("Creating PyScriptParser...");
         PyScriptParser parser(&tokens);
@@ -252,6 +262,11 @@ bool ScriptInterpreter::execute(const string& script) {
         
         logger_.debug("Parsing program...");
         auto tree = parser.program();
+        if (!tree) {
+            logger_.error("Parse tree is null");
+            reportError("Parser error: Failed to create parse tree", ScriptErrorType::Syntax, ScriptErrorCode::Unknown);
+            return false;
+        }
         logger_.debug("Parse tree created successfully");
 
         // 提供 __fstr__ 辅助：使用 Python eval 计算 f-string

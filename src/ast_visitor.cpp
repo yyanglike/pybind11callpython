@@ -2978,11 +2978,19 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
             string memberName = attrOp->IDENTIFIER()->getText();
             // 原生 list 快路径
             if (currentValue->isList()) {
+                // 注意：这里需要确保 self 的生命周期足够长
+                // 使用 shared_ptr 的值捕获可以确保对象不会被提前销毁
                 auto self = currentValue;
                 if (memberName == "append") {
+                    // 使用 shared_ptr 的值捕获确保 self 的生命周期
+                    // 注意：py::cpp_function 会自动管理 lambda 的生命周期
                     py::object fn = py::cpp_function([self](py::args args) {
                         if (py::len(args) != 1) throw std::runtime_error("append expects 1 arg");
-                        self->append(ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(args[0])));
+                        try {
+                            self->append(ScriptValue::fromPythonObject(py::reinterpret_borrow<py::object>(args[0])));
+                        } catch (const std::exception& e) {
+                            throw std::runtime_error(std::string("append failed: ") + e.what());
+                        }
                         return py::none();
                     });
                     currentValue = ScriptValue::fromPythonObject(fn);
@@ -3181,13 +3189,23 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 }
             }
 
-            auto member = python_bridge_.getMember(currentValue, memberName);
-            if (!member) {
-                // 如果成员不存在，返回null而不是报错，以允许脚本继续执行
-                logger_.debug("Object has no member: " + memberName + ", returning null");
-                return any(ScriptValue::createNull());
+            try {
+                auto member = python_bridge_.getMember(currentValue, memberName);
+                if (!member) {
+                    // 如果成员不存在，返回null而不是报错，以允许脚本继续执行
+                    logger_.debug("Object has no member: " + memberName + ", returning null");
+                    return any(ScriptValue::createNull());
+                }
+                currentValue = member;
+            } catch (const std::exception& e) {
+                logger_.error("Error getting member " + memberName + ": " + string(e.what()));
+                reportError("Error accessing member: " + memberName, attrOp);
+                return any();
+            } catch (...) {
+                logger_.error("Unknown error getting member " + memberName);
+                reportError("Unknown error accessing member: " + memberName, attrOp);
+                return any();
             }
-            currentValue = member;
         } else if (auto subscriptOp = dynamic_cast<PyScriptParser::SubscriptAccessOpContext*>(postfixOp)) {
             auto subscriptArgCtx = subscriptOp->subscriptArg();
             if (!subscriptArgCtx) {
@@ -5055,28 +5073,43 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
             visit(elseSuite);
         }
     } catch (const py::error_already_set& e) {
+        // 检查是否有匹配的 except 子句
+        bool exception_matched = false;
+        for (auto exceptClause : ctx->exceptClause()) {
+            auto exceptSuite = exceptClause->suite();
+            if (exceptSuite) {
+                // 清除 Python 错误状态，避免影响 except 块中的代码
+                // 注意：必须在执行 except 块之前清除，否则会影响 except 块中的代码执行
+                PyErr_Clear();
+                visit(exceptSuite);
+                handled = true;
+                exception_matched = true;
+                break;
+            }
+        }
+        
+        if (!handled && !exception_matched) {
+            // 如果没有匹配的 except 子句，清除错误状态并报告错误
+            string errorMsg = string(e.what());
+            PyErr_Clear();
+            reportError("Unhandled exception in try statement: " + errorMsg, ctx);
+        }
+    } catch (const std::exception& e) {
+        // 检查是否有匹配的 except 子句
+        bool exception_matched = false;
         for (auto exceptClause : ctx->exceptClause()) {
             auto exceptSuite = exceptClause->suite();
             if (exceptSuite) {
                 visit(exceptSuite);
                 handled = true;
+                exception_matched = true;
                 break;
             }
         }
-        if (!handled) {
-            throw;
-        }
-    } catch (const std::exception&) {
-        for (auto exceptClause : ctx->exceptClause()) {
-            auto exceptSuite = exceptClause->suite();
-            if (exceptSuite) {
-                visit(exceptSuite);
-                handled = true;
-                break;
-            }
-        }
-        if (!handled) {
-            throw;
+        
+        if (!handled && !exception_matched) {
+            // 如果没有匹配的 except 子句，报告错误
+            reportError("Unhandled exception in try statement: " + string(e.what()), ctx);
         }
     }
     
