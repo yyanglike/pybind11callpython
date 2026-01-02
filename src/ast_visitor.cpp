@@ -1193,7 +1193,8 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
             for (auto item : pyIterable) {
                 continue_flag_ = false;
                 py::object pyItem = py::reinterpret_borrow<py::object>(item);
-                auto itemValue = ScriptValue::fromPythonObject(pyItem);
+                // 确保循环变量是 PythonObject 类型，以便可以调用 Python 方法（如 .items()）
+                auto itemValue = ScriptValue::createPythonObject(pyItem);
                 variable_manager_.setVariable(varName, itemValue);
                 
                 // 执行循环体
@@ -1223,7 +1224,8 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
             for (auto item : pyList) {
                 continue_flag_ = false;
                 py::object pyItem = py::reinterpret_borrow<py::object>(item);
-                auto itemValue = ScriptValue::fromPythonObject(pyItem);
+                // 确保循环变量是 PythonObject 类型，以便可以调用 Python 方法（如 .items()）
+                auto itemValue = ScriptValue::createPythonObject(pyItem);
                 variable_manager_.setVariable(varName, itemValue);
                 
                 // 执行循环体
@@ -1253,7 +1255,8 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
             for (auto item : pyIterable) {
                 continue_flag_ = false;
                 py::object pyItem = py::reinterpret_borrow<py::object>(item);
-                auto itemValue = ScriptValue::fromPythonObject(pyItem);
+                // 确保循环变量是 PythonObject 类型，以便可以调用 Python 方法（如 .items()）
+                auto itemValue = ScriptValue::createPythonObject(pyItem);
                 variable_manager_.setVariable(varName, itemValue);
                 
                 // 执行循环体
@@ -4894,13 +4897,95 @@ any AstVisitor::visitDecorator(PyScriptParser::DecoratorContext *ctx) {
 any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
     // 直接执行整段文本（包含装饰器+定义），让 Python 处理装饰器应用
     try {
-        auto start = ctx->getStart()->getStartIndex();
-        auto stop = ctx->getStop()->getStopIndex();
-        auto input = ctx->getStart()->getTokenSource()->getInputStream();
-        std::string text = input->getText(antlr4::misc::Interval(start, stop));
+        // 获取开始位置（第一个装饰器的开始）
+        auto startToken = ctx->getStart();
+        if (!startToken) {
+            reportError("Decorated definition has no start token", ctx);
+            return any();
+        }
+        
+        auto inputStream = startToken->getInputStream();
+        if (!inputStream) {
+            reportError("Cannot get input stream for decorated definition", ctx);
+            return any();
+        }
+        
+        // 使用与 visitFunctionDef 相同的方法：基于行缩进确定完整范围
+        std::string fullText = inputStream->getText(misc::Interval(0, inputStream->size() - 1));
+        
+        // 预计算每行的起始偏移
+        std::vector<size_t> lineOffsets;
+        lineOffsets.push_back(0);
+        for (size_t i = 0; i < fullText.size(); ++i) {
+            if (fullText[i] == '\n') {
+                lineOffsets.push_back(i + 1);
+            }
+        }
+        lineOffsets.push_back(fullText.size() + 1);
+        
+        auto countIndent = [](const std::string& text, size_t offset) -> size_t {
+            size_t indent = 0;
+            while (offset < text.size()) {
+                char c = text[offset];
+                if (c == ' ') {
+                    ++indent;
+                } else if (c == '\t') {
+                    indent += 4;
+                } else {
+                    break;
+                }
+                ++offset;
+            }
+            return indent;
+        };
+        
+        size_t startLine = static_cast<size_t>(startToken->getLine() - 1);
+        size_t startOffset = lineOffsets[startLine] + startToken->getCharPositionInLine();
+        
+        // 确定函数/类定义的开始行（跳过装饰器）
+        size_t defStartLine = startLine;
+        if (ctx->functionDef()) {
+            defStartLine = static_cast<size_t>(ctx->functionDef()->getStart()->getLine() - 1);
+        } else if (ctx->classDef()) {
+            defStartLine = static_cast<size_t>(ctx->classDef()->getStart()->getLine() - 1);
+        }
+        
+        // 获取函数/类定义的缩进
+        size_t defStartOffset = lineOffsets[defStartLine];
+        size_t defIndent = countIndent(fullText, defStartOffset);
+        
+        // 找到函数/类定义的结束行（缩进回到定义级别或更小的下一行）
+        size_t endLine = defStartLine;
+        for (size_t line = defStartLine + 1; line < lineOffsets.size() - 1; ++line) {
+            size_t lineStart = lineOffsets[line];
+            if (lineStart >= fullText.size()) break;
+            
+            size_t lineIndent = countIndent(fullText, lineStart);
+            // 如果这一行非空且缩进 <= 定义缩进，说明定义结束
+            if (lineIndent <= defIndent && lineStart < fullText.size()) {
+                // 检查是否真的是新语句（不是空行）
+                size_t firstNonSpace = lineStart + lineIndent;
+                if (firstNonSpace < fullText.size() && fullText[firstNonSpace] != '\n' && fullText[firstNonSpace] != '\r') {
+                    endLine = line - 1;
+                    break;
+                }
+            }
+            endLine = line; // 更新结束行
+        }
+        
+        size_t endOffset;
+        if (endLine + 1 < lineOffsets.size()) {
+            endOffset = lineOffsets[endLine + 1] - 1; // 包含换行符
+        } else {
+            endOffset = fullText.size() - 1;
+        }
+        
+        std::string text = fullText.substr(startOffset, endOffset - startOffset + 1);
         if (text.empty() || text.back() != '\n') {
             text.push_back('\n');
         }
+        
+        logger_.debug("Decorated definition text (length=" + std::to_string(text.length()) + "):\n" + text);
         
         // 两级缓存策略：使用增量哈希
         // 优化：缓存源代码哈希
@@ -4975,6 +5060,30 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             }
             if (cls) {
                 variable_manager_.setVariable(name, ScriptValue::fromPythonObject(cls));
+            }
+        } else if (ctx->functionDef()) {
+            // 处理装饰的函数定义
+            std::string name = ctx->functionDef()->IDENTIFIER()->getText();
+            py::object func;
+            if (cached) {
+                func = cached_cls;  // 复用 cached_cls 变量名
+            } else {
+                if (py::globals().contains(name.c_str())) {
+                    func = py::globals()[name.c_str()];
+                    // 缓存结果（如果缓存启用）
+                    if (cache_enabled_) {
+                        if (!has_python_objects) {
+                            exec_cache_source_[source_hash] = func;
+                            logger_.debug("Decorated function definition cached (source only) for: " + name);
+                        }
+                        exec_cache_[full_hash] = func;
+                        logger_.debug("Decorated function definition cached (full) for: " + name);
+                    }
+                }
+            }
+            if (func) {
+                variable_manager_.setVariable(name, ScriptValue::fromPythonObject(func));
+                logger_.info("Function defined: " + name);
             }
         }
     } catch (const std::exception& e) {
@@ -5186,6 +5295,9 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
     }
     
     bool handled = false;
+    py::object excType, excValue, excTraceback;
+    string errorMsg;
+    
     try {
         visit(trySuite);
         auto elseSuite = ctx->ELSE() ? ctx->suite(ctx->suite().size() - 1) : nullptr;
@@ -5193,26 +5305,21 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
             visit(elseSuite);
         }
     } catch (const py::error_already_set& e) {
-        // 检查是否有匹配的 except 子句
-        bool exception_matched = false;
-        string errorMsg;
-        py::object excType, excValue, excTraceback;
-        
-        // 在清除错误状态之前，先获取异常信息
+        // 在捕获异常时，立即获取异常信息（此时错误状态仍然存在）
         {
             py::gil_scoped_acquire acquire;
-            // 使用 sys.exc_info() 获取当前异常信息（在 py::error_already_set 被捕获时，错误状态仍然存在）
+            // 使用 sys.exc_info() 获取异常信息（在 py::error_already_set 被捕获时，错误状态仍然存在）
             try {
                 py::object sys = py::module_::import("sys");
                 py::tuple excInfo = sys.attr("exc_info")();
-                if (excInfo.size() >= 3 && !excInfo[0].is_none()) {
+                if (excInfo.size() >= 3) {
                     excType = excInfo[0];
                     excValue = excInfo[1];
                     excTraceback = excInfo[2];
                 }
             } catch (...) {
-                // 如果 sys.exc_info() 失败，尝试使用 PyErr_Fetch
-                PyObject *ptype, *pvalue, *ptraceback;
+                // 如果失败，尝试使用 PyErr_Fetch
+                PyObject *ptype = nullptr, *pvalue = nullptr, *ptraceback = nullptr;
                 PyErr_Fetch(&ptype, &pvalue, &ptraceback);
                 if (ptype) {
                     excType = py::reinterpret_steal<py::object>(ptype);
@@ -5222,6 +5329,73 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
                 }
                 if (ptraceback) {
                     excTraceback = py::reinterpret_steal<py::object>(ptraceback);
+                }
+            }
+            
+            // 获取错误消息
+            try {
+                if (!excValue.is_none()) {
+                    errorMsg = string(py::str(excValue));
+                } else if (!excType.is_none()) {
+                    errorMsg = string(py::str(excType));
+                } else {
+                    try {
+                        errorMsg = string(e.what());
+                    } catch (...) {
+                        errorMsg = "Python exception";
+                    }
+                }
+            } catch (...) {
+                try {
+                    errorMsg = string(e.what());
+                } catch (...) {
+                    errorMsg = "Python exception";
+                }
+            }
+        }
+        
+        // 检查是否有匹配的 except 子句
+        bool exception_matched = false;
+        
+        // 在清除错误状态之前，先获取异常信息
+        // 注意：在 py::error_already_set 被捕获时，Python 错误状态可能已经被 pybind11 处理
+        // 我们需要在 try 块执行时捕获异常，而不是在这里
+        // 但为了兼容性，我们仍然尝试获取异常信息
+        {
+            py::gil_scoped_acquire acquire;
+            // 尝试使用 sys.exc_info() 获取异常信息（在 py::error_already_set 被捕获时，错误状态可能仍然存在）
+            try {
+                py::object sys = py::module_::import("sys");
+                py::tuple excInfo = sys.attr("exc_info")();
+                if (excInfo.size() >= 3) {
+                    excType = excInfo[0];
+                    excValue = excInfo[1];
+                    excTraceback = excInfo[2];
+                    logger_.debug("Got exception info from sys.exc_info()");
+                }
+            } catch (...) {
+                // 如果 sys.exc_info() 失败，尝试使用 PyErr_Fetch
+                PyObject *ptype = nullptr, *pvalue = nullptr, *ptraceback = nullptr;
+                PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+                if (ptype) {
+                    excType = py::reinterpret_steal<py::object>(ptype);
+                }
+                if (pvalue) {
+                    excValue = py::reinterpret_steal<py::object>(pvalue);
+                }
+                if (ptraceback) {
+                    excTraceback = py::reinterpret_steal<py::object>(ptraceback);
+                }
+            }
+            
+            // 如果 excType 仍然是 None，但 excValue 不是 None，尝试从 excValue 获取类型
+            if (excType.is_none() && !excValue.is_none()) {
+                try {
+                    py::object type_func = py::module_::import("builtins").attr("type");
+                    excType = type_func(excValue);
+                    logger_.debug("Got excType from type(excValue)");
+                } catch (...) {
+                    // 忽略错误
                 }
             }
             
@@ -5259,10 +5433,83 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
                 type_matches = true;
             } else {
                 // 检查异常类型是否匹配
-                // 简化版本：暂时匹配所有异常，后续可以优化类型检查
-                // TODO: 实现完整的异常类型匹配逻辑
-                type_matches = true;
-                logger_.debug("Exception type check skipped, matching all exceptions");
+                if (!excType.is_none()) {
+                    try {
+                        py::gil_scoped_acquire acquire;
+                        // 获取 except 子句指定的异常类型（dottedName 是一个标识符或点分名称）
+                        string typeName = dottedNameCtx->getText();
+                        logger_.debug("Checking exception type match: expected=" + typeName);
+                        
+                        // 在 Python 中查找异常类型
+                        py::object expectedType;
+                        try {
+                            py::dict globals = py::globals();
+                            if (globals.contains(typeName.c_str())) {
+                                expectedType = globals[typeName.c_str()];
+                                logger_.debug("Found exception type in globals: " + typeName);
+                            } else {
+                                py::object builtins = py::module_::import("builtins");
+                                if (py::hasattr(builtins, typeName.c_str())) {
+                                    expectedType = builtins.attr(typeName.c_str());
+                                    logger_.debug("Found exception type in builtins: " + typeName);
+                                } else {
+                                    // 尝试导入模块（如 mymodule.MyException）
+                                    size_t dotPos = typeName.find('.');
+                                    if (dotPos != string::npos) {
+                                        string moduleName = typeName.substr(0, dotPos);
+                                        string attrName = typeName.substr(dotPos + 1);
+                                        py::object module = py::module_::import(moduleName.c_str());
+                                        expectedType = module.attr(attrName.c_str());
+                                        logger_.debug("Found exception type in module: " + typeName);
+                                    } else {
+                                        logger_.warn("Exception type not found: " + typeName);
+                                    }
+                                }
+                            }
+                        } catch (const py::error_already_set& ex) {
+                            {
+                                py::gil_scoped_acquire acquire2;
+                                PyErr_Clear();
+                            }
+                            logger_.warn("Error looking up exception type: " + typeName);
+                        }
+                        
+                        if (!expectedType.is_none() && excType.ptr() != nullptr) {
+                            // 使用 Python C API 的 PyObject_IsSubclass 检查异常类型继承关系
+                            // excType 是异常类型，expectedType 是期望的异常类型
+                            int result = PyObject_IsSubclass(excType.ptr(), expectedType.ptr());
+                            if (result == 1) {
+                                type_matches = true;
+                                logger_.info("Exception type match: " + typeName + " = true");
+                            } else if (result == 0) {
+                                type_matches = false;
+                                logger_.info("Exception type match: " + typeName + " = false");
+                            } else {
+                                // 检查失败，清除错误状态
+                                PyErr_Clear();
+                                logger_.warn("Failed to check exception type match for " + typeName + ", matching anyway");
+                                type_matches = true;  // 如果检查失败，匹配所有异常
+                            }
+                        } else {
+                            if (expectedType.is_none()) {
+                                logger_.warn("Exception type not found: " + typeName + ", matching anyway");
+                            } else {
+                                logger_.warn("excType is invalid, matching anyway");
+                            }
+                            type_matches = true;  // 如果找不到类型或 excType 无效，匹配所有异常
+                        }
+                    } catch (const std::exception& ex) {
+                        logger_.warn("C++ error checking exception type match: " + string(ex.what()) + ", matching anyway");
+                        type_matches = true;  // 如果检查失败，匹配所有异常
+                    } catch (...) {
+                        logger_.warn("Unknown error checking exception type match, matching anyway");
+                        type_matches = true;  // 如果检查失败，匹配所有异常
+                    }
+                } else {
+                    // 如果 excType 是 None，匹配所有异常
+                    logger_.warn("excType is None, matching all exceptions");
+                    type_matches = true;
+                }
             }
             
             if (type_matches) {

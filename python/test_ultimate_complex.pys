@@ -324,12 +324,25 @@ def test_scope():
     global global_var
     global_var = 200
     
+    # 测试 nonlocal：使用局部变量
+    local_var = 100
+    
     def inner():
-        nonlocal global_var
-        global_var = 300
+        nonlocal local_var  # 正确：local_var 是外层函数的局部变量
+        local_var = 300
+        return local_var
+    
+    inner_result = inner()
+    
+    # 测试 global：在嵌套函数中也使用 global
+    def inner2():
+        global global_var  # 正确：global_var 是全局变量
+        global_var = 400
         return global_var
     
-    return inner()
+    inner2_result = inner2()
+    
+    return inner_result + inner2_result
 
 scope_result = test_scope()
 print(f"✓ 作用域控制: global_var={global_var}, result={scope_result}")
