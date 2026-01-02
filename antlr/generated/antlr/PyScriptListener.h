@@ -107,8 +107,11 @@ public:
   virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
   virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
 
-  virtual void enterExpression(PyScriptParser::ExpressionContext *ctx) = 0;
-  virtual void exitExpression(PyScriptParser::ExpressionContext *ctx) = 0;
+  virtual void enterConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) = 0;
+  virtual void exitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) = 0;
+
+  virtual void enterConditional(PyScriptParser::ConditionalContext *ctx) = 0;
+  virtual void exitConditional(PyScriptParser::ConditionalContext *ctx) = 0;
 
   virtual void enterLogicalOr(PyScriptParser::LogicalOrContext *ctx) = 0;
   virtual void exitLogicalOr(PyScriptParser::LogicalOrContext *ctx) = 0;
@@ -116,11 +119,23 @@ public:
   virtual void enterLogicalAnd(PyScriptParser::LogicalAndContext *ctx) = 0;
   virtual void exitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) = 0;
 
+  virtual void enterBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext *ctx) = 0;
+  virtual void exitBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext *ctx) = 0;
+
+  virtual void enterBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext *ctx) = 0;
+  virtual void exitBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext *ctx) = 0;
+
+  virtual void enterBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *ctx) = 0;
+  virtual void exitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *ctx) = 0;
+
   virtual void enterEquality(PyScriptParser::EqualityContext *ctx) = 0;
   virtual void exitEquality(PyScriptParser::EqualityContext *ctx) = 0;
 
   virtual void enterComparison(PyScriptParser::ComparisonContext *ctx) = 0;
   virtual void exitComparison(PyScriptParser::ComparisonContext *ctx) = 0;
+
+  virtual void enterShiftExpr(PyScriptParser::ShiftExprContext *ctx) = 0;
+  virtual void exitShiftExpr(PyScriptParser::ShiftExprContext *ctx) = 0;
 
   virtual void enterAdditive(PyScriptParser::AdditiveContext *ctx) = 0;
   virtual void exitAdditive(PyScriptParser::AdditiveContext *ctx) = 0;
@@ -136,6 +151,9 @@ public:
 
   virtual void enterPrimary(PyScriptParser::PrimaryContext *ctx) = 0;
   virtual void exitPrimary(PyScriptParser::PrimaryContext *ctx) = 0;
+
+  virtual void enterTuple(PyScriptParser::TupleContext *ctx) = 0;
+  virtual void exitTuple(PyScriptParser::TupleContext *ctx) = 0;
 
   virtual void enterNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
   virtual void exitNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
@@ -175,6 +193,12 @@ public:
 
   virtual void enterListElements(PyScriptParser::ListElementsContext *ctx) = 0;
   virtual void exitListElements(PyScriptParser::ListElementsContext *ctx) = 0;
+
+  virtual void enterComprehension(PyScriptParser::ComprehensionContext *ctx) = 0;
+  virtual void exitComprehension(PyScriptParser::ComprehensionContext *ctx) = 0;
+
+  virtual void enterCompFor(PyScriptParser::CompForContext *ctx) = 0;
+  virtual void exitCompFor(PyScriptParser::CompForContext *ctx) = 0;
 
   virtual void enterDictLiteral(PyScriptParser::DictLiteralContext *ctx) = 0;
   virtual void exitDictLiteral(PyScriptParser::DictLiteralContext *ctx) = 0;

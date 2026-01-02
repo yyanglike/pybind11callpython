@@ -109,8 +109,11 @@ public:
   virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
   virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
 
-  virtual void enterExpression(PyScriptParser::ExpressionContext * /*ctx*/) override { }
-  virtual void exitExpression(PyScriptParser::ExpressionContext * /*ctx*/) override { }
+  virtual void enterConditionalExpr(PyScriptParser::ConditionalExprContext * /*ctx*/) override { }
+  virtual void exitConditionalExpr(PyScriptParser::ConditionalExprContext * /*ctx*/) override { }
+
+  virtual void enterConditional(PyScriptParser::ConditionalContext * /*ctx*/) override { }
+  virtual void exitConditional(PyScriptParser::ConditionalContext * /*ctx*/) override { }
 
   virtual void enterLogicalOr(PyScriptParser::LogicalOrContext * /*ctx*/) override { }
   virtual void exitLogicalOr(PyScriptParser::LogicalOrContext * /*ctx*/) override { }
@@ -118,11 +121,23 @@ public:
   virtual void enterLogicalAnd(PyScriptParser::LogicalAndContext * /*ctx*/) override { }
   virtual void exitLogicalAnd(PyScriptParser::LogicalAndContext * /*ctx*/) override { }
 
+  virtual void enterBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext * /*ctx*/) override { }
+  virtual void exitBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext * /*ctx*/) override { }
+
+  virtual void enterBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext * /*ctx*/) override { }
+  virtual void exitBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext * /*ctx*/) override { }
+
+  virtual void enterBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext * /*ctx*/) override { }
+  virtual void exitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext * /*ctx*/) override { }
+
   virtual void enterEquality(PyScriptParser::EqualityContext * /*ctx*/) override { }
   virtual void exitEquality(PyScriptParser::EqualityContext * /*ctx*/) override { }
 
   virtual void enterComparison(PyScriptParser::ComparisonContext * /*ctx*/) override { }
   virtual void exitComparison(PyScriptParser::ComparisonContext * /*ctx*/) override { }
+
+  virtual void enterShiftExpr(PyScriptParser::ShiftExprContext * /*ctx*/) override { }
+  virtual void exitShiftExpr(PyScriptParser::ShiftExprContext * /*ctx*/) override { }
 
   virtual void enterAdditive(PyScriptParser::AdditiveContext * /*ctx*/) override { }
   virtual void exitAdditive(PyScriptParser::AdditiveContext * /*ctx*/) override { }
@@ -138,6 +153,9 @@ public:
 
   virtual void enterPrimary(PyScriptParser::PrimaryContext * /*ctx*/) override { }
   virtual void exitPrimary(PyScriptParser::PrimaryContext * /*ctx*/) override { }
+
+  virtual void enterTuple(PyScriptParser::TupleContext * /*ctx*/) override { }
+  virtual void exitTuple(PyScriptParser::TupleContext * /*ctx*/) override { }
 
   virtual void enterNewExpression(PyScriptParser::NewExpressionContext * /*ctx*/) override { }
   virtual void exitNewExpression(PyScriptParser::NewExpressionContext * /*ctx*/) override { }
@@ -177,6 +195,12 @@ public:
 
   virtual void enterListElements(PyScriptParser::ListElementsContext * /*ctx*/) override { }
   virtual void exitListElements(PyScriptParser::ListElementsContext * /*ctx*/) override { }
+
+  virtual void enterComprehension(PyScriptParser::ComprehensionContext * /*ctx*/) override { }
+  virtual void exitComprehension(PyScriptParser::ComprehensionContext * /*ctx*/) override { }
+
+  virtual void enterCompFor(PyScriptParser::CompForContext * /*ctx*/) override { }
+  virtual void exitCompFor(PyScriptParser::CompForContext * /*ctx*/) override { }
 
   virtual void enterDictLiteral(PyScriptParser::DictLiteralContext * /*ctx*/) override { }
   virtual void exitDictLiteral(PyScriptParser::DictLiteralContext * /*ctx*/) override { }

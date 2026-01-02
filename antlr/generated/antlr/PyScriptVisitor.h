@@ -81,15 +81,25 @@ public:
 
     virtual std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *context) = 0;
 
-    virtual std::any visitExpression(PyScriptParser::ExpressionContext *context) = 0;
+    virtual std::any visitConditionalExpr(PyScriptParser::ConditionalExprContext *context) = 0;
+
+    virtual std::any visitConditional(PyScriptParser::ConditionalContext *context) = 0;
 
     virtual std::any visitLogicalOr(PyScriptParser::LogicalOrContext *context) = 0;
 
     virtual std::any visitLogicalAnd(PyScriptParser::LogicalAndContext *context) = 0;
 
+    virtual std::any visitBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext *context) = 0;
+
+    virtual std::any visitBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext *context) = 0;
+
+    virtual std::any visitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *context) = 0;
+
     virtual std::any visitEquality(PyScriptParser::EqualityContext *context) = 0;
 
     virtual std::any visitComparison(PyScriptParser::ComparisonContext *context) = 0;
+
+    virtual std::any visitShiftExpr(PyScriptParser::ShiftExprContext *context) = 0;
 
     virtual std::any visitAdditive(PyScriptParser::AdditiveContext *context) = 0;
 
@@ -100,6 +110,8 @@ public:
     virtual std::any visitUnary(PyScriptParser::UnaryContext *context) = 0;
 
     virtual std::any visitPrimary(PyScriptParser::PrimaryContext *context) = 0;
+
+    virtual std::any visitTuple(PyScriptParser::TupleContext *context) = 0;
 
     virtual std::any visitNewExpression(PyScriptParser::NewExpressionContext *context) = 0;
 
@@ -126,6 +138,10 @@ public:
     virtual std::any visitListLiteral(PyScriptParser::ListLiteralContext *context) = 0;
 
     virtual std::any visitListElements(PyScriptParser::ListElementsContext *context) = 0;
+
+    virtual std::any visitComprehension(PyScriptParser::ComprehensionContext *context) = 0;
+
+    virtual std::any visitCompFor(PyScriptParser::CompForContext *context) = 0;
 
     virtual std::any visitDictLiteral(PyScriptParser::DictLiteralContext *context) = 0;
 

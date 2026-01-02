@@ -428,6 +428,7 @@ any ScriptInterpreter::visitPassStatement(PyScriptParser::PassStatementContext *
     return ast_visitor_.visitPassStatement(ctx);
 }
 
+
 any ScriptInterpreter::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     // 委托给AstVisitor处理
     return ast_visitor_.visitAssignment(ctx);
@@ -444,12 +445,41 @@ any ScriptInterpreter::visitExpression(PyScriptParser::ExpressionContext *ctx) {
     return ast_visitor_.visitExpression(ctx);
 }
 
+any ScriptInterpreter::visitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx){
+    return ast_visitor_.visitConditionalExpr(ctx);
+}
 
+any ScriptInterpreter::visitConditional(PyScriptParser::ConditionalContext *ctx){
+    return ast_visitor_.visitConditional(ctx);
+}
 
+any ScriptInterpreter::visitBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext *ctx){
+    return ast_visitor_.visitBitwiseOrExpr(ctx);
+}
 
+any ScriptInterpreter::visitBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext *ctx){
+    return ast_visitor_.visitBitwiseXorExpr(ctx);
+}
 
+any ScriptInterpreter::visitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *ctx){
+    return ast_visitor_.visitBitwiseAndExpr(ctx);
+}
 
+any ScriptInterpreter::visitShiftExpr(PyScriptParser::ShiftExprContext *ctx){
+    return ast_visitor_.visitShiftExpr(ctx);
+}
 
+any ScriptInterpreter::visitTuple(PyScriptParser::TupleContext *ctx){
+    return ast_visitor_.visitTuple(ctx);
+}
+
+any ScriptInterpreter::visitComprehension(PyScriptParser::ComprehensionContext *ctx){
+    return ast_visitor_.visitComprehension(ctx);
+}
+
+any ScriptInterpreter::visitCompFor(PyScriptParser::CompForContext *ctx){
+    return ast_visitor_.visitCompFor(ctx);
+}
 
 any ScriptInterpreter::visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) {
     // 委托给AstVisitor处理
@@ -465,7 +495,6 @@ any ScriptInterpreter::visitSubscriptAccess(PyScriptParser::SubscriptAccessConte
     // 委托给AstVisitor处理
     return ast_visitor_.visitSubscriptAccess(ctx);
 }
-
 
 any ScriptInterpreter::visitNewExpression(PyScriptParser::NewExpressionContext *ctx) {
     // 委托给AstVisitor处理
@@ -632,6 +661,7 @@ any ScriptInterpreter::visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) {
     return ast_visitor_.visitLogicalAnd(ctx);
 }
 
+
 any ScriptInterpreter::visitEquality(PyScriptParser::EqualityContext *ctx) {
     return ast_visitor_.visitEquality(ctx);
 }
@@ -639,6 +669,7 @@ any ScriptInterpreter::visitEquality(PyScriptParser::EqualityContext *ctx) {
 any ScriptInterpreter::visitComparison(PyScriptParser::ComparisonContext *ctx) {
     return ast_visitor_.visitComparison(ctx);
 }
+
 
 any ScriptInterpreter::visitAdditive(PyScriptParser::AdditiveContext *ctx) {
     return ast_visitor_.visitAdditive(ctx);
@@ -655,6 +686,7 @@ any ScriptInterpreter::visitUnary(PyScriptParser::UnaryContext *ctx) {
 any ScriptInterpreter::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
     return ast_visitor_.visitPrimary(ctx);
 }
+
 
 any ScriptInterpreter::visitAtom(PyScriptParser::AtomContext *ctx) {
     return ast_visitor_.visitAtom(ctx);
@@ -675,6 +707,7 @@ any ScriptInterpreter::visitPower(PyScriptParser::PowerContext *ctx) {
 any ScriptInterpreter::visitListElements(PyScriptParser::ListElementsContext *ctx) {
     return ast_visitor_.visitListElements(ctx);
 }
+
 
 any ScriptInterpreter::visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) {
     return ast_visitor_.visitLambdaExpression(ctx);

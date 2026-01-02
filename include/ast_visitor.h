@@ -81,16 +81,23 @@ public:
     std::any visitImportItem(PyScriptParser::ImportItemContext *ctx) override;
     std::any visitAssignment(PyScriptParser::AssignmentContext *ctx) override;
     std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) override;
-    std::any visitExpression(PyScriptParser::ExpressionContext *ctx) override;
+    std::any visitExpression(PyScriptParser::ExpressionContext *ctx);
+    std::any visitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) override;
+    std::any visitConditional(PyScriptParser::ConditionalContext *ctx) override;
     std::any visitLogicalOr(PyScriptParser::LogicalOrContext *ctx) override;
     std::any visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) override;
+    std::any visitBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext *ctx) override;
+    std::any visitBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext *ctx) override;
+    std::any visitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *ctx) override;
     std::any visitEquality(PyScriptParser::EqualityContext *ctx) override;
     std::any visitComparison(PyScriptParser::ComparisonContext *ctx) override;
+    std::any visitShiftExpr(PyScriptParser::ShiftExprContext *ctx) override;
     std::any visitAdditive(PyScriptParser::AdditiveContext *ctx) override;
     std::any visitMultiplicative(PyScriptParser::MultiplicativeContext *ctx) override;
     std::any visitPower(PyScriptParser::PowerContext *ctx) override;
     std::any visitUnary(PyScriptParser::UnaryContext *ctx) override;
     std::any visitPrimary(PyScriptParser::PrimaryContext *ctx) override;
+    std::any visitTuple(PyScriptParser::TupleContext *ctx) override;
     std::any visitNewExpression(PyScriptParser::NewExpressionContext *ctx) override;
     std::any visitAtom(PyScriptParser::AtomContext *ctx) override;
     std::any visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) override;
@@ -102,14 +109,16 @@ public:
     std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
     std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override;
     std::any visitListLiteral(PyScriptParser::ListLiteralContext *ctx) override;
+    std::any visitListElements(PyScriptParser::ListElementsContext *ctx) override;
+    std::any visitComprehension(PyScriptParser::ComprehensionContext *ctx) override;
+    std::any visitCompFor(PyScriptParser::CompForContext *ctx) override;
     std::any visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) override;
+    std::any visitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) override;
+    std::any visitDictItem(PyScriptParser::DictItemContext *ctx) override;
     std::any visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) override;
     std::any visitSetElements(PyScriptParser::SetElementsContext *ctx) override;
     std::any visitGeneratorExpression(PyScriptParser::GeneratorExpressionContext *ctx) override;
-    std::any visitDictComprehension(PyScriptParser::DictComprehensionContext *ctx) override;
-    std::any visitDictItem(PyScriptParser::DictItemContext *ctx) override;
     std::any visitLiteral(PyScriptParser::LiteralContext *ctx) override;
-    std::any visitListElements(PyScriptParser::ListElementsContext *ctx) override;
     std::any visitLambdaExpression(PyScriptParser::LambdaExpressionContext *ctx) override;
     std::any visitDottedName(PyScriptParser::DottedNameContext *ctx) override;
     std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) override;
@@ -228,6 +237,13 @@ public:
      */
     void clearCache() { exec_cache_.clear(); }
     
+    /**
+     * @brief 检查节点是否在函数定义体内（通过行号范围）
+     * @param ctx 解析器规则上下文
+     * @return 如果节点在函数定义体内返回 true，否则返回 false
+     */
+    bool isNodeInsideFunctionDef(antlr4::ParserRuleContext* ctx) const;
+    
 private:
     // 模块引用
     VariableManager& variable_manager_;
@@ -239,6 +255,8 @@ private:
     // 执行状态
     std::shared_ptr<ScriptValue> result_; ///< 执行结果
     bool defining_function_;               ///< 是否正在定义函数
+    bool break_flag_;                      ///< break标志（用于循环控制）
+    bool continue_flag_;                    ///< continue标志（用于循环控制）
     
     // 性能计数器（用于优化分析）
     mutable std::atomic<size_t> py_call_count_{0};           ///< Python函数调用次数
@@ -267,6 +285,13 @@ private:
     mutable std::vector<std::string> cached_module_names_;    ///< 缓存的模块名列表
     mutable size_t cached_var_count_{0};                      ///< 缓存的变量数量（用于失效检测）
     mutable size_t cached_module_count_{0};                   ///< 缓存的模块数量（用于失效检测）
+    
+    // 函数定义的行号范围（用于检测节点是否在函数体内）
+    struct FunctionRange {
+        int start_line;
+        int end_line;
+    };
+    std::unordered_map<std::string, FunctionRange> function_ranges_;  ///< 函数名到行号范围的映射
     
     /**
      * @brief 处理切片参数

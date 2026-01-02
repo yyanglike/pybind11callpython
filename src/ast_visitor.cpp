@@ -164,7 +164,11 @@ static py::dict buildEvalGlobals(VariableManager& variable_manager, py::object b
 static py::iterator toIterator(const shared_ptr<ScriptValue>& val) {
     if (!val) throw runtime_error("Iterator source is null");
     if (val->isPythonObject()) {
-        return py::iter(val->toPythonObject());
+        py::object pyObj = val->toPythonObject();
+        if (py::isinstance<py::none>(pyObj)) {
+            throw runtime_error("Cannot iterate over None");
+        }
+        return py::iter(pyObj);
     }
     if (val->isList()) {
         py::list lst;
@@ -197,6 +201,8 @@ AstVisitor::AstVisitor(VariableManager& variable_manager,
       expression_evaluator_(expression_evaluator),
       result_(nullptr),
       defining_function_(false),
+      break_flag_(false),
+      continue_flag_(false),
       current_from_module_(py::none()) {
     // 缓存 builtins 和 sys 模块，避免每次函数定义都导入
     try {
@@ -390,6 +396,22 @@ any AstVisitor::visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) 
         }
     } else if (ctx->passStatement()) {
         return visit(ctx->passStatement());
+    } else {
+        // 检查是否是 BREAK 或 CONTINUE token
+        // 由于 ANTLR 没有为这些规则生成单独的 context，我们通过检查 children 来识别
+        for (auto child : ctx->children) {
+            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+            if (terminal) {
+                int tokenType = terminal->getSymbol()->getType();
+                if (tokenType == PyScriptParser::BREAK) {
+                    break_flag_ = true;
+                    return any();
+                } else if (tokenType == PyScriptParser::CONTINUE) {
+                    continue_flag_ = true;
+                    return any();
+                }
+            }
+        }
     }
     
     reportError("Unknown small statement type", ctx);
@@ -426,10 +448,13 @@ any AstVisitor::visitCompoundStatement(PyScriptParser::CompoundStatementContext 
 }
 
 any AstVisitor::visitSuite(PyScriptParser::SuiteContext *ctx) {
-    // 如果在函数定义阶段，仍然访问子节点，但其他visit方法会跳过求值
+    // 如果在函数定义阶段，阻止访问子节点（函数体应该在Python中执行，不在解释器中执行）
     if (defining_function_) {
-        logger_.debug("Suite evaluation during function definition - visiting children but skipping evaluation");
+        logger_.debug("visitSuite: Skipping suite evaluation during function definition, returning stop signal (defining_function_=true)");
+        return any(true);  // 返回非空值阻止ANTLR访问子节点
     }
+    
+    logger_.debug("visitSuite: Evaluating suite (defining_function_=false)");
     
     // suite: simple_stmt | NEWLINE INDENT statement+ DEDENT
     if (ctx->simpleStatement()) {
@@ -457,8 +482,10 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     logger_.debug("visitFunctionDef called");
     
     // 设置标志，表明正在定义函数，跳过函数体内的求值
+    // 注意：必须在访问任何子节点之前设置标志，以阻止ANTLR访问子节点
     bool old_defining_function = defining_function_;
     defining_function_ = true;
+    logger_.debug("Setting defining_function_ = true for function: " + ctx->IDENTIFIER()->getText());
     
     try {
         // 获取开始令牌（函数定义的开始，即'def'关键字）
@@ -630,13 +657,20 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
                      " interval by indent: startOffset=" + to_string(startOffset) + 
                      ", stopOffset=" + to_string(stopOffset));
         
+        // 提取函数名
+        string funcName = ctx->IDENTIFIER()->getText();
+        
+        // 记录函数的行号范围（用于后续检测节点是否在函数体内）
+        int start_line = static_cast<int>(startToken->getLine());
+        int end_line = static_cast<int>(endLine + 1);  // endLine 是 0-based，转换为 1-based
+        function_ranges_[funcName] = {start_line, end_line};
+        logger_.debug("Recorded function range for " + funcName + ": lines " + 
+                     to_string(start_line) + "-" + to_string(end_line));
+        
         string funcDef = fullText.substr(startOffset, stopOffset - startOffset + 1);
         
         logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
         logger_.debug("First 200 chars: " + funcDef.substr(0, min((size_t)200, funcDef.length())));
-        
-        // 提取函数名
-        string funcName = ctx->IDENTIFIER()->getText();
         
         // 延迟缓存策略：跟踪函数定义次数
         func_def_count_[funcName]++;
@@ -865,8 +899,10 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     
     // Restore the old defining_function flag
     defining_function_ = old_defining_function;
+    logger_.debug("Restored defining_function_ = " + std::string(old_defining_function ? "true" : "false") + " for function: " + ctx->IDENTIFIER()->getText());
     
     // 返回非空值阻止访问子节点
+    // 注意：如果ANTLR在访问visitFunctionDef之前已经访问了子节点，这个返回值可能无法阻止已发生的访问
     return any(true);
 }
 
@@ -884,11 +920,14 @@ any AstVisitor::visitIfStatement(PyScriptParser::IfStatementContext *ctx) {
     logger_.debug("visitIfStatement called");
 
     auto exprCtxList = ctx->expression();
-    if (exprCtxList.empty()) {
-        reportError("If statement condition is missing", ctx);
+    auto suiteList = ctx->suite();
+    
+    if (exprCtxList.empty() || suiteList.empty()) {
+        reportError("If statement condition or suite is missing", ctx);
         return any();
     }
 
+    // 检查if条件
     auto condValue = evaluateExpression(exprCtxList[0]);
     if (!condValue) {
         reportError("Cannot evaluate condition", ctx);
@@ -896,12 +935,28 @@ any AstVisitor::visitIfStatement(PyScriptParser::IfStatementContext *ctx) {
     }
 
     if (expression_evaluator_.isTruthy(condValue)) {
-        auto thenSuite = ctx->suite(0);
-        if (thenSuite) {
-            return this->visit(thenSuite);
+        // if条件为真，执行第一个suite
+        return this->visit(suiteList[0]);
+    }
+    
+    // 检查elif分支
+    size_t elifCount = exprCtxList.size() - 1; // 减去if条件
+    for (size_t i = 0; i < elifCount; ++i) {
+        auto elifCond = evaluateExpression(exprCtxList[i + 1]);
+        if (!elifCond) {
+            continue;
         }
-    } else if (ctx->suite().size() > 1) {
-        auto elseSuite = ctx->suite(1);
+        if (expression_evaluator_.isTruthy(elifCond)) {
+            // elif条件为真，执行对应的suite
+            if (i + 1 < suiteList.size()) {
+                return this->visit(suiteList[i + 1]);
+            }
+        }
+    }
+    
+    // 检查else分支
+    if (suiteList.size() > exprCtxList.size()) {
+        auto elseSuite = suiteList[suiteList.size() - 1];
         if (elseSuite) {
             return this->visit(elseSuite);
         }
@@ -911,7 +966,10 @@ any AstVisitor::visitIfStatement(PyScriptParser::IfStatementContext *ctx) {
 }
 
 any AstVisitor::visitWhileStatement(PyScriptParser::WhileStatementContext *ctx) {
+    break_flag_ = false;
     while (true) {
+        continue_flag_ = false;
+        
         auto condValue = evaluateExpression(ctx->expression());
 
         if (!condValue) {
@@ -924,6 +982,16 @@ any AstVisitor::visitWhileStatement(PyScriptParser::WhileStatementContext *ctx) 
         }
 
         visit(ctx->suite());
+
+        if (break_flag_) {
+            break_flag_ = false;
+            break;
+        }
+        
+        if (continue_flag_) {
+            continue_flag_ = false;
+            continue;
+        }
 
         if (error_handler_.hasError()) {
             break;
@@ -958,17 +1026,30 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
         return any();
     }
     
+    break_flag_ = false;
     // 转换为Python可迭代对象
     if (iterableValue->isPythonObject()) {
         py::object pyIterable = iterableValue->getPythonObject();
         try {
             for (auto item : pyIterable) {
+                continue_flag_ = false;
                 py::object pyItem = py::reinterpret_borrow<py::object>(item);
                 auto itemValue = ScriptValue::fromPythonObject(pyItem);
                 variable_manager_.setVariable(varName, itemValue);
                 
                 // 执行循环体
                 visit(suiteCtx);
+                
+                if (break_flag_) {
+                    break_flag_ = false;
+                    break;
+                }
+                
+                if (continue_flag_) {
+                    continue_flag_ = false;
+                    continue;
+                }
+                
                 if (error_handler_.hasError()) {
                     break;
                 }
@@ -979,10 +1060,22 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
     } else if (iterableValue->isList()) {
         auto& list = iterableValue->getList();
         for (auto& item : list) {
+            continue_flag_ = false;
             variable_manager_.setVariable(varName, item);
             
             // 执行循环体
             visit(suiteCtx);
+            
+            if (break_flag_) {
+                break_flag_ = false;
+                break;
+            }
+            
+            if (continue_flag_) {
+                continue_flag_ = false;
+                continue;
+            }
+            
             if (error_handler_.hasError()) {
                 break;
             }
@@ -998,6 +1091,8 @@ any AstVisitor::visitPassStatement(PyScriptParser::PassStatementContext *ctx) {
     // pass语句什么都不做
     return any();
 }
+
+
 
 any AstVisitor::visitReturnStatement(PyScriptParser::ReturnStatementContext *ctx) {
     // 如果正在定义函数，则跳过求值，只返回占位符
@@ -1183,12 +1278,44 @@ any AstVisitor::visitImportItem(PyScriptParser::ImportItemContext *ctx) {
     return any();
 }
 
+// 辅助函数：检查节点是否在函数定义体内（通过行号范围）
+bool AstVisitor::isNodeInsideFunctionDef(antlr4::ParserRuleContext* ctx) const {
+    if (!ctx) return false;
+    
+    auto startToken = ctx->getStart();
+    if (!startToken) return false;
+    
+    int line = startToken->getLine();
+    
+    // 检查当前节点的行号是否在任何函数定义的行号范围内
+    for (const auto& [funcName, range] : function_ranges_) {
+        if (line >= range.start_line && line <= range.end_line) {
+            logger_.debug("Node at line " + std::to_string(line) + " is inside function " + funcName + 
+                         " (range: " + std::to_string(range.start_line) + "-" + std::to_string(range.end_line) + ")");
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     // 如果在函数定义阶段，跳过赋值求值，返回null
     if (defining_function_) {
-        logger_.debug("Skipping assignment evaluation during function definition");
+        logger_.debug("visitAssignment: Skipping assignment evaluation during function definition (defining_function_=true)");
         return any(ScriptValue::createNull());
     }
+    
+    // 额外检查：如果节点在函数定义体内，跳过求值（防止函数定义完成后 ANTLR 继续访问函数体内的节点）
+    bool inside_function = isNodeInsideFunctionDef(ctx);
+    auto startToken = ctx->getStart();
+    int line = startToken ? startToken->getLine() : -1;
+    if (inside_function) {
+        logger_.debug("visitAssignment: Skipping assignment at line " + std::to_string(line) + " (inside function definition, defining_function_=false)");
+        return any(ScriptValue::createNull());
+    }
+    
+    logger_.debug("visitAssignment: Evaluating assignment (defining_function_=false)");
     
     // 有三种赋值形式：标识符赋值、属性赋值、下标赋值
     if (ctx->IDENTIFIER()) {
@@ -1207,8 +1334,86 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             return any();
         }
         
-        // 简单赋值
-        variable_manager_.setVariable(varName, rightValue);
+        // 检查是否是赋值运算符（+=, -=, *=, /=, //=, %=, **=, &=, |=, ^=, <<=, >>=）
+        // 通过检查children中的terminal node来获取操作符token类型
+        string op = "=";
+        for (auto child : ctx->children) {
+            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+            if (terminal) {
+                int tokenType = terminal->getSymbol()->getType();
+                if (tokenType == PyScriptParser::PLUS_ASSIGN) {
+                    op = "+=";
+                    break;
+                } else if (tokenType == PyScriptParser::MINUS_ASSIGN) {
+                    op = "-=";
+                    break;
+                } else if (tokenType == PyScriptParser::MUL_ASSIGN) {
+                    op = "*=";
+                    break;
+                } else if (tokenType == PyScriptParser::DIV_ASSIGN) {
+                    op = "/=";
+                    break;
+                } else if (tokenType == PyScriptParser::FLOOR_DIV_ASSIGN) {
+                    op = "//=";
+                    break;
+                } else if (tokenType == PyScriptParser::MOD_ASSIGN) {
+                    op = "%=";
+                    break;
+                } else if (tokenType == PyScriptParser::POW_ASSIGN) {
+                    op = "**=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_AND_ASSIGN) {
+                    op = "&=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_OR_ASSIGN) {
+                    op = "|=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_XOR_ASSIGN) {
+                    op = "^=";
+                    break;
+                } else if (tokenType == PyScriptParser::LEFT_SHIFT_ASSIGN) {
+                    op = "<<=";
+                    break;
+                } else if (tokenType == PyScriptParser::RIGHT_SHIFT_ASSIGN) {
+                    op = ">>=";
+                    break;
+                } else if (tokenType == PyScriptParser::ASSIGN) {
+                    op = "=";
+                    // 继续查找，可能有其他赋值运算符
+                }
+            }
+        }
+        
+        if (op != "=") {
+            // 赋值运算符：先获取当前值，执行运算，再赋值
+            auto currentValue = variable_manager_.getVariable(varName);
+            if (!currentValue) {
+                currentValue = ScriptValue::createNull();
+            }
+            
+            // 提取基础操作符（去掉=）
+            string baseOp = op.substr(0, op.length() - 1);
+            auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
+            if (!result) {
+                reportError("Unsupported assignment operator: " + op, ctx);
+                return any();
+            }
+            variable_manager_.setVariable(varName, result);
+        } else {
+            // 简单赋值
+            variable_manager_.setVariable(varName, rightValue);
+            // 调试：检查赋值是否成功
+            if (!rightValue) {
+                logger_.debug("Warning: Assigning null to variable '" + varName + "'");
+            } else if (rightValue->isNull()) {
+                logger_.debug("Warning: Assigning null to variable '" + varName + "'");
+            } else if (rightValue->isPythonObject()) {
+                py::object pyObj = rightValue->toPythonObject();
+                if (py::isinstance<py::none>(pyObj)) {
+                    logger_.debug("Warning: Assigning None to variable '" + varName + "'");
+                }
+            }
+        }
         try {
             if (rightValue) {
                 logger_.debug(std::string("Assigned variable '") + varName + "' = " + rightValue->toString());
@@ -1261,6 +1466,89 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         if (!rightValue) {
             reportError("Cannot evaluate right-hand side", ctx);
             return any();
+        }
+
+        // 检查是否是赋值运算符（属性赋值也支持 +=, -= 等）
+        string op = "=";
+        for (auto child : ctx->children) {
+            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+            if (terminal) {
+                int tokenType = terminal->getSymbol()->getType();
+                if (tokenType == PyScriptParser::PLUS_ASSIGN) {
+                    op = "+=";
+                    break;
+                } else if (tokenType == PyScriptParser::MINUS_ASSIGN) {
+                    op = "-=";
+                    break;
+                } else if (tokenType == PyScriptParser::MUL_ASSIGN) {
+                    op = "*=";
+                    break;
+                } else if (tokenType == PyScriptParser::DIV_ASSIGN) {
+                    op = "/=";
+                    break;
+                } else if (tokenType == PyScriptParser::FLOOR_DIV_ASSIGN) {
+                    op = "//=";
+                    break;
+                } else if (tokenType == PyScriptParser::MOD_ASSIGN) {
+                    op = "%=";
+                    break;
+                } else if (tokenType == PyScriptParser::POW_ASSIGN) {
+                    op = "**=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_AND_ASSIGN) {
+                    op = "&=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_OR_ASSIGN) {
+                    op = "|=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_XOR_ASSIGN) {
+                    op = "^=";
+                    break;
+                } else if (tokenType == PyScriptParser::LEFT_SHIFT_ASSIGN) {
+                    op = "<<=";
+                    break;
+                } else if (tokenType == PyScriptParser::RIGHT_SHIFT_ASSIGN) {
+                    op = ">>=";
+                    break;
+                } else if (tokenType == PyScriptParser::ASSIGN) {
+                    op = "=";
+                }
+            }
+        }
+
+        if (op != "=") {
+            // 赋值运算符：先获取当前属性值，执行运算，再赋值
+            py::object currentAttr;
+            try {
+                if (objectValue->isPythonObject()) {
+                    py::object pyObj = objectValue->getPythonObject();
+                    currentAttr = pyObj.attr(memberName.c_str());
+                } else {
+                    // 非Python对象，尝试通过ScriptValue获取
+                    auto currentValue = objectValue->getKey(memberName);
+                    if (currentValue) {
+                        currentAttr = currentValue->toPythonObject();
+                    } else {
+                        currentAttr = py::none();
+                    }
+                }
+            } catch (...) {
+                currentAttr = py::none();
+            }
+            
+            auto currentValue = ScriptValue::fromPythonObject(currentAttr);
+            if (!currentValue) {
+                currentValue = ScriptValue::createNull();
+            }
+            
+            // 提取基础操作符（去掉=）
+            string baseOp = op.substr(0, op.length() - 1);
+            auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
+            if (!result) {
+                reportError("Unsupported assignment operator: " + op, ctx);
+                return any();
+            }
+            rightValue = result;  // 使用计算结果作为新的赋值值
         }
 
         // 执行属性赋值
@@ -1345,6 +1633,92 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             return any();
         }
         
+        // 检查是否是赋值运算符（下标赋值也支持 +=, -= 等）
+        string op = "=";
+        for (auto child : ctx->children) {
+            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+            if (terminal) {
+                int tokenType = terminal->getSymbol()->getType();
+                if (tokenType == PyScriptParser::PLUS_ASSIGN) {
+                    op = "+=";
+                    break;
+                } else if (tokenType == PyScriptParser::MINUS_ASSIGN) {
+                    op = "-=";
+                    break;
+                } else if (tokenType == PyScriptParser::MUL_ASSIGN) {
+                    op = "*=";
+                    break;
+                } else if (tokenType == PyScriptParser::DIV_ASSIGN) {
+                    op = "/=";
+                    break;
+                } else if (tokenType == PyScriptParser::FLOOR_DIV_ASSIGN) {
+                    op = "//=";
+                    break;
+                } else if (tokenType == PyScriptParser::MOD_ASSIGN) {
+                    op = "%=";
+                    break;
+                } else if (tokenType == PyScriptParser::POW_ASSIGN) {
+                    op = "**=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_AND_ASSIGN) {
+                    op = "&=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_OR_ASSIGN) {
+                    op = "|=";
+                    break;
+                } else if (tokenType == PyScriptParser::BITWISE_XOR_ASSIGN) {
+                    op = "^=";
+                    break;
+                } else if (tokenType == PyScriptParser::LEFT_SHIFT_ASSIGN) {
+                    op = "<<=";
+                    break;
+                } else if (tokenType == PyScriptParser::RIGHT_SHIFT_ASSIGN) {
+                    op = ">>=";
+                    break;
+                } else if (tokenType == PyScriptParser::ASSIGN) {
+                    op = "=";
+                }
+            }
+        }
+        
+        if (op != "=") {
+            // 赋值运算符：先获取当前下标值，执行运算，再赋值
+            shared_ptr<ScriptValue> currentValue = nullptr;
+            try {
+                if (objectValue->isList()) {
+                    if (indexValue->isInteger()) {
+                        long long idx = indexValue->getInteger();
+                        if (idx >= 0 && idx < static_cast<long long>(objectValue->listSize())) {
+                            currentValue = objectValue->getAt(static_cast<size_t>(idx));
+                        }
+                    }
+                } else if (objectValue->isDictionary()) {
+                    if (indexValue->isString()) {
+                        currentValue = objectValue->getKey(indexValue->getString());
+                    }
+                } else if (objectValue->isPythonObject()) {
+                    py::object pyObj = objectValue->getPythonObject();
+                    py::object pyIndex = indexValue->toPythonObject();
+                    currentValue = ScriptValue::fromPythonObject(pyObj[pyIndex]);
+                }
+            } catch (...) {
+                // 忽略错误，使用null作为当前值
+            }
+            
+            if (!currentValue) {
+                currentValue = ScriptValue::createNull();
+            }
+            
+            // 提取基础操作符（去掉=）
+            string baseOp = op.substr(0, op.length() - 1);
+            auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
+            if (!result) {
+                reportError("Unsupported assignment operator: " + op, ctx);
+                return any();
+            }
+            rightValue = result;  // 使用计算结果作为新的赋值值
+        }
+        
         // 执行下标赋值
         if (objectValue->isPythonObject()) {
             py::object pyObj = objectValue->getPythonObject();
@@ -1418,13 +1792,107 @@ any AstVisitor::visitExpressionStatement(PyScriptParser::ExpressionStatementCont
 }
 
 any AstVisitor::visitExpression(PyScriptParser::ExpressionContext *ctx) {
-    // expression: logicalOr
-    if (ctx->logicalOr()) {
-        return visit(ctx->logicalOr());
+    // expression: conditionalExpression # conditionalExpr
+    // 根据语法规则，所有的 ExpressionContext 都应该是 ConditionalExprContext
+    // 直接调用 visitConditionalExpr，让访问者模式自动路由
+    auto conditionalExprCtx = dynamic_cast<PyScriptParser::ConditionalExprContext*>(ctx);
+    if (conditionalExprCtx) {
+        return visitConditionalExpr(conditionalExprCtx);
     }
-    
+    // 如果不是 ConditionalExprContext，尝试直接访问子节点
+    // 这种情况理论上不应该发生，但作为容错处理
+    if (ctx->children.size() == 1) {
+        return visit(ctx->children[0]);
+    }
     reportError("Invalid expression", ctx);
     return any();
+}
+
+any AstVisitor::visitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) {
+    // ConditionalExprContext 有 conditionalExpression() 方法
+    auto condExpr = ctx->conditionalExpression();
+    if (!condExpr) {
+        reportError("Invalid conditional expression: missing conditionalExpression", ctx);
+        return any();
+    }
+    
+    // ConditionalExpressionContext 总是 ConditionalContext（根据语法规则只有一个标签 # conditional）
+    // 使用访问者模式自动路由到 visitConditional
+    return visit(condExpr);
+}
+
+any AstVisitor::visitConditional(PyScriptParser::ConditionalContext *ctx) {
+    // 处理三元运算符: condition if true_expr else false_expr
+    // 或者普通表达式: logicalOr（没有 IF/ELSE）
+    auto logicalOrCtxs = ctx->logicalOr();
+    if (logicalOrCtxs.empty()) {
+        reportError("Invalid conditional expression: no logicalOr", ctx);
+        return any();
+    }
+    
+    // 如果没有 IF/ELSE，只是一个普通的 logicalOr 表达式
+    if (!ctx->IF() || !ctx->ELSE() || logicalOrCtxs.size() < 2) {
+        // 普通表达式，直接返回第一个 logicalOr
+        return visit(logicalOrCtxs[0]);
+    }
+    
+    // 三元运算符: condition if true_expr else false_expr
+    if (logicalOrCtxs.size() < 2) {
+        reportError("Invalid conditional expression: need at least 2 expressions for ternary", ctx);
+        return any();
+    }
+    
+    // 第一个是条件
+    auto conditionAny = visit(logicalOrCtxs[0]);
+    shared_ptr<ScriptValue> condition;
+    try {
+        condition = any_cast<shared_ptr<ScriptValue>>(conditionAny);
+    } catch (const bad_any_cast&) {
+        reportError("Cannot evaluate condition", ctx);
+        return any();
+    }
+    
+    if (!condition) {
+        reportError("Cannot evaluate condition", ctx);
+        return any();
+    }
+    
+    // 第二个是 true 分支
+    auto trueAny = visit(logicalOrCtxs[1]);
+    shared_ptr<ScriptValue> trueValue;
+    try {
+        trueValue = any_cast<shared_ptr<ScriptValue>>(trueAny);
+    } catch (const bad_any_cast&) {
+        reportError("Cannot evaluate true branch", ctx);
+        return any();
+    }
+    
+    if (!trueValue) {
+        reportError("Cannot evaluate true branch", ctx);
+        return any();
+    }
+    
+    // 如果有 false 分支（conditionalExpression）
+    if (ctx->conditionalExpression()) {
+        auto falseAny = visit(ctx->conditionalExpression());
+        shared_ptr<ScriptValue> falseValue;
+        try {
+            falseValue = any_cast<shared_ptr<ScriptValue>>(falseAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate false branch", ctx);
+            return any();
+        }
+        
+        if (!falseValue) {
+            reportError("Cannot evaluate false branch", ctx);
+            return any();
+        }
+        
+        return any(expression_evaluator_.isTruthy(condition) ? trueValue : falseValue);
+    }
+    
+    // 只有 true 分支
+    return any(expression_evaluator_.isTruthy(condition) ? trueValue : ScriptValue::createNull());
 }
 
 any AstVisitor::visitLogicalOr(PyScriptParser::LogicalOrContext *ctx) {
@@ -1463,14 +1931,14 @@ any AstVisitor::visitLogicalOr(PyScriptParser::LogicalOrContext *ctx) {
 }
 
 any AstVisitor::visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) {
-    auto equalityExprs = ctx->equality();
-    if (equalityExprs.size() == 1) {
-        return this->visit(equalityExprs[0]);
+    auto bitwiseOrExprs = ctx->bitwiseOr();
+    if (bitwiseOrExprs.size() == 1) {
+        return this->visit(bitwiseOrExprs[0]);
     }
     
     // 处理多个逻辑与表达式
     shared_ptr<ScriptValue> result;
-    for (auto expr : equalityExprs) {
+    for (auto expr : bitwiseOrExprs) {
         auto valAny = visit(expr);
         shared_ptr<ScriptValue> val;
         try {
@@ -1491,6 +1959,102 @@ any AstVisitor::visitLogicalAnd(PyScriptParser::LogicalAndContext *ctx) {
         
         if (!result) {
             result = val;
+        }
+    }
+    
+    return any(result);
+}
+
+any AstVisitor::visitBitwiseOrExpr(PyScriptParser::BitwiseOrExprContext *ctx) {
+    auto bitwiseXorExprs = ctx->bitwiseXor();
+    if (bitwiseXorExprs.size() == 1) {
+        return this->visit(bitwiseXorExprs[0]);
+    }
+    
+    // 处理多个位或表达式
+    shared_ptr<ScriptValue> result;
+    for (size_t i = 0; i < bitwiseXorExprs.size(); ++i) {
+        auto valAny = visit(bitwiseXorExprs[i]);
+        shared_ptr<ScriptValue> val;
+        try {
+            val = any_cast<shared_ptr<ScriptValue>>(valAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate bitwise OR expression", ctx);
+            return any();
+        }
+        if (!val) {
+            reportError("Cannot evaluate bitwise OR expression", ctx);
+            return any();
+        }
+        
+        if (i == 0) {
+            result = val;
+        } else {
+            result = expression_evaluator_.evaluateBinaryOperation("|", result, val);
+        }
+    }
+    
+    return any(result);
+}
+
+any AstVisitor::visitBitwiseXorExpr(PyScriptParser::BitwiseXorExprContext *ctx) {
+    auto bitwiseAndExprs = ctx->bitwiseAnd();
+    if (bitwiseAndExprs.size() == 1) {
+        return this->visit(bitwiseAndExprs[0]);
+    }
+    
+    // 处理多个位异或表达式
+    shared_ptr<ScriptValue> result;
+    for (size_t i = 0; i < bitwiseAndExprs.size(); ++i) {
+        auto valAny = visit(bitwiseAndExprs[i]);
+        shared_ptr<ScriptValue> val;
+        try {
+            val = any_cast<shared_ptr<ScriptValue>>(valAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate bitwise XOR expression", ctx);
+            return any();
+        }
+        if (!val) {
+            reportError("Cannot evaluate bitwise XOR expression", ctx);
+            return any();
+        }
+        
+        if (i == 0) {
+            result = val;
+        } else {
+            result = expression_evaluator_.evaluateBinaryOperation("^", result, val);
+        }
+    }
+    
+    return any(result);
+}
+
+any AstVisitor::visitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *ctx) {
+    auto equalityExprs = ctx->equality();
+    if (equalityExprs.size() == 1) {
+        return this->visit(equalityExprs[0]);
+    }
+    
+    // 处理多个位与表达式
+    shared_ptr<ScriptValue> result;
+    for (size_t i = 0; i < equalityExprs.size(); ++i) {
+        auto valAny = visit(equalityExprs[i]);
+        shared_ptr<ScriptValue> val;
+        try {
+            val = any_cast<shared_ptr<ScriptValue>>(valAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate bitwise AND expression", ctx);
+            return any();
+        }
+        if (!val) {
+            reportError("Cannot evaluate bitwise AND expression", ctx);
+            return any();
+        }
+        
+        if (i == 0) {
+            result = val;
+        } else {
+            result = expression_evaluator_.evaluateBinaryOperation("&", result, val);
         }
     }
     
@@ -1546,13 +2110,13 @@ any AstVisitor::visitEquality(PyScriptParser::EqualityContext *ctx) {
 }
 
 any AstVisitor::visitComparison(PyScriptParser::ComparisonContext *ctx) {
-    auto additiveExprs = ctx->additive();
-    if (additiveExprs.size() == 1) {
-        return this->visit(additiveExprs[0]);
+    auto shiftExprs = ctx->shift();
+    if (shiftExprs.size() == 1) {
+        return this->visit(shiftExprs[0]);
     }
     
     // 处理关系比较
-    auto leftAny = visit(additiveExprs[0]);
+    auto leftAny = visit(shiftExprs[0]);
     shared_ptr<ScriptValue> left;
     try {
         left = any_cast<shared_ptr<ScriptValue>>(leftAny);
@@ -1565,8 +2129,8 @@ any AstVisitor::visitComparison(PyScriptParser::ComparisonContext *ctx) {
         return any();
     }
     
-    for (size_t i = 1; i < additiveExprs.size(); ++i) {
-        auto rightAny = visit(additiveExprs[i]);
+    for (size_t i = 1; i < shiftExprs.size(); ++i) {
+        auto rightAny = visit(shiftExprs[i]);
         shared_ptr<ScriptValue> right;
         try {
             right = any_cast<shared_ptr<ScriptValue>>(rightAny);
@@ -1580,7 +2144,31 @@ any AstVisitor::visitComparison(PyScriptParser::ComparisonContext *ctx) {
         }
         
         // 获取操作符
-        string op = ctx->children[2*i - 1]->getText();
+        // 需要检查token类型，因为is/is not/not in是多词操作符
+        string op;
+        size_t opIndex = 2*i - 1;
+        if (opIndex < ctx->children.size()) {
+            auto opChild = ctx->children[opIndex];
+            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(opChild);
+            if (terminal) {
+                int tokenType = terminal->getSymbol()->getType();
+                if (tokenType == PyScriptParser::IS) {
+                    op = "is";
+                } else if (tokenType == PyScriptParser::IS_NOT) {
+                    op = "is not";
+                } else if (tokenType == PyScriptParser::NOT_IN) {
+                    op = "not in";
+                } else {
+                    op = opChild->getText();
+                }
+            } else {
+                op = opChild->getText();
+            }
+        } else {
+            reportError("Missing operator in comparison", ctx);
+            return any();
+        }
+        
         auto result = expression_evaluator_.evaluateBinaryOperation(op, left, right);
         if (!result) {
             reportError("Unsupported relational operator: " + op, ctx);
@@ -1592,6 +2180,10 @@ any AstVisitor::visitComparison(PyScriptParser::ComparisonContext *ctx) {
     
     return any(left);
 }
+
+
+
+
 
 any AstVisitor::visitAdditive(PyScriptParser::AdditiveContext *ctx) {
     auto multiplicativeExprs = ctx->multiplicative();
@@ -1761,6 +2353,15 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
         
         auto var = getVariable(name);
         if (var) {
+            // 检查变量值是否为 None
+            if (var->isNull()) {
+                logger_.debug("Variable '" + name + "' is null");
+            } else if (var->isPythonObject()) {
+                py::object pyObj = var->toPythonObject();
+                if (py::isinstance<py::none>(pyObj)) {
+                    logger_.debug("Variable '" + name + "' is None (Python None)");
+                }
+            }
             return any(var);
         }
         
@@ -1771,10 +2372,54 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
         }
         
         // 非函数定义阶段，返回null
+        logger_.debug("Variable '" + name + "' not found, returning null");
+        // 注意：这里返回 null 会导致后续的 any_cast 失败，所以应该返回 ScriptValue::createNull()
         return any(ScriptValue::createNull());
     } else if (ctx->LPAREN()) {
-        // 括号表达式
-        return visit(ctx->expression());
+        // 括号表达式: LPAREN (expression | tupleLiteral) RPAREN
+        // 由于 ANTLR 没有为 tupleLiteral 生成单独的 context，
+        // 我们通过检查 expression 的内容来判断是否是元组
+        if (ctx->expression()) {
+            auto exprCtx = ctx->expression();
+            // 检查 expression 是否包含多个子表达式（通过检查是否有逗号）
+            // 如果有逗号，则可能是元组字面量
+            bool hasComma = false;
+            for (auto child : exprCtx->children) {
+                auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+                if (terminal && terminal->getSymbol()->getType() == PyScriptParser::COMMA) {
+                    hasComma = true;
+                    break;
+                }
+            }
+            
+            if (hasComma) {
+                // 元组字面量：包含逗号的表达式列表
+                // 通过访问 expression 的所有子表达式来构建元组
+                // ExpressionContext 没有直接的 logicalOr() 方法，需要通过 conditionalExpression() 访问
+                // 但这里我们直接访问 children 来获取逗号分隔的表达式
+                vector<shared_ptr<ScriptValue>> tupleItems;
+                for (auto child : exprCtx->children) {
+                    auto exprChild = dynamic_cast<PyScriptParser::ExpressionContext*>(child);
+                    if (exprChild) {
+                        auto value = evaluateExpression(exprChild);
+                        if (value) {
+                            tupleItems.push_back(value);
+                        } else {
+                            return any();
+                        }
+                    }
+                }
+                if (!tupleItems.empty()) {
+                    auto tupleValue = make_shared<ScriptValue>(tupleItems);
+                    return any(tupleValue);
+                }
+            }
+            
+            // 普通括号表达式
+            return visit(exprCtx);
+        }
+        // 空括号，可能是空元组
+        return any(ScriptValue::createList());
     } else if (ctx->listLiteral()) {
         return visit(ctx->listLiteral());
     } else if (ctx->dictLiteral()) {
@@ -1793,6 +2438,38 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
     
     reportError("Invalid primary expression", ctx);
     return any();
+}
+
+any AstVisitor::visitTuple(PyScriptParser::TupleContext *ctx) {
+    // 处理元组字面量: expression (COMMA expression)* COMMA?
+    vector<shared_ptr<ScriptValue>> elements;
+    auto expressions = ctx->expression();
+    
+    for (auto exprCtx : expressions) {
+        auto exprAny = visit(exprCtx);
+        shared_ptr<ScriptValue> val;
+        try {
+            val = any_cast<shared_ptr<ScriptValue>>(exprAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate tuple element", ctx);
+            return any();
+        }
+        if (!val) {
+            reportError("Cannot evaluate tuple element", ctx);
+            return any();
+        }
+        elements.push_back(val);
+    }
+    
+    // 创建 Python 元组
+    py::gil_scoped_acquire acquire;
+    py::tuple pyTuple(elements.size());
+    for (size_t i = 0; i < elements.size(); ++i) {
+        pyTuple[i] = elements[i]->toPythonObject();
+    }
+    py::gil_scoped_release release;
+    
+    return any(ScriptValue::fromPythonObject(pyTuple));
 }
 
 any AstVisitor::visitNewExpression(PyScriptParser::NewExpressionContext *ctx) {
@@ -2309,7 +2986,17 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 py_call_count_++;
                 py::object result = DynamicPythonCaller::callFunction(pyFunc, py::args(pyArgs), py::kwargs(pyKwargs));
                 py_to_sv_count_++;
-                currentValue = ScriptValue::fromPythonObject(result);
+                auto resultValue = ScriptValue::fromPythonObject(result);
+                // 检查返回值是否为 None 或 null
+                if (!resultValue || resultValue->isNull()) {
+                    logger_.debug("Function call returned null/None");
+                } else if (resultValue->isPythonObject()) {
+                    py::object pyObj = resultValue->toPythonObject();
+                    if (py::isinstance<py::none>(pyObj)) {
+                        logger_.debug("Function call returned None (Python None)");
+                    }
+                }
+                currentValue = resultValue;
             } catch (const py::error_already_set& e) {
                 reportError("Python function call error: " + string(e.what()), callOp);
                 return any();
@@ -2561,17 +3248,18 @@ any AstVisitor::visitArgument(PyScriptParser::ArgumentContext *ctx) {
 }
 
 any AstVisitor::visitListLiteral(PyScriptParser::ListLiteralContext *ctx) {
-    // 如果正在定义函数，跳过求值，返回空列表
+    // 如果正在定义函数，跳过求值，返回空列表，并阻止访问子节点
     if (defining_function_) {
-        logger_.debug("Skipping list literal evaluation during function definition");
-        return any(ScriptValue::createList());
+        logger_.debug("visitListLiteral: Skipping list literal evaluation during function definition, returning stop signal");
+        return any(true);  // 返回非空值阻止ANTLR访问子节点
     }
     
     auto listElementsCtx = ctx->listElements();
     if (listElementsCtx) {
         // 检查是否为列表推导式
-        if (listElementsCtx->FOR()) {
+        if (listElementsCtx->comprehension()) {
             // 列表推导式，让visitListElements处理
+            // 注意：visitListElements 会检查 defining_function_，所以这里不需要再次检查
             logger_.debug("List comprehension detected in visitListLiteral, delegating to visitListElements");
             return this->visit(listElementsCtx);
         } else {
@@ -2669,7 +3357,8 @@ any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext 
         return any(ScriptValue::createNull());
     }
     auto exprs = ctx->expression();
-    if (exprs.empty() || !ctx->IDENTIFIER()) {
+    auto compFors = ctx->compFor();
+    if (exprs.size() < 2 || compFors.empty()) {
         reportError("Invalid dict comprehension", ctx);
         return any();
     }
@@ -2682,39 +3371,42 @@ any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext 
         PyScriptParser::ExpressionContext* cond;
     };
     std::vector<CompClause> clauses;
-    auto children = ctx->children;
-    size_t idx = 0;
-    // expressions: key, value, then per-clause iter/cond
-    if (!children.empty()) {
-        // find first FOR after key/val
-        while (idx < children.size()) {
-            auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-            if (t_for && t_for->getSymbol()->getType() == PyScriptParser::FOR) break;
-            ++idx;
-        }
-    }
-    while (idx < children.size()) {
-        auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-        if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
-        if (idx + 3 >= children.size()) break;
-        auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
-        auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
-        if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
-        CompClause clause{ idNode->getText(), iterExprNode, nullptr };
-        idx += 4;
-        if (idx + 1 < children.size()) {
-            auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-            auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
-            if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
-                clause.cond = condExprNode;
-                idx += 2;
-            }
-        }
-        clauses.push_back(std::move(clause));
-    }
-    if (clauses.empty()) {
-        reportError("Invalid dict comprehension clauses", ctx);
+    
+    // 使用 compFor() 方法获取所有 compFor 子句
+    if (compFors.empty()) {
+        reportError("Invalid dict comprehension: no compFor clauses", ctx);
         return any();
+    }
+    
+    for (auto compForCtx : compFors) {
+        // compFor: FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
+        auto identifiers = compForCtx->IDENTIFIER();
+        if (identifiers.empty()) {
+            reportError("Invalid compFor: missing identifier", ctx);
+            return any();
+        }
+        
+        // 获取第一个标识符（支持多个标识符的情况，但这里先只处理第一个）
+        std::string varName = identifiers[0]->getText();
+        
+        // 获取 IN 后面的表达式
+        auto iterExprs = compForCtx->expression();
+        if (iterExprs.empty()) {
+            reportError("Invalid compFor: missing iterable expression", ctx);
+            return any();
+        }
+        
+        // 第一个 expression 是迭代对象
+        PyScriptParser::ExpressionContext* iterExpr = iterExprs[0];
+        
+        // 检查是否有 IF 条件
+        PyScriptParser::ExpressionContext* condExpr = nullptr;
+        if (compForCtx->IF() && iterExprs.size() > 1) {
+            // 如果有 IF token，第二个 expression 是条件
+            condExpr = iterExprs[1];
+        }
+        
+        clauses.push_back({varName, iterExpr, condExpr});
     }
 
     auto dictVal = ScriptValue::createDictionary();
@@ -2821,7 +3513,8 @@ any AstVisitor::visitSetLiteral(PyScriptParser::SetLiteralContext *ctx) {
         return any(ScriptValue::fromPythonObject(py::set()));
     }
     // 推导式
-    if (elementsCtx->IDENTIFIER() && elementsCtx->expression().size() >= 2) {
+    auto compCtx = elementsCtx->comprehension();
+    if (compCtx && elementsCtx->expression().size() >= 2) {
         auto exprs = elementsCtx->expression();
         if (exprs.size() < 2) {
             reportError("Invalid set comprehension", ctx);
@@ -2984,12 +3677,16 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
     if (defining_function_) {
         return any(ScriptValue::createNull());
     }
-    auto exprs = ctx->expression();
-    if (exprs.empty() || !ctx->IDENTIFIER()) {
+    auto compCtx = ctx->comprehension();
+    if (!compCtx) {
         reportError("Invalid generator expression", ctx);
         return any();
     }
-    auto bodyExpr = exprs[0];
+    auto bodyExpr = compCtx->expression();
+    if (!bodyExpr) {
+        reportError("Invalid generator expression: missing body expression", ctx);
+        return any();
+    }
 
     struct CompClause {
         std::string var;
@@ -2997,34 +3694,42 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
         PyScriptParser::ExpressionContext* cond;
     };
     std::vector<CompClause> clauses;
-    auto children = ctx->children;
-    size_t idx = 0;
-    // skip first expression child
-    if (!children.empty() && dynamic_cast<PyScriptParser::ExpressionContext*>(children[0]) == bodyExpr) {
-        idx = 1;
-    }
-    while (idx < children.size()) {
-        auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-        if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
-        if (idx + 3 >= children.size()) break;
-        auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
-        auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
-        if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
-        CompClause clause{ idNode->getText(), iterExprNode, nullptr };
-        idx += 4;
-        if (idx + 1 < children.size()) {
-            auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-            auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
-            if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
-                clause.cond = condExprNode;
-                idx += 2;
-            }
-        }
-        clauses.push_back(std::move(clause));
-    }
-    if (clauses.empty()) {
-        reportError("Invalid generator expression clauses", ctx);
+    
+    // 使用 compFor() 方法获取所有 compFor 子句
+    auto compFors = compCtx->compFor();
+    if (compFors.empty()) {
+        reportError("Invalid generator expression: no compFor clauses", ctx);
         return any();
+    }
+    
+    for (auto compForCtx : compFors) {
+        // compFor: FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
+        auto identifiers = compForCtx->IDENTIFIER();
+        if (identifiers.empty()) {
+            reportError("Invalid compFor: missing identifier", ctx);
+            return any();
+        }
+        
+        // 获取第一个标识符（支持多个标识符的情况，但这里先只处理第一个）
+        std::string varName = identifiers[0]->getText();
+        
+        // 获取 IN 后面的表达式
+        auto iterExprs = compForCtx->expression();
+        if (iterExprs.empty()) {
+            reportError("Invalid compFor: missing iterable expression", ctx);
+            return any();
+        }
+        
+        // 第一个 expression 是迭代对象
+        PyScriptParser::ExpressionContext* iterExpr = iterExprs[0];
+        
+        // 检查是否有 IF 条件（第二个 expression）
+        PyScriptParser::ExpressionContext* condExpr = nullptr;
+        if (iterExprs.size() > 1) {
+            condExpr = iterExprs[1];
+        }
+        
+        clauses.push_back({varName, iterExpr, condExpr});
     }
 
     py::list results;
@@ -3212,26 +3917,55 @@ any AstVisitor::visitPower(PyScriptParser::PowerContext *ctx) {
     return any(left);
 }
 
+any AstVisitor::visitComprehension(PyScriptParser::ComprehensionContext *ctx) {
+    // comprehension: expression (compFor)+
+    // 这是一个通用的推导式结构，被列表、字典、集合和生成器表达式使用
+    // 实际的推导式逻辑在各自的 visit 方法中处理
+    // ComprehensionContext 有 expression() 方法（返回单个 ExpressionContext*）
+    auto expression = ctx->expression();
+    if (expression) {
+        return visit(expression);
+    }
+    reportError("Invalid comprehension expression", ctx);
+    return any();
+}
+
+any AstVisitor::visitCompFor(PyScriptParser::CompForContext *ctx) {
+    // compFor: FOR IDENTIFIER IN expression (IF expression)?
+    // 这是一个推导式的 for 子句，实际的逻辑在各自的推导式处理中
+    // 这里返回 null 作为占位符
+    return any(ScriptValue::createNull());
+}
+
 any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
     // listElements: expression (COMMA expression)* COMMA? | expression FOR IDENTIFIER IN expression (IF expression)? (FOR IDENTIFIER IN expression (IF expression)?)* 
-    logger_.debug("visitListElements called");
+    auto startToken = ctx->getStart();
+    int line = startToken ? startToken->getLine() : -1;
+    logger_.info("visitListElements called at line " + std::to_string(line) + " (defining_function_=" + (defining_function_ ? "true" : "false") + ")");
     
     // 如果正在定义函数，跳过列表推导式的求值，返回特殊标记阻止访问子节点
     if (defining_function_) {
-        logger_.debug("Skipping list comprehension evaluation during function definition, returning stop signal");
+        logger_.info("Skipping list comprehension evaluation during function definition, returning stop signal");
         // 返回true阻止ANTLR访问子节点
         return any(true);
     }
     
+    // 额外检查：如果节点在函数定义体内，跳过求值（防止函数定义完成后 ANTLR 继续访问函数体内的节点）
+    bool inside_function = isNodeInsideFunctionDef(ctx);
+    if (inside_function) {
+        logger_.debug("Skipping list comprehension evaluation at line " + std::to_string(line) + " (inside function definition, defining_function_=false)");
+        return any(true);
+    }
+    
     // 检查是否为列表推导式
-    if (ctx->FOR()) {
+    auto compCtx = ctx->comprehension();
+    if (compCtx) {
         logger_.debug("List comprehension detected");
-        auto expressions = ctx->expression();
-        if (expressions.empty() || !ctx->IDENTIFIER()) {
+        auto outputExpr = compCtx->expression();
+        if (!outputExpr) {
             reportError("Invalid list comprehension syntax", ctx);
             return any();
         }
-        auto outputExpr = expressions[0];
 
         struct CompClause {
             std::string var;
@@ -3239,34 +3973,43 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
             PyScriptParser::ExpressionContext* cond; // may be nullptr
         };
         std::vector<CompClause> clauses;
-        auto children = ctx->children;
-        size_t idx = 0;
-        // skip first expression child
-        if (!children.empty() && dynamic_cast<PyScriptParser::ExpressionContext*>(children[0]) == outputExpr) {
-            idx = 1;
-        }
-        while (idx < children.size()) {
-            auto t_for = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-            if (!t_for || t_for->getSymbol()->getType() != PyScriptParser::FOR) { ++idx; continue; }
-            if (idx + 3 >= children.size()) break;
-            auto idNode = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx + 1]);
-            auto iterExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 3]);
-            if (!idNode || idNode->getSymbol()->getType() != PyScriptParser::IDENTIFIER || !iterExprNode) break;
-            CompClause clause{ idNode->getText(), iterExprNode, nullptr };
-            idx += 4; // FOR IDENTIFIER IN expr
-            if (idx + 1 < children.size()) {
-                auto t_if = dynamic_cast<antlr4::tree::TerminalNode*>(children[idx]);
-                auto condExprNode = dynamic_cast<PyScriptParser::ExpressionContext*>(children[idx + 1]);
-                if (t_if && t_if->getSymbol()->getType() == PyScriptParser::IF && condExprNode) {
-                    clause.cond = condExprNode;
-                    idx += 2;
-                }
-            }
-            clauses.push_back(std::move(clause));
-        }
-        if (clauses.empty()) {
-            reportError("Invalid list comprehension syntax", ctx);
+        
+        // 使用 compFor() 方法获取所有 compFor 子句
+        auto compFors = compCtx->compFor();
+        if (compFors.empty()) {
+            reportError("Invalid list comprehension syntax: no compFor clauses", ctx);
             return any();
+        }
+        
+        for (auto compForCtx : compFors) {
+            // compFor: FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
+            auto identifiers = compForCtx->IDENTIFIER();
+            if (identifiers.empty()) {
+                reportError("Invalid compFor: missing identifier", ctx);
+                return any();
+            }
+            
+            // 获取第一个标识符（支持多个标识符的情况，但这里先只处理第一个）
+            std::string varName = identifiers[0]->getText();
+            
+            // 获取 IN 后面的表达式
+            auto iterExprs = compForCtx->expression();
+            if (iterExprs.empty()) {
+                reportError("Invalid compFor: missing iterable expression", ctx);
+                return any();
+            }
+            
+            // 第一个 expression 是迭代对象
+            PyScriptParser::ExpressionContext* iterExpr = iterExprs[0];
+            
+            // 检查是否有 IF 条件
+            PyScriptParser::ExpressionContext* condExpr = nullptr;
+            if (compForCtx->IF() && iterExprs.size() > 1) {
+                // 如果有 IF token，第二个 expression 是条件
+                condExpr = iterExprs[1];
+            }
+            
+            clauses.push_back({varName, iterExpr, condExpr});
         }
         
         auto listVal = ScriptValue::createList();
@@ -3291,6 +4034,18 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
             if (!iterVal) {
                 reportError("Cannot evaluate list comprehension iterable", ctx);
                 return false;
+            }
+            // 检查是否为 None 或 null
+            if (iterVal->isNull()) {
+                reportError("List comprehension iterable is null (variable may not be assigned correctly)", ctx);
+                return false;
+            }
+            if (iterVal->isPythonObject()) {
+                py::object pyObj = iterVal->toPythonObject();
+                if (py::isinstance<py::none>(pyObj)) {
+                    reportError("List comprehension iterable is None (variable may not be assigned correctly)", ctx);
+                    return false;
+                }
             }
             try {
                 bool useDirect = false;
@@ -3335,27 +4090,32 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
                 if (!useDirect) {
                     // Python 迭代慢路径
                     iter_py_count_++;
-                    for (auto item : toIterator(iterVal)) {
-                        py::object obj = py::reinterpret_borrow<py::object>(item);
-                        py_to_sv_count_++;
-                        variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
-                        if (clause.cond) {
-                            auto condVal = evaluateExpression(clause.cond);
-                            if (!condVal) {
-                                reportError("Cannot evaluate list comprehension filter", ctx);
-                                return false;
+                    try {
+                        for (auto item : toIterator(iterVal)) {
+                            py::object obj = py::reinterpret_borrow<py::object>(item);
+                            py_to_sv_count_++;
+                            variable_manager_.setVariable(clause.var, ScriptValue::fromPythonObject(obj));
+                            if (clause.cond) {
+                                auto condVal = evaluateExpression(clause.cond);
+                                if (!condVal) {
+                                    reportError("Cannot evaluate list comprehension filter", ctx);
+                                    return false;
+                                }
+                                if (!expression_evaluator_.isTruthy(condVal)) {
+                                    continue;
+                                }
                             }
-                            if (!expression_evaluator_.isTruthy(condVal)) {
-                                continue;
-                            }
+                            if (!evalClause(depth + 1)) return false;
                         }
-                        if (!evalClause(depth + 1)) return false;
+                    } catch (const runtime_error& e) {
+                        reportError("Failed to iterate over list comprehension iterable: " + string(e.what()), ctx);
+                        return false;
                     }
                 }
         } catch (const py::error_already_set& e) {
             reportError("Failed to evaluate list comprehension: " + string(e.what()), ctx);
-                return false;
-            }
+            return false;
+        }
             return true;
         };
 
@@ -3665,6 +4425,60 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
 any AstVisitor::visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) {
     // async def 与普通 def 等价处理
     return visitFunctionDef(ctx->functionDef());
+}
+std::any AstVisitor::visitShiftExpr(PyScriptParser::ShiftExprContext *ctx){
+    auto additiveExprs = ctx->additive();
+    if (additiveExprs.size() == 1) {
+        return this->visit(additiveExprs[0]);
+    }
+    
+    // 处理移位表达式
+    shared_ptr<ScriptValue> result;
+    for (size_t i = 0; i < additiveExprs.size(); ++i) {
+        auto valAny = visit(additiveExprs[i]);
+        shared_ptr<ScriptValue> val;
+        try {
+            val = any_cast<shared_ptr<ScriptValue>>(valAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate shift expression", ctx);
+            return any();
+        }
+        if (!val) {
+            reportError("Cannot evaluate shift expression", ctx);
+            return any();
+        }
+        
+        if (i == 0) {
+            result = val;
+        } else {
+            // 检查操作符类型
+            string op;
+            size_t opIndex = 2*i - 1;
+            if (opIndex < ctx->children.size()) {
+                auto opChild = ctx->children[opIndex];
+                auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(opChild);
+                if (terminal) {
+                    int tokenType = terminal->getSymbol()->getType();
+                    if (tokenType == PyScriptParser::LEFT_SHIFT) {
+                        op = "<<";
+                    } else if (tokenType == PyScriptParser::RIGHT_SHIFT) {
+                        op = ">>";
+                    } else {
+                        op = opChild->getText();
+                    }
+                } else {
+                    op = opChild->getText();
+                }
+            } else {
+                reportError("Missing operator in shift expression", ctx);
+                return any();
+            }
+            
+            result = expression_evaluator_.evaluateBinaryOperation(op, result, val);
+        }
+    }
+    
+    return any(result);
 }
 
 any AstVisitor::visitAsyncForStatement(PyScriptParser::AsyncForStatementContext *ctx) {

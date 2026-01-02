@@ -248,6 +248,34 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             }
         } else if (op == "in") {
             return contains(right, left);
+        } else if (op == "not in") {
+            auto result = contains(right, left);
+            if (!result) {
+                return ScriptValue::createBoolean(true);
+            }
+            return ScriptValue::createBoolean(!result->toBoolean());
+        } else if (op == "is") {
+            // is运算符：检查对象身份（id）
+            if (left->isPythonObject() && right->isPythonObject()) {
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                bool is_same = lhs.ptr() == rhs.ptr();
+                return ScriptValue::createBoolean(is_same);
+            } else {
+                // 对于非Python对象，使用==比较
+                return evaluateBinaryOperation("==", left, right);
+            }
+        } else if (op == "is not") {
+            // is not运算符：检查对象身份不相等
+            if (left->isPythonObject() && right->isPythonObject()) {
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                bool is_same = lhs.ptr() == rhs.ptr();
+                return ScriptValue::createBoolean(!is_same);
+            } else {
+                // 对于非Python对象，使用!=比较
+                return evaluateBinaryOperation("!=", left, right);
+            }
         } else if (op == "&&") {
             // 逻辑与，短路
             if (!isTruthy(left)) {

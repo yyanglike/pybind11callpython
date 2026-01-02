@@ -89,6 +89,8 @@ smallStatement
     | expressionStatement
     | importStatement
     | passStatement
+    | BREAK
+    | CONTINUE
     ;
 
 compoundStatement
@@ -201,7 +203,7 @@ parameter
 
 ifStatement
     : IF expression COLON suite
-      (ELSE IF expression COLON suite)*
+      (ELIF expression COLON suite)*
       (ELSE COLON suite)?
     ;
 
@@ -221,6 +223,7 @@ passStatement
     : PASS
     ;
 
+
 returnStatement
     : RETURN expression?
     ;
@@ -235,7 +238,7 @@ importItem
     ;
 
 assignment
-    : (IDENTIFIER | attributeAccess | subscriptAccess) ASSIGN expression
+    : (IDENTIFIER | attributeAccess | subscriptAccess) (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | FLOOR_DIV_ASSIGN | MOD_ASSIGN | POW_ASSIGN | BITWISE_AND_ASSIGN | BITWISE_OR_ASSIGN | BITWISE_XOR_ASSIGN | LEFT_SHIFT_ASSIGN | RIGHT_SHIFT_ASSIGN) expression
     ;
 
 expressionStatement
@@ -247,7 +250,11 @@ expressionStatement
  * ========================= */
 
 expression
-    : logicalOr
+    : conditionalExpression # conditionalExpr
+    ;
+
+conditionalExpression
+    : logicalOr (IF logicalOr ELSE conditionalExpression)? # conditional
     ;
 
 logicalOr
@@ -255,7 +262,19 @@ logicalOr
     ;
 
 logicalAnd
-    : equality (AND equality)*
+    : bitwiseOr (AND bitwiseOr)*
+    ;
+
+bitwiseOr
+    : bitwiseXor (BITWISE_OR bitwiseXor)* # bitwiseOrExpr
+    ;
+
+bitwiseXor
+    : bitwiseAnd (BITWISE_XOR bitwiseAnd)* # bitwiseXorExpr
+    ;
+
+bitwiseAnd
+    : equality (BITWISE_AND equality)* # bitwiseAndExpr
     ;
 
 equality
@@ -263,7 +282,11 @@ equality
     ;
 
 comparison
-    : additive ((LT | LE | GT | GE | IN) additive)*
+    : shift ((LT | LE | GT | GE | IN | NOT_IN | IS | IS_NOT) shift)*
+    ;
+
+shift
+    : additive ((LEFT_SHIFT | RIGHT_SHIFT) additive)* # shiftExpr
     ;
 
 additive
@@ -271,7 +294,7 @@ additive
     ;
 
 multiplicative
-    : power ((MUL | DIV | MOD) power)*
+    : power ((MUL | DIV | FLOOR_DIV | MOD) power)*
     ;
 
 power
@@ -279,7 +302,7 @@ power
     ;
 
 unary
-    : (NOT | PLUS | MINUS)? atom
+    : (NOT | PLUS | MINUS | BITWISE_NOT)? atom
     | awaitExpr
     ;
 
@@ -291,6 +314,7 @@ primary
     : literal
     | IDENTIFIER
     | LPAREN expression RPAREN
+    | LPAREN tupleLiteral RPAREN
     | listLiteral
     | dictLiteral
     | setLiteral
@@ -298,6 +322,10 @@ primary
     | newExpression
     | lambdaExpression
     | awaitExpr
+    ;
+
+tupleLiteral
+    : expression (COMMA expression)* COMMA? # tuple
     ;
 
 newExpression
@@ -352,7 +380,15 @@ listLiteral
 
 listElements
     : expression (COMMA expression)* COMMA?
-    | expression FOR IDENTIFIER IN expression (IF expression)?
+    | comprehension
+    ;
+
+comprehension
+    : expression (compFor)+
+    ;
+
+compFor
+    : FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
     ;
 
 dictLiteral
@@ -360,7 +396,7 @@ dictLiteral
     ;
 
 dictComprehension
-    : expression COLON expression FOR IDENTIFIER IN expression (IF expression)?
+    : expression COLON expression (compFor)+
     ;
 
 dictItem
@@ -374,11 +410,11 @@ setLiteral
 
 setElements
     : expression (COMMA expression)* COMMA?
-    | expression FOR IDENTIFIER IN expression (IF expression)?
+    | comprehension
     ;
 
 generatorExpression
-    : LPAREN expression FOR IDENTIFIER IN expression (IF expression)? RPAREN
+    : LPAREN comprehension RPAREN
     ;
 
 literal
@@ -413,6 +449,7 @@ dottedName
 DEF     : 'def';
 IF      : 'if';
 ELSE    : 'else';
+ELIF    : 'elif';
 FOR     : 'for';
 WHILE   : 'while';
 RETURN  : 'return';
@@ -421,6 +458,8 @@ FROM    : 'from';
 AS      : 'as';
 IN      : 'in';
 PASS    : 'pass';
+BREAK   : 'break';
+CONTINUE: 'continue';
 NEW     : 'new';
 LAMBDA  : 'lambda';
 
@@ -441,6 +480,10 @@ AND     : 'and';
 OR      : 'or';
 NOT     : 'not';
 
+IS      : 'is';
+IS_NOT  : 'is not';
+NOT_IN  : 'not in';
+
 /* =========================
  * 操作符 / 分隔符
  * ========================= */
@@ -449,6 +492,7 @@ PLUS    : '+';
 MINUS   : '-';
 MUL     : '*';
 DIV     : '/';
+FLOOR_DIV : '//';
 MOD     : '%';
 
 EQ      : '==';
@@ -458,7 +502,26 @@ LE      : '<=';
 GT      : '>';
 GE      : '>=';
 
+LEFT_SHIFT  : '<<';
+RIGHT_SHIFT : '>>';
+BITWISE_AND : '&';
+BITWISE_OR  : '|';
+BITWISE_XOR : '^';
+BITWISE_NOT : '~';
+
 ASSIGN  : '=';
+PLUS_ASSIGN    : '+=';
+MINUS_ASSIGN   : '-=';
+MUL_ASSIGN     : '*=';
+DIV_ASSIGN     : '/=';
+FLOOR_DIV_ASSIGN : '//=';
+MOD_ASSIGN     : '%=';
+POW_ASSIGN     : '**=';
+BITWISE_AND_ASSIGN : '&=';
+BITWISE_OR_ASSIGN  : '|=';
+BITWISE_XOR_ASSIGN : '^=';
+LEFT_SHIFT_ASSIGN  : '<<=';
+RIGHT_SHIFT_ASSIGN : '>>=';
 SEMI    : ';';
 
 LPAREN  : '(' { opened++; };
@@ -527,6 +590,8 @@ FLOAT
 STRING
     : '"' (~["\\\r\n] | '\\' .)* '"'
     | '\'' (~['\\\r\n] | '\\' .)* '\''
+    | '"""' (~["] | '"' ~["] | '""' ~["])* '"""'
+    | '\'\'\'' (~['] | '\'' ~['] | '\'\'' ~['])* '\'\'\''
     ;
 
 /* =========================
