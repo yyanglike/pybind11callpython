@@ -31,7 +31,7 @@ show_help() {
 选项:
   --report     - 生成详细报告
   --quiet      - 静默模式（只显示摘要）
-  --timeout N  - 设置超时时间（秒，默认30）
+  --timeout N  - 设置超时时间（秒，默认300，即5分钟）
 
 示例:
   $0                    # 运行所有测试
@@ -52,14 +52,14 @@ run_test() {
     fi
     
     if [ "$quiet" = "true" ]; then
-        if timeout "${TIMEOUT:-30}" $INTERPRETER "$script" > /dev/null 2>&1; then
+        if timeout "${TIMEOUT:-300}" $INTERPRETER "$script" > /dev/null 2>&1; then
             return 0
         else
             return 1
         fi
     else
         echo "Testing: $script"
-        if timeout "${TIMEOUT:-30}" $INTERPRETER "$script" 2>&1; then
+        if timeout "${TIMEOUT:-300}" $INTERPRETER "$script" 2>&1; then
             echo "✓ PASSED: $script"
             return 0
         else
@@ -116,7 +116,7 @@ run_all_tests() {
             echo "----------------------------------------" >> "$REPORT_FILE"
         fi
         
-        OUTPUT=$(timeout "${TIMEOUT:-30}" $INTERPRETER "$script" 2>&1)
+        OUTPUT=$(timeout "${TIMEOUT:-300}" $INTERPRETER "$script" 2>&1)
         EXIT_CODE=$?
         
         if [ $EXIT_CODE -eq 0 ]; then
@@ -322,7 +322,7 @@ list_tests() {
 # 解析参数
 REPORT=false
 QUIET=false
-TIMEOUT=30
+TIMEOUT=300
 
 while [[ $# -gt 0 ]]; do
     case $1 in

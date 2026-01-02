@@ -1321,15 +1321,7 @@ any AstVisitor::visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) {
             }
         }
         
-        // 导入Python模块
-        logger_.debug("Calling py::module_::import...");
-        py::module_ module = py::module_::import(moduleName.c_str());
-        logger_.info(std::string("Module imported successfully: ") + moduleName);
-        
-        // 存储模块到VariableManager
-        variable_manager_.importModule(moduleName, module);
-        
-        // 存储模块引用到变量
+        // 计算变量名（用于检查是否已存在）
         string varName;
         if (!alias.empty()) {
             varName = alias;
@@ -1339,8 +1331,30 @@ any AstVisitor::visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) {
             varName = (dotPos != string::npos) ? 
                       moduleName.substr(dotPos + 1) : moduleName;
         }
-        variable_manager_.setVariable(varName, ScriptValue::createPythonObject(module));
-        logger_.debug(std::string("Module stored in variables as: ") + varName);
+        
+        // 检查模块是否已导入（缓存检查）
+        py::module_ module;
+        if (variable_manager_.hasModule(moduleName)) {
+            // 模块已导入，从缓存中获取（静默使用缓存，减少日志噪音）
+            module = variable_manager_.getModule(moduleName);
+            logger_.debug(std::string("Module ") + moduleName + " already imported, using cached version");
+        } else {
+            // 模块未导入，执行导入
+            logger_.debug("Calling py::module_::import...");
+            module = py::module_::import(moduleName.c_str());
+            logger_.info(std::string("Module imported successfully: ") + moduleName);
+            
+            // 存储模块到VariableManager（缓存）
+            variable_manager_.importModule(moduleName, module);
+        }
+        
+        // 存储模块引用到变量（如果变量不存在或需要更新）
+        if (!variable_manager_.hasVariable(varName)) {
+            variable_manager_.setVariable(varName, ScriptValue::createPythonObject(module));
+            logger_.debug(std::string("Module stored in variables as: ") + varName);
+        } else {
+            logger_.debug(std::string("Variable ") + varName + " already exists, skipping variable assignment");
+        }
         
         // 即使在函数定义阶段，也存储变量，以便后续解析能够找到
         if (defining_function_) {
@@ -1381,12 +1395,20 @@ any AstVisitor::visitFromImport(PyScriptParser::FromImportContext *ctx) {
         string moduleName = dottedNameCtx->getText();
         logger_.debug(std::string("From import module: ") + moduleName);
         
-        // 导入整个模块
-        py::module_ module = py::module_::import(moduleName.c_str());
-        logger_.info(std::string("Module imported successfully: ") + moduleName);
-        
-        // 存储模块到VariableManager（可选，但为了完整性）
-        variable_manager_.importModule(moduleName, module);
+        // 检查模块是否已导入（缓存检查）
+        py::module_ module;
+        if (variable_manager_.hasModule(moduleName)) {
+            // 模块已导入，从缓存中获取（静默使用缓存，减少日志噪音）
+            module = variable_manager_.getModule(moduleName);
+            logger_.debug(std::string("Module ") + moduleName + " already imported, using cached version");
+        } else {
+            // 模块未导入，执行导入
+            module = py::module_::import(moduleName.c_str());
+            logger_.info(std::string("Module imported successfully: ") + moduleName);
+            
+            // 存储模块到VariableManager（缓存）
+            variable_manager_.importModule(moduleName, module);
+        }
         
         // 设置当前from-import的模块，以便visitImportItem使用
         current_from_module_ = module;

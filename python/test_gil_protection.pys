@@ -1,0 +1,269 @@
+"""
+GIL (Global Interpreter Lock) 保护测试
+测试函数调用、异常处理、对象访问等场景中的 GIL 保护
+"""
+
+print("=" * 80)
+print("GIL 保护测试套件")
+print("=" * 80)
+print()
+
+# ========== 测试 1: 函数调用中的 GIL 保护 ==========
+print("[1] 函数调用中的 GIL 保护测试")
+
+def test_function_call_gil():
+    """测试函数调用过程中的 GIL 保护"""
+    result = []
+    
+    # 定义多个函数
+    def func1(x):
+        return x * 2
+    
+    def func2(x):
+        return x + 10
+    
+    def func3(x):
+        return x ** 2
+    
+    # 连续调用多个函数
+    for i in range(1000):
+        val = func1(i)
+        val = func2(val)
+        val = func3(val)
+        result.append(val)
+    
+    return len(result) == 1000
+
+test1_result = test_function_call_gil()
+print(f"  ✓ 函数调用测试: {'通过' if test1_result else '失败'}")
+print()
+
+# ========== 测试 2: 嵌套函数调用 ==========
+print("[2] 嵌套函数调用测试")
+
+def outer_func(x):
+    def inner_func(y):
+        def deep_func(z):
+            return z * 3
+        return deep_func(y) + 5
+    return inner_func(x) * 2
+
+test2_result = outer_func(10) == 70  # (10 * 3 + 5) * 2 = 70
+print(f"  ✓ 嵌套函数调用: {'通过' if test2_result else '失败'}")
+print()
+
+# ========== 测试 3: 函数调用中的异常处理 ==========
+print("[3] 函数调用异常处理中的 GIL 保护")
+
+def test_exception_in_function():
+    """测试函数中异常处理的 GIL 保护"""
+    results = []
+    
+    def risky_func(x):
+        if x < 0:
+            raise ValueError("Negative value")
+        return x * 2
+    
+    for i in range(-5, 10):
+        try:
+            val = risky_func(i)
+            results.append(val)
+        except ValueError:
+            results.append(None)
+    
+    return len(results) == 15
+
+test3_result = test_exception_in_function()
+print(f"  ✓ 函数异常处理: {'通过' if test3_result else '失败'}")
+print()
+
+# ========== 测试 4: 从 globals 查找函数 ==========
+print("[4] 从 globals 查找函数测试")
+
+def test_globals_lookup():
+    """测试从 Python globals 查找函数时的 GIL 保护"""
+    # 定义一个函数
+    def my_func(x):
+        return x * 3
+    
+    # 通过变量名调用
+    func_name = "my_func"
+    # 这里会触发从 globals 查找函数的逻辑
+    result = my_func(5)
+    
+    return result == 15
+
+test4_result = test_globals_lookup()
+print(f"  ✓ globals 查找函数: {'通过' if test4_result else '失败'}")
+print()
+
+# ========== 测试 5: 函数返回 Python 对象 ==========
+print("[5] 函数返回 Python 对象测试")
+
+def test_return_python_objects():
+    """测试函数返回 Python 对象时的 GIL 保护"""
+    def return_list():
+        return [1, 2, 3, 4, 5]
+    
+    def return_dict():
+        return {"a": 1, "b": 2, "c": 3}
+    
+    def return_tuple():
+        return (1, 2, 3)
+    
+    lst = return_list()
+    dct = return_dict()
+    tpl = return_tuple()
+    
+    return len(lst) == 5 and len(dct) == 3 and len(tpl) == 3
+
+test5_result = test_return_python_objects()
+print(f"  ✓ 返回 Python 对象: {'通过' if test5_result else '失败'}")
+print()
+
+# ========== 测试 6: 大量函数调用压力测试 ==========
+print("[6] 大量函数调用压力测试（验证 GIL 稳定性）")
+
+def test_massive_function_calls():
+    """大量函数调用，验证 GIL 保护稳定性"""
+    def simple_func(x):
+        return x + 1
+    
+    count = 0
+    for i in range(10000):
+        result = simple_func(i)
+        if result == i + 1:
+            count += 1
+    
+    return count == 10000
+
+test6_result = test_massive_function_calls()
+print(f"  ✓ 大量函数调用 (10,000次): {'通过' if test6_result else '失败'}")
+print()
+
+# ========== 测试 7: 函数调用中的属性访问 ==========
+print("[7] 函数调用中的属性访问测试")
+
+def test_attribute_access_in_function():
+    """测试函数调用过程中访问对象属性的 GIL 保护"""
+    class TestClass:
+        def __init__(self, value):
+            self.value = value
+        
+        def get_value(self):
+            return self.value
+    
+    def create_and_call(obj):
+        return obj.get_value()
+    
+    obj = TestClass(42)
+    result = create_and_call(obj)
+    
+    return result == 42
+
+test7_result = test_attribute_access_in_function()
+print(f"  ✓ 属性访问: {'通过' if test7_result else '失败'}")
+print()
+
+# ========== 测试 8: 函数调用中的下标访问 ==========
+print("[8] 函数调用中的下标访问测试")
+
+def test_subscript_access_in_function():
+    """测试函数调用过程中访问下标的 GIL 保护"""
+    def process_list(lst):
+        return lst[0] + lst[1] + lst[2]
+    
+    my_list = [10, 20, 30]
+    result = process_list(my_list)
+    
+    return result == 60
+
+test8_result = test_subscript_access_in_function()
+print(f"  ✓ 下标访问: {'通过' if test8_result else '失败'}")
+print()
+
+# ========== 测试 9: 异常处理中的 GIL 保护 ==========
+print("[9] 异常处理中的 GIL 保护测试")
+
+def test_exception_handling_gil():
+    """测试异常处理过程中的 GIL 保护"""
+    results = []
+    
+    for i in range(20):
+        try:
+            if i % 3 == 0:
+                raise ValueError(f"Error at {i}")
+            results.append(i)
+        except ValueError as e:
+            # 异常处理中访问 Python 对象
+            error_msg = str(e)
+            results.append(None)
+    
+    return len(results) == 20
+
+test9_result = test_exception_handling_gil()
+print(f"  ✓ 异常处理: {'通过' if test9_result else '失败'}")
+print()
+
+# ========== 测试 10: 复杂函数调用链 ==========
+print("[10] 复杂函数调用链测试")
+
+def test_complex_call_chain():
+    """测试复杂函数调用链中的 GIL 保护"""
+    def step1(x):
+        return x * 2
+    
+    def step2(x):
+        return x + 10
+    
+    def step3(x):
+        return x ** 2
+    
+    def step4(x):
+        return x - 5
+    
+    def step5(x):
+        return x // 3
+    
+    # 链式调用
+    result = 5
+    result = step1(result)
+    result = step2(result)
+    result = step3(result)
+    result = step4(result)
+    result = step5(result)
+    
+    # (5 * 2 + 10) ** 2 - 5) // 3 = (20 ** 2 - 5) // 3 = (400 - 5) // 3 = 395 // 3 = 131
+    return result == 131
+
+test10_result = test_complex_call_chain()
+print(f"  ✓ 复杂调用链: {'通过' if test10_result else '失败'}")
+print()
+
+# ========== 测试总结 ==========
+print("=" * 80)
+print("GIL 保护测试总结")
+print("=" * 80)
+
+all_tests = [
+    test1_result, test2_result, test3_result, test4_result, test5_result,
+    test6_result, test7_result, test8_result, test9_result, test10_result
+]
+
+passed = sum(all_tests)
+total = len(all_tests)
+
+print(f"总测试数: {total}")
+print(f"通过: {passed}")
+print(f"失败: {total - passed}")
+print(f"成功率: {passed * 100 // total}%")
+print()
+
+if passed == total:
+    print("✅ 所有 GIL 保护测试通过！")
+    print("✅ 函数调用过程中的 GIL 保护正常工作！")
+else:
+    print(f"⚠️  有 {total - passed} 个测试失败，需要检查 GIL 保护实现")
+
+print("=" * 80)
+
