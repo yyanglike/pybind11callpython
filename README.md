@@ -96,9 +96,44 @@ make uninstall
 ```bash
 ./build/run_pys_script path/to/script.pys
 ```
-示例批量运行（项目根目录下所有 `.pys`）：
+
+### 运行测试
+
+项目提供了统一的测试脚本：
+
 ```bash
-for f in *.pys python/*.pys; do ./build/run_pys_script "$f" || break; done
+# 运行所有测试
+./scripts/test.sh
+
+# 运行新功能测试
+./scripts/test.sh new
+
+# 运行简单测试
+./scripts/test.sh simple
+
+# 列出所有测试用例
+./scripts/test.sh list
+
+# 运行指定测试并生成报告
+./scripts/test.sh all --report
+```
+
+### 缓存性能测试
+
+```bash
+# 快速缓存性能对比（前10个用例）
+./scripts/test_cache.sh quick
+
+# 完整缓存一致性验证（所有用例）
+./scripts/test_cache.sh full
+
+# 对比指定脚本的缓存性能
+./scripts/test_cache.sh compare --script python/test_cache_performance.pys
+```
+
+示例批量运行（python 目录下所有 `.pys`）：
+```bash
+for f in python/*.pys; do ./build/run_pys_script "$f" || break; done
 ```
 
 ## 支持的语言特性（已实现）
