@@ -1,0 +1,39 @@
+# 测试 assert 语句
+
+print("=== 测试 assert 语句 ===")
+
+# 1. 基本断言（通过）
+x = 10
+assert x > 0, "x should be positive"
+print("✓ Assertion 1 passed: x > 0")
+
+# 2. 断言（通过，无消息）
+assert x == 10
+print("✓ Assertion 2 passed: x == 10")
+
+# 3. 测试失败的断言（带消息）
+try:
+    assert x < 0, "x should be negative"
+    print("✗ This should not be printed")
+except AssertionError as e:
+    print(f"✓ Caught AssertionError: {e}")
+
+# 4. 测试失败的断言（无消息）
+try:
+    assert x == 0
+    print("✗ This should not be printed")
+except AssertionError as e:
+    print(f"✓ Caught AssertionError (no message): {e}")
+
+# 5. 测试列表断言
+my_list = [1, 2, 3]
+assert len(my_list) == 3
+print("✓ Assertion 3 passed: len(my_list) == 3")
+
+# 6. 测试字典断言
+my_dict = {"a": 1, "b": 2}
+assert "a" in my_dict
+print("✓ Assertion 4 passed: 'a' in my_dict")
+
+print("\n=== 所有 assert 测试完成 ===")
+

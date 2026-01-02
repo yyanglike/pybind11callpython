@@ -87,6 +87,8 @@ public:
 
     virtual std::any visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *context) = 0;
 
+    virtual std::any visitAssertStatement(PyScriptParser::AssertStatementContext *context) = 0;
+
     virtual std::any visitSimpleImport(PyScriptParser::SimpleImportContext *context) = 0;
 
     virtual std::any visitFromImport(PyScriptParser::FromImportContext *context) = 0;

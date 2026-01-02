@@ -1,0 +1,25 @@
+print("测试 for 循环解包...")
+for k, v in {"a": 1, "b": 2}.items():
+    print(f"{k}={v}")
+
+# 2. 测试赋值解包
+print("\n测试赋值解包...")
+a, b = 1, 2
+print(f"a={a}, b={b}")
+
+x, y = (3, 4)
+print(f"x={x}, y={y}")
+
+# 3. 测试类型注解（函数参数）
+print("\n测试类型注解...")
+def test_func(n: int) -> int:
+    return n * 2
+
+result = test_func(5)
+print(f"result={result}")
+
+# 4. 测试变量类型注解
+print("\n测试变量类型注解...")
+value: int = 10
+print(f"value={value}")
+

@@ -540,6 +540,11 @@ any ScriptInterpreter::visitNonlocalStatement(PyScriptParser::NonlocalStatementC
     return ast_visitor_.visitNonlocalStatement(ctx);
 }
 
+any ScriptInterpreter::visitAssertStatement(PyScriptParser::AssertStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitAssertStatement(ctx);
+}
+
 any ScriptInterpreter::visitYieldExpr(PyScriptParser::YieldExprContext *ctx) {
     // 委托给AstVisitor处理
     return ast_visitor_.visitYieldExpr(ctx);

@@ -406,6 +406,8 @@ any AstVisitor::visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) 
         return visit(ctx->globalStatement());
     } else if (ctx->nonlocalStatement()) {
         return visit(ctx->nonlocalStatement());
+    } else if (ctx->assertStatement()) {
+        return visit(ctx->assertStatement());
     } else {
         // 检查是否是 BREAK 或 CONTINUE token
         // 由于 ANTLR 没有为这些规则生成单独的 context，我们通过检查 children 来识别
@@ -1169,10 +1171,69 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
         return any(true);
     }
     
-    // FOR IDENTIFIER IN expression COLON suite
-    auto varName = ctx->IDENTIFIER()->getText();
+    // FOR (IDENTIFIER | tupleLiteral) IN expression COLON suite
     auto iterableExpr = ctx->expression();
     auto suiteCtx = ctx->suite();
+    
+    // 检查是单个标识符还是元组解包
+    bool isTupleUnpack = false;
+    string varName;
+    vector<string> tupleVarNames;
+    
+    if (ctx->IDENTIFIER()) {
+        varName = ctx->IDENTIFIER()->getText();
+    } else if (ctx->tupleLiteral()) {
+        isTupleUnpack = true;
+        auto tupleCtx = ctx->tupleLiteral();
+        // tupleLiteral 有两个子规则：multiElementTuple 和 singleElementTuple
+        // 辅助函数：从表达式中提取标识符名称
+        auto extractIdentifier = [this, ctx](PyScriptParser::ExpressionContext* exprCtx) -> string {
+            // ExpressionContext 有两个子类：AssignmentExprContext 和 YieldExprContext
+            // 使用 dynamic_cast 或 visit 来访问
+            // 简化处理：直接访问表达式的 primary 节点
+            // 使用 visit 方法访问表达式，然后检查 AST 结构
+            // 更简单的方法：直接递归查找 IDENTIFIER token
+            std::function<string(antlr4::tree::ParseTree*)> findIdentifier;
+            findIdentifier = [&findIdentifier](antlr4::tree::ParseTree* node) -> string {
+                if (!node) return "";
+                // 检查是否是 TerminalNode，且是 IDENTIFIER
+                if (auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(node)) {
+                    if (terminal->getSymbol()->getType() == PyScriptParser::IDENTIFIER) {
+                        return terminal->getText();
+                    }
+                }
+                // 递归查找子节点
+                for (auto child : node->children) {
+                    string result = findIdentifier(child);
+                    if (!result.empty()) return result;
+                }
+                return "";
+            };
+            return findIdentifier(exprCtx);
+        };
+        
+        vector<PyScriptParser::ExpressionContext*> tupleExprs;
+        if (auto multiCtx = dynamic_cast<PyScriptParser::MultiElementTupleContext*>(tupleCtx)) {
+            tupleExprs = multiCtx->expression();
+        } else if (auto singleCtx = dynamic_cast<PyScriptParser::SingleElementTupleContext*>(tupleCtx)) {
+            auto exprCtx = singleCtx->expression();
+            if (exprCtx) {
+                tupleExprs.push_back(exprCtx);
+            }
+        }
+        
+        for (auto exprCtx : tupleExprs) {
+            string varName = extractIdentifier(exprCtx);
+            if (varName.empty()) {
+                reportError("Tuple unpacking in for loop requires identifiers", ctx);
+                return any();
+            }
+            tupleVarNames.push_back(varName);
+        }
+    } else {
+        reportError("Invalid for statement: missing identifier or tuple", ctx);
+        return any();
+    }
     
     if (!iterableExpr || !suiteCtx) {
         reportError("Invalid for statement", ctx);
@@ -1185,17 +1246,97 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
         return any();
     }
     
+    // 检查是否为 None
+    if (iterableValue->isNull()) {
+        reportError("Cannot iterate over None", ctx);
+        return any();
+    }
+    
     break_flag_ = false;
+    
+    // 处理元组解包的辅助函数
+    auto setLoopVariables = [&](py::object item) {
+        if (isTupleUnpack) {
+            // 元组解包：for k, v in items
+            // item 已经是元组 (key, value)，需要解包
+            try {
+                py::gil_scoped_acquire acquire;
+                // item 应该已经是可迭代的元组，直接迭代
+                py::object iter_obj = py::iter(item);
+                for (size_t i = 0; i < tupleVarNames.size(); ++i) {
+                    py::object unpackedItem = py::reinterpret_borrow<py::object>(PyIter_Next(iter_obj.ptr()));
+                    if (!unpackedItem.ptr()) {
+                        // 检查是否有异常
+                        if (PyErr_Occurred()) {
+                            PyObject* exc_type, *exc_value, *exc_traceback;
+                            PyErr_Fetch(&exc_type, &exc_value, &exc_traceback);
+                            if (exc_type && PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration)) {
+                                PyErr_Clear();
+                                reportError("Not enough items to unpack in for loop", ctx);
+                                return false;
+                            } else {
+                                PyErr_Restore(exc_type, exc_value, exc_traceback);
+                                throw py::error_already_set();
+                            }
+                        }
+                        reportError("Not enough items to unpack in for loop", ctx);
+                        return false;
+                    }
+                    auto itemValue = ScriptValue::createPythonObject(unpackedItem);
+                    variable_manager_.setVariable(tupleVarNames[i], itemValue);
+                }
+            } catch (const py::error_already_set& e) {
+                {
+                    py::gil_scoped_acquire acquire;
+                    PyErr_Clear();
+                }
+                reportError("Cannot unpack item in for loop: " + string(e.what()), ctx);
+                return false;
+            }
+        } else {
+            // 单个变量：for x in items
+            auto itemValue = ScriptValue::createPythonObject(item);
+            variable_manager_.setVariable(varName, itemValue);
+        }
+        return true;
+    };
+    
     // 转换为Python可迭代对象
     if (iterableValue->isPythonObject()) {
         py::object pyIterable = iterableValue->getPythonObject();
+        // 检查是否为 None
+        if (py::isinstance<py::none>(pyIterable)) {
+            reportError("Cannot iterate over None", ctx);
+            return any();
+        }
         try {
-            for (auto item : pyIterable) {
+            // 确保是可迭代对象
+            py::object iter_obj = py::iter(pyIterable);
+            while (true) {
+                py::object item = py::reinterpret_borrow<py::object>(PyIter_Next(iter_obj.ptr()));
+                if (!item.ptr()) {
+                    // 检查是否有异常
+                    if (PyErr_Occurred()) {
+                        PyObject* exc_type, *exc_value, *exc_traceback;
+                        PyErr_Fetch(&exc_type, &exc_value, &exc_traceback);
+                        if (exc_type && PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration)) {
+                            // 正常结束迭代
+                            PyErr_Clear();
+                            break;
+                        } else {
+                            // 其他异常
+                            PyErr_Restore(exc_type, exc_value, exc_traceback);
+                            throw py::error_already_set();
+                        }
+                    } else {
+                        // 迭代结束
+                        break;
+                    }
+                }
                 continue_flag_ = false;
-                py::object pyItem = py::reinterpret_borrow<py::object>(item);
-                // 确保循环变量是 PythonObject 类型，以便可以调用 Python 方法（如 .items()）
-                auto itemValue = ScriptValue::createPythonObject(pyItem);
-                variable_manager_.setVariable(varName, itemValue);
+                if (!setLoopVariables(item)) {
+                    break;
+                }
                 
                 // 执行循环体
                 visit(suiteCtx);
@@ -1215,6 +1356,10 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                 }
             }
         } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
             reportError("Python iteration error: " + string(e.what()), ctx);
         }
     } else if (iterableValue->isList()) {
@@ -1224,9 +1369,9 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
             for (auto item : pyList) {
                 continue_flag_ = false;
                 py::object pyItem = py::reinterpret_borrow<py::object>(item);
-                // 确保循环变量是 PythonObject 类型，以便可以调用 Python 方法（如 .items()）
-                auto itemValue = ScriptValue::createPythonObject(pyItem);
-                variable_manager_.setVariable(varName, itemValue);
+                if (!setLoopVariables(pyItem)) {
+                    break;
+                }
                 
                 // 执行循环体
                 visit(suiteCtx);
@@ -1246,6 +1391,10 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                 }
             }
         } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
             reportError("Python iteration error: " + string(e.what()), ctx);
         }
     } else {
@@ -1255,9 +1404,9 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
             for (auto item : pyIterable) {
                 continue_flag_ = false;
                 py::object pyItem = py::reinterpret_borrow<py::object>(item);
-                // 确保循环变量是 PythonObject 类型，以便可以调用 Python 方法（如 .items()）
-                auto itemValue = ScriptValue::createPythonObject(pyItem);
-                variable_manager_.setVariable(varName, itemValue);
+                if (!setLoopVariables(pyItem)) {
+                    break;
+                }
                 
                 // 执行循环体
                 visit(suiteCtx);
@@ -1277,6 +1426,10 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                 }
             }
         } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
             reportError("Cannot iterate over non-iterable type: " + string(e.what()), ctx);
         } catch (const exception& e) {
             reportError("Cannot iterate over non-iterable type: " + string(e.what()), ctx);
@@ -1546,6 +1699,138 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     }
     
     logger_.debug("visitAssignment: Evaluating assignment (defining_function_=false)");
+    
+    // 检查是否是元组解包赋值：tupleLiteral ASSIGN (expression | tupleLiteral)
+    auto tupleLiterals = ctx->tupleLiteral();
+    if (!tupleLiterals.empty()) {
+        // 检查是否有 ASSIGN token，如果没有，说明这不是赋值语句（可能是 assert 语句等）
+        if (!ctx->ASSIGN()) {
+            // 没有 ASSIGN token，这不是赋值语句，跳过
+            // 这可能是 assert 语句或其他包含逗号的表达式
+            // 让其他规则处理
+            return any();
+        }
+        
+        // 元组解包赋值：x, y = (1, 2) 或 a, b = 1, 2
+        auto tupleLiteralCtx = tupleLiterals[0];  // 左侧 tupleLiteral
+        // 检查右侧是否是 tupleLiteral
+        PyScriptParser::TupleLiteralContext* rightTupleCtx = nullptr;
+        if (tupleLiterals.size() > 1) {
+            rightTupleCtx = tupleLiterals[1];  // 第二个 tupleLiteral（如果有）
+        }
+        auto rightExpr = ctx->expression();
+        
+        shared_ptr<ScriptValue> rightValue;
+        if (rightTupleCtx) {
+            // 右侧是 tupleLiteral：a, b = 1, 2
+            auto rightTupleAny = visit(rightTupleCtx);
+            try {
+                rightValue = any_cast<shared_ptr<ScriptValue>>(rightTupleAny);
+            } catch (...) {
+                reportError("Cannot evaluate right-hand side tuple in tuple unpacking", ctx);
+                return any();
+            }
+        } else if (rightExpr) {
+            // 右侧是 expression：x, y = (1, 2)
+        
+            rightValue = evaluateExpression(rightExpr);
+            if (!rightValue) {
+                reportError("Cannot evaluate right-hand side expression in tuple unpacking", ctx);
+                return any();
+            }
+        } else {
+            reportError("Missing right-hand side in tuple unpacking", ctx);
+            return any();
+        }
+        
+        // 检查是否为 None
+        if (rightValue->isNull()) {
+            reportError("Cannot unpack None", ctx);
+            return any();
+        }
+        
+        // 将右侧值转换为 Python 可迭代对象
+        py::object rightObj;
+        {
+            py::gil_scoped_acquire acquire;
+            rightObj = rightValue->toPythonObject();
+        }
+        
+        // 解包右侧值
+        try {
+            py::gil_scoped_acquire acquire;
+            py::object iter_obj = py::iter(rightObj);
+            
+            // 辅助函数：从表达式中提取标识符名称
+            auto extractIdentifier = [this, ctx](PyScriptParser::ExpressionContext* exprCtx) -> string {
+                // 简化处理：直接递归查找 IDENTIFIER token
+                std::function<string(antlr4::tree::ParseTree*)> findIdentifier;
+                findIdentifier = [&findIdentifier](antlr4::tree::ParseTree* node) -> string {
+                    if (!node) return "";
+                    // 检查是否是 TerminalNode，且是 IDENTIFIER
+                    if (auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(node)) {
+                        if (terminal->getSymbol()->getType() == PyScriptParser::IDENTIFIER) {
+                            return terminal->getText();
+                        }
+                    }
+                    // 递归查找子节点
+                    for (auto child : node->children) {
+                        string result = findIdentifier(child);
+                        if (!result.empty()) return result;
+                    }
+                    return "";
+                };
+                return findIdentifier(exprCtx);
+                return "";
+            };
+            
+            vector<string> varNames;
+            if (auto multiCtx = dynamic_cast<PyScriptParser::MultiElementTupleContext*>(tupleLiteralCtx)) {
+                auto tupleExprs = multiCtx->expression();
+                for (auto exprCtx : tupleExprs) {
+                    string varName = extractIdentifier(exprCtx);
+                    if (varName.empty()) {
+                        reportError("Tuple unpacking requires identifiers", ctx);
+                        return any();
+                    }
+                    varNames.push_back(varName);
+                }
+            } else if (auto singleCtx = dynamic_cast<PyScriptParser::SingleElementTupleContext*>(tupleLiteralCtx)) {
+                auto exprCtx = singleCtx->expression();
+                if (exprCtx) {
+                    string varName = extractIdentifier(exprCtx);
+                    if (varName.empty()) {
+                        reportError("Tuple unpacking requires identifiers", ctx);
+                        return any();
+                    }
+                    varNames.push_back(varName);
+                }
+            }
+            
+            for (size_t i = 0; i < varNames.size(); ++i) {
+                py::object item = py::reinterpret_borrow<py::object>(PyIter_Next(iter_obj.ptr()));
+                if (!item.ptr()) {
+                    // 检查是否有异常
+                    if (PyErr_Occurred()) {
+                        throw py::error_already_set();
+                    }
+                    reportError("Not enough items to unpack", ctx);
+                    return any();
+                }
+                auto itemValue = ScriptValue::fromPythonObject(item);
+                variable_manager_.setVariable(varNames[i], itemValue);
+            }
+        } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
+            reportError("Cannot unpack right-hand side: " + string(e.what()), ctx);
+            return any();
+        }
+        
+        return any(rightValue);
+    }
     
     // 获取赋值目标
     auto targetCtx = ctx->assignmentTarget();
@@ -3207,6 +3492,19 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                             vals.append(kv.second ? kv.second->toPythonObject() : py::none());
                         }
                         return vals;
+                    });
+                    currentValue = ScriptValue::fromPythonObject(fn);
+                    continue;
+                } else if (memberName == "items") {
+                    py::object fn = py::cpp_function([self](py::args) {
+                        py::list items;
+                        for (auto& kv : self->getDictionary()) {
+                            py::tuple pair(2);
+                            pair[0] = py::str(kv.first);
+                            pair[1] = kv.second ? kv.second->toPythonObject() : py::none();
+                            items.append(pair);
+                        }
+                        return items;
                     });
                     currentValue = ScriptValue::fromPythonObject(fn);
                     continue;
@@ -6036,6 +6334,69 @@ any AstVisitor::visitNonlocalStatement(PyScriptParser::NonlocalStatementContext 
         logger_.debug("nonlocal variable declared: " + varName);
         // 实际处理应该在函数定义时进行
     }
+    return any();
+}
+
+any AstVisitor::visitAssertStatement(PyScriptParser::AssertStatementContext *ctx) {
+    logger_.debug("visitAssertStatement called");
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        return any(true);
+    }
+    
+    // assert expression (COMMA expression)?
+    // 第一个 expression 是条件，第二个 expression（可选）是错误消息
+    auto expressions = ctx->expression();
+    if (expressions.empty()) {
+        reportError("assert statement requires at least one expression", ctx);
+        return any();
+    }
+    
+    // 评估条件表达式
+    auto conditionExpr = expressions[0];
+    auto conditionValue = evaluateExpression(conditionExpr);
+    if (!conditionValue) {
+        reportError("Cannot evaluate assert condition", ctx);
+        return any();
+    }
+    
+    // 检查条件是否为真
+    bool conditionIsTrue = expression_evaluator_.isTruthy(conditionValue);
+    
+    if (!conditionIsTrue) {
+        // 断言失败，抛出 AssertionError
+        string errorMessage = "AssertionError";
+        
+        // 如果有第二个表达式（错误消息），使用它
+        if (expressions.size() > 1) {
+            auto messageExpr = expressions[1];
+            auto messageValue = evaluateExpression(messageExpr);
+            if (messageValue && messageValue->isString()) {
+                errorMessage = messageValue->getString();
+            } else if (messageValue) {
+                errorMessage = messageValue->toString();
+            }
+        }
+        
+        // 使用 Python 的 assert 机制抛出异常
+        try {
+            py::gil_scoped_acquire acquire;
+            py::object assertionError = py::module_::import("builtins").attr("AssertionError");
+            py::object errorMsg = py::str(errorMessage);
+            PyErr_SetObject(assertionError.ptr(), errorMsg.ptr());
+            throw py::error_already_set();
+        } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                string errorStr = e.what();
+                PyErr_Clear();
+                reportError("AssertionError: " + errorMessage, ctx);
+            }
+        }
+        return any();
+    }
+    
+    // 断言通过，什么都不做
     return any();
 }
 

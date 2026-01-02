@@ -1,0 +1,9 @@
+# 测试 items() 方法调用
+d = {"a": 1, "b": 2}
+items = d.items()
+print(f"items: {items}")
+
+# 测试直接调用
+items2 = {"a": 1}.items()
+print(f"items2: {items2}")
+

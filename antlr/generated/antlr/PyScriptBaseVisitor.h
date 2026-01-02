@@ -151,6 +151,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitAssertStatement(PyScriptParser::AssertStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) override {
     return visitChildren(ctx);
   }

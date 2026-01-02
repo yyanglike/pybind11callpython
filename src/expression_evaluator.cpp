@@ -212,9 +212,55 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
             }
         } else if (op == "==") {
+            // 如果一个是 PythonObject，另一个是 List/Dictionary，转换为 PythonObject 再比较
+            if ((left->isPythonObject() && (right->isList() || right->isDictionary())) ||
+                (right->isPythonObject() && (left->isList() || left->isDictionary()))) {
+                try {
+                    py::gil_scoped_acquire acquire;
+                    py::object lhs = left->toPythonObject();
+                    py::object rhs = right->toPythonObject();
+                    py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_EQ));
+                    if (!result.ptr() || result.is_none()) {
+                        throw py::error_already_set();
+                    }
+                    bool equal = py::cast<bool>(result);
+                    return ScriptValue::createBoolean(equal);
+                } catch (const py::error_already_set& e) {
+                    {
+                        py::gil_scoped_acquire acquire;
+                        PyErr_Clear();
+                    }
+                    // 如果 Python 比较失败，回退到原生比较
+                    bool equal = (*left == *right);
+                    return ScriptValue::createBoolean(equal);
+                }
+            }
             bool equal = (*left == *right);
             return ScriptValue::createBoolean(equal);
         } else if (op == "!=") {
+            // 如果一个是 PythonObject，另一个是 List/Dictionary，转换为 PythonObject 再比较
+            if ((left->isPythonObject() && (right->isList() || right->isDictionary())) ||
+                (right->isPythonObject() && (left->isList() || left->isDictionary()))) {
+                try {
+                    py::gil_scoped_acquire acquire;
+                    py::object lhs = left->toPythonObject();
+                    py::object rhs = right->toPythonObject();
+                    py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_NE));
+                    if (!result.ptr() || result.is_none()) {
+                        throw py::error_already_set();
+                    }
+                    bool notEqual = py::cast<bool>(result);
+                    return ScriptValue::createBoolean(notEqual);
+                } catch (const py::error_already_set& e) {
+                    {
+                        py::gil_scoped_acquire acquire;
+                        PyErr_Clear();
+                    }
+                    // 如果 Python 比较失败，回退到原生比较
+                    bool notEqual = !(*left == *right);
+                    return ScriptValue::createBoolean(notEqual);
+                }
+            }
             bool notEqual = !(*left == *right);
             return ScriptValue::createBoolean(notEqual);
         } else if (op == "<") {

@@ -118,6 +118,9 @@ public:
   virtual void enterNonlocalStatement(PyScriptParser::NonlocalStatementContext * /*ctx*/) override { }
   virtual void exitNonlocalStatement(PyScriptParser::NonlocalStatementContext * /*ctx*/) override { }
 
+  virtual void enterAssertStatement(PyScriptParser::AssertStatementContext * /*ctx*/) override { }
+  virtual void exitAssertStatement(PyScriptParser::AssertStatementContext * /*ctx*/) override { }
+
   virtual void enterSimpleImport(PyScriptParser::SimpleImportContext * /*ctx*/) override { }
   virtual void exitSimpleImport(PyScriptParser::SimpleImportContext * /*ctx*/) override { }
 

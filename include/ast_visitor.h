@@ -84,6 +84,7 @@ public:
     std::any visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) override;
     std::any visitGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) override;
     std::any visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) override;
+    std::any visitAssertStatement(PyScriptParser::AssertStatementContext *ctx) override;
     std::any visitYieldExpr(PyScriptParser::YieldExprContext *ctx) override;
     std::any visitWalrusExpr(PyScriptParser::WalrusExprContext *ctx) override;
     std::any visitYieldExpression(PyScriptParser::YieldExpressionContext *ctx) override;

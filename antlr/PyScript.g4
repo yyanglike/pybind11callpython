@@ -93,6 +93,7 @@ smallStatement
     | delStatement
     | globalStatement
     | nonlocalStatement
+    | assertStatement
     | BREAK
     | CONTINUE
     ;
@@ -188,7 +189,7 @@ suite
  * ========================= */
 
 functionDef
-    : DEF IDENTIFIER LPAREN parameterList? RPAREN COLON suite
+    : DEF IDENTIFIER LPAREN parameterList? RPAREN (ARROW expression)? COLON suite  // 支持返回类型注解：-> int
     ;
 
 parameterList
@@ -196,7 +197,7 @@ parameterList
     ;
 
 parameter
-    : IDENTIFIER (ASSIGN expression)?
+    : IDENTIFIER (COLON expression)? (ASSIGN expression)?  // 支持类型注解：n: int = 0
     | MUL IDENTIFIER?
     | DOUBLE_STAR IDENTIFIER
     ;
@@ -216,7 +217,7 @@ whileStatement
     ;
 
 forStatement
-    : FOR IDENTIFIER IN expression COLON suite
+    : FOR (IDENTIFIER | tupleLiteral) IN expression COLON suite
     ;
 
 /* =========================
@@ -258,6 +259,10 @@ nonlocalStatement
     : NONLOCAL IDENTIFIER (COMMA IDENTIFIER)*
     ;
 
+assertStatement
+    : ASSERT expression (COMMA expression)?
+    ;
+
 importStatement
     : IMPORT dottedName (AS IDENTIFIER)?                    # simpleImport
     | FROM dottedName IMPORT importItem (COMMA importItem)* # fromImport
@@ -269,6 +274,7 @@ importItem
 
 assignment
     : assignmentTarget (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | FLOOR_DIV_ASSIGN | MOD_ASSIGN | POW_ASSIGN | BITWISE_AND_ASSIGN | BITWISE_OR_ASSIGN | BITWISE_XOR_ASSIGN | LEFT_SHIFT_ASSIGN | RIGHT_SHIFT_ASSIGN) expression
+    | tupleLiteral ASSIGN (expression | tupleLiteral)  // 支持元组解包赋值：x, y = (1, 2) 或 a, b = 1, 2
     ;
 
 // 赋值目标：标识符、属性访问、下标访问
@@ -503,6 +509,7 @@ RAISE   : 'raise';
 DEL     : 'del';
 GLOBAL  : 'global';
 NONLOCAL: 'nonlocal';
+ASSERT  : 'assert';
 
 TRY     : 'try';
 EXCEPT  : 'except';
@@ -577,6 +584,7 @@ COMMA   : ',';
 COLON   : ':';
 DOT     : '.';
 DOUBLE_STAR : '**';
+ARROW       : '->';  // 返回类型注解
 
 /* =========================
  * 换行符 / 缩进处理

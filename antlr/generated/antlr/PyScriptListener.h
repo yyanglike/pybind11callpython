@@ -116,6 +116,9 @@ public:
   virtual void enterNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) = 0;
   virtual void exitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) = 0;
 
+  virtual void enterAssertStatement(PyScriptParser::AssertStatementContext *ctx) = 0;
+  virtual void exitAssertStatement(PyScriptParser::AssertStatementContext *ctx) = 0;
+
   virtual void enterSimpleImport(PyScriptParser::SimpleImportContext *ctx) = 0;
   virtual void exitSimpleImport(PyScriptParser::SimpleImportContext *ctx) = 0;
 

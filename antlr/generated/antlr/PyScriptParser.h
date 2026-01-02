@@ -15,19 +15,20 @@ public:
     DEF = 1, IF = 2, ELSE = 3, ELIF = 4, FOR = 5, WHILE = 6, RETURN = 7, 
     IMPORT = 8, FROM = 9, AS = 10, IN = 11, PASS = 12, BREAK = 13, CONTINUE = 14, 
     NEW = 15, LAMBDA = 16, YIELD = 17, RAISE = 18, DEL = 19, GLOBAL = 20, 
-    NONLOCAL = 21, TRY = 22, EXCEPT = 23, FINALLY = 24, WITH = 25, ASYNC = 26, 
-    AWAIT = 27, CLASS = 28, AT = 29, TRUE = 30, FALSE = 31, NONE = 32, AND = 33, 
-    OR = 34, NOT = 35, IS = 36, IS_NOT = 37, NOT_IN = 38, PLUS = 39, MINUS = 40, 
-    MUL = 41, DIV = 42, FLOOR_DIV = 43, MOD = 44, EQ = 45, NE = 46, LT = 47, 
-    LE = 48, GT = 49, GE = 50, LEFT_SHIFT = 51, RIGHT_SHIFT = 52, BITWISE_AND = 53, 
-    BITWISE_OR = 54, BITWISE_XOR = 55, BITWISE_NOT = 56, ASSIGN = 57, WALRUS = 58, 
-    PLUS_ASSIGN = 59, MINUS_ASSIGN = 60, MUL_ASSIGN = 61, DIV_ASSIGN = 62, 
-    FLOOR_DIV_ASSIGN = 63, MOD_ASSIGN = 64, POW_ASSIGN = 65, BITWISE_AND_ASSIGN = 66, 
-    BITWISE_OR_ASSIGN = 67, BITWISE_XOR_ASSIGN = 68, LEFT_SHIFT_ASSIGN = 69, 
-    RIGHT_SHIFT_ASSIGN = 70, SEMI = 71, LPAREN = 72, RPAREN = 73, LBRACK = 74, 
-    RBRACK = 75, LBRACE = 76, RBRACE = 77, COMMA = 78, COLON = 79, DOT = 80, 
-    DOUBLE_STAR = 81, NEWLINE = 82, IDENTIFIER = 83, INTEGER = 84, FLOAT = 85, 
-    STRING = 86, WS = 87, COMMENT = 88, INDENT = 89, DEDENT = 90
+    NONLOCAL = 21, ASSERT = 22, TRY = 23, EXCEPT = 24, FINALLY = 25, WITH = 26, 
+    ASYNC = 27, AWAIT = 28, CLASS = 29, AT = 30, TRUE = 31, FALSE = 32, 
+    NONE = 33, AND = 34, OR = 35, NOT = 36, IS = 37, IS_NOT = 38, NOT_IN = 39, 
+    PLUS = 40, MINUS = 41, MUL = 42, DIV = 43, FLOOR_DIV = 44, MOD = 45, 
+    EQ = 46, NE = 47, LT = 48, LE = 49, GT = 50, GE = 51, LEFT_SHIFT = 52, 
+    RIGHT_SHIFT = 53, BITWISE_AND = 54, BITWISE_OR = 55, BITWISE_XOR = 56, 
+    BITWISE_NOT = 57, ASSIGN = 58, WALRUS = 59, PLUS_ASSIGN = 60, MINUS_ASSIGN = 61, 
+    MUL_ASSIGN = 62, DIV_ASSIGN = 63, FLOOR_DIV_ASSIGN = 64, MOD_ASSIGN = 65, 
+    POW_ASSIGN = 66, BITWISE_AND_ASSIGN = 67, BITWISE_OR_ASSIGN = 68, BITWISE_XOR_ASSIGN = 69, 
+    LEFT_SHIFT_ASSIGN = 70, RIGHT_SHIFT_ASSIGN = 71, SEMI = 72, LPAREN = 73, 
+    RPAREN = 74, LBRACK = 75, RBRACK = 76, LBRACE = 77, RBRACE = 78, COMMA = 79, 
+    COLON = 80, DOT = 81, DOUBLE_STAR = 82, ARROW = 83, NEWLINE = 84, IDENTIFIER = 85, 
+    INTEGER = 86, FLOAT = 87, STRING = 88, WS = 89, COMMENT = 90, INDENT = 91, 
+    DEDENT = 92
   };
 
   enum {
@@ -40,18 +41,18 @@ public:
     RuleWhileStatement = 22, RuleForStatement = 23, RulePassStatement = 24, 
     RuleReturnStatement = 25, RuleRaiseStatement = 26, RuleDelStatement = 27, 
     RuleDelTargets = 28, RuleDelTarget = 29, RuleGlobalStatement = 30, RuleNonlocalStatement = 31, 
-    RuleImportStatement = 32, RuleImportItem = 33, RuleAssignment = 34, 
-    RuleAssignmentTarget = 35, RuleExpressionStatement = 36, RuleExpression = 37, 
-    RuleAssignmentExpression = 38, RuleConditionalExpression = 39, RuleYieldExpression = 40, 
-    RuleLogicalOr = 41, RuleLogicalAnd = 42, RuleBitwiseOr = 43, RuleBitwiseXor = 44, 
-    RuleBitwiseAnd = 45, RuleEquality = 46, RuleComparison = 47, RuleShift = 48, 
-    RuleAdditive = 49, RuleMultiplicative = 50, RulePower = 51, RuleUnary = 52, 
-    RulePrimary = 53, RuleTupleLiteral = 54, RuleNewExpression = 55, RuleAtom = 56, 
-    RulePostfixOp = 57, RuleSubscriptArg = 58, RuleArgumentList = 59, RuleArgument = 60, 
-    RuleListLiteral = 61, RuleListElements = 62, RuleComprehension = 63, 
-    RuleCompFor = 64, RuleDictLiteral = 65, RuleDictComprehension = 66, 
-    RuleDictItem = 67, RuleSetLiteral = 68, RuleSetElements = 69, RuleGeneratorExpression = 70, 
-    RuleLiteral = 71, RuleLambdaExpression = 72, RuleDottedName = 73
+    RuleAssertStatement = 32, RuleImportStatement = 33, RuleImportItem = 34, 
+    RuleAssignment = 35, RuleAssignmentTarget = 36, RuleExpressionStatement = 37, 
+    RuleExpression = 38, RuleAssignmentExpression = 39, RuleConditionalExpression = 40, 
+    RuleYieldExpression = 41, RuleLogicalOr = 42, RuleLogicalAnd = 43, RuleBitwiseOr = 44, 
+    RuleBitwiseXor = 45, RuleBitwiseAnd = 46, RuleEquality = 47, RuleComparison = 48, 
+    RuleShift = 49, RuleAdditive = 50, RuleMultiplicative = 51, RulePower = 52, 
+    RuleUnary = 53, RulePrimary = 54, RuleTupleLiteral = 55, RuleNewExpression = 56, 
+    RuleAtom = 57, RulePostfixOp = 58, RuleSubscriptArg = 59, RuleArgumentList = 60, 
+    RuleArgument = 61, RuleListLiteral = 62, RuleListElements = 63, RuleComprehension = 64, 
+    RuleCompFor = 65, RuleDictLiteral = 66, RuleDictComprehension = 67, 
+    RuleDictItem = 68, RuleSetLiteral = 69, RuleSetElements = 70, RuleGeneratorExpression = 71, 
+    RuleLiteral = 72, RuleLambdaExpression = 73, RuleDottedName = 74
   };
 
   explicit PyScriptParser(antlr4::TokenStream *input);
@@ -103,6 +104,7 @@ public:
   class DelTargetContext;
   class GlobalStatementContext;
   class NonlocalStatementContext;
+  class AssertStatementContext;
   class ImportStatementContext;
   class ImportItemContext;
   class AssignmentContext;
@@ -211,6 +213,7 @@ public:
     DelStatementContext *delStatement();
     GlobalStatementContext *globalStatement();
     NonlocalStatementContext *nonlocalStatement();
+    AssertStatementContext *assertStatement();
     antlr4::tree::TerminalNode *BREAK();
     antlr4::tree::TerminalNode *CONTINUE();
 
@@ -499,6 +502,8 @@ public:
     antlr4::tree::TerminalNode *COLON();
     SuiteContext *suite();
     ParameterListContext *parameterList();
+    antlr4::tree::TerminalNode *ARROW();
+    ExpressionContext *expression();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -532,8 +537,10 @@ public:
     ParameterContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *IDENTIFIER();
+    antlr4::tree::TerminalNode *COLON();
+    std::vector<ExpressionContext *> expression();
+    ExpressionContext* expression(size_t i);
     antlr4::tree::TerminalNode *ASSIGN();
-    ExpressionContext *expression();
     antlr4::tree::TerminalNode *MUL();
     antlr4::tree::TerminalNode *DOUBLE_STAR();
 
@@ -593,11 +600,12 @@ public:
     ForStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *FOR();
-    antlr4::tree::TerminalNode *IDENTIFIER();
     antlr4::tree::TerminalNode *IN();
     ExpressionContext *expression();
     antlr4::tree::TerminalNode *COLON();
     SuiteContext *suite();
+    antlr4::tree::TerminalNode *IDENTIFIER();
+    TupleLiteralContext *tupleLiteral();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -782,6 +790,24 @@ public:
 
   NonlocalStatementContext* nonlocalStatement();
 
+  class  AssertStatementContext : public antlr4::ParserRuleContext {
+  public:
+    AssertStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *ASSERT();
+    std::vector<ExpressionContext *> expression();
+    ExpressionContext* expression(size_t i);
+    antlr4::tree::TerminalNode *COMMA();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  AssertStatementContext* assertStatement();
+
   class  ImportStatementContext : public antlr4::ParserRuleContext {
   public:
     ImportStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -864,6 +890,8 @@ public:
     antlr4::tree::TerminalNode *BITWISE_XOR_ASSIGN();
     antlr4::tree::TerminalNode *LEFT_SHIFT_ASSIGN();
     antlr4::tree::TerminalNode *RIGHT_SHIFT_ASSIGN();
+    std::vector<TupleLiteralContext *> tupleLiteral();
+    TupleLiteralContext* tupleLiteral(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
