@@ -1,0 +1,9 @@
+def test():
+    results = {"lists": []}
+    results["lists"].append(1)
+    return {
+        "lists_processed": len(results["lists"])
+    }
+
+result = test()
+print(result)

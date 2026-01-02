@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+"""
+脚本级别测试 - 直接在脚本顶层执行代码，测试脚本解析和执行能力
+
+这个测试文件专门用于测试脚本级别的解析和执行，所有代码都直接写在脚本顶层
+"""
+
+print("=" * 80)
+print("脚本级别测试 - 测试脚本解析和执行能力")
+print("=" * 80)
+
+# ============================================================================
+# 测试1：脚本级别的变量操作
+# ============================================================================
+print("\n[1] 脚本级别变量操作")
+
+# 直接定义和使用变量
+x = 10
+y = 20
+z = x + y
+print(f"✓ 变量操作: x={x}, y={y}, z={z}")
+
+# 修改变量
+x = x * 2
+y = y + 10
+z = x - y
+print(f"✓ 变量修改: x={x}, y={y}, z={z}")
+
+# ============================================================================
+# 测试2：脚本级别的控制流
+# ============================================================================
+print("\n[2] 脚本级别控制流")
+
+# if/elif/else 在脚本级别
+if x > 10:
+    result1 = "x is greater than 10"
+elif x == 10:
+    result1 = "x equals 10"
+else:
+    result1 = "x is less than 10"
+print(f"✓ if/elif/else: {result1}")
+
+# for 循环在脚本级别
+for_results = []
+for i in range(5):
+    for_results.append(i * 2)
+print(f"✓ for 循环: {for_results}")
+
+# while 循环在脚本级别
+while_count = 0
+while_results = []
+while while_count < 5:
+    while_results.append(while_count)
+    while_count += 1
+print(f"✓ while 循环: {while_results}")
+
+# ============================================================================
+# 测试3：脚本级别的数据结构操作
+# ============================================================================
+print("\n[3] 脚本级别数据结构操作")
+
+# 列表操作
+my_list = [1, 2, 3]
+my_list.append(4)
+my_list.extend([5, 6])
+my_list.insert(0, 0)
+del my_list[1]
+print(f"✓ 列表操作: {my_list}")
+
+# 字典操作
+my_dict = {"a": 1, "b": 2}
+my_dict["c"] = 3
+my_dict.update({"d": 4, "e": 5})
+del my_dict["b"]
+print(f"✓ 字典操作: {my_dict}")
+
+# 集合操作
+my_set = {1, 2, 3}
+my_set.add(4)
+my_set.update({5, 6})
+my_set.discard(2)
+print(f"✓ 集合操作: {my_set}")
+
+# ============================================================================
+# 测试4：脚本级别的推导式
+# ============================================================================
+print("\n[4] 脚本级别推导式")
+
+# 列表推导式
+list_comp = [x * 2 for x in range(10) if x % 2 == 0]
+print(f"✓ 列表推导式: {list_comp}")
+
+# 字典推导式
+dict_comp = {f"key_{x}": x * 2 for x in range(5)}
+print(f"✓ 字典推导式: {dict_comp}")
+
+# 集合推导式
+set_comp = {x * 2 for x in range(5)}
+print(f"✓ 集合推导式: {set_comp}")
+
+# 嵌套推导式
+nested_comp = [x * y for x in range(3) for y in range(3)]
+print(f"✓ 嵌套推导式: {nested_comp}")
+
+# ============================================================================
+# 测试5：脚本级别的异常处理
+# ============================================================================
+print("\n[5] 脚本级别异常处理")
+
+# try/except 在脚本级别
+try:
+    result = 10 / 2
+    print(f"✓ try/except 正常: {result}")
+except ZeroDivisionError:
+    print("✗ 不应该到这里")
+
+try:
+    result = 10 / 0
+    print("✗ 不应该到这里")
+except ZeroDivisionError as e:
+    print(f"✓ try/except 捕获异常: ZeroDivisionError")
+
+# ============================================================================
+# 测试6：脚本级别的复杂表达式
+# ============================================================================
+print("\n[6] 脚本级别复杂表达式")
+
+# 算术表达式
+arithmetic = 10 + 20 - 15 * 2 / 4
+print(f"✓ 算术表达式: {arithmetic}")
+
+# 逻辑表达式
+logical = (True and False) or (not False)
+print(f"✓ 逻辑表达式: {logical}")
+
+# 比较表达式
+comparison = (10 == 10) and (20 > 10)
+print(f"✓ 比较表达式: {comparison}")
+
+# 成员测试
+membership = 5 in [1, 2, 3, 4, 5]
+print(f"✓ 成员测试: {membership}")
+
+# 条件表达式
+conditional = "yes" if True else "no"
+print(f"✓ 条件表达式: {conditional}")
+
+# Walrus 运算符
+walrus_list = []
+while (n := len(walrus_list)) < 5:
+    walrus_list.append(n)
+print(f"✓ Walrus 运算符: {walrus_list}")
+
+# ============================================================================
+# 测试7：脚本级别的字符串操作
+# ============================================================================
+print("\n[7] 脚本级别字符串操作")
+
+# f-string
+name = "World"
+fstring = f"Hello {name}"
+print(f"✓ f-string: {fstring}")
+
+# 字符串方法
+upper_str = "hello".upper()
+split_str = "a,b,c".split(",")
+print(f"✓ 字符串方法: upper={upper_str}, split={split_str}")
+
+# ============================================================================
+# 测试8：脚本级别的函数定义和调用
+# ============================================================================
+print("\n[8] 脚本级别函数定义和调用")
+
+def add_numbers(a, b):
+    return a + b
+
+def multiply_numbers(a, b):
+    return a * b
+
+# 在脚本级别调用函数
+sum_result = add_numbers(10, 20)
+product_result = multiply_numbers(5, 6)
+print(f"✓ 函数调用: sum={sum_result}, product={product_result}")
+
+# ============================================================================
+# 测试9：脚本级别的类定义和使用
+# ============================================================================
+print("\n[9] 脚本级别类定义和使用")
+
+class SimpleClass:
+    def __init__(self, value):
+        self.value = value
+    
+    def get_value(self):
+        return self.value
+    
+    def set_value(self, value):
+        self.value = value
+
+# 在脚本级别创建和使用对象
+obj = SimpleClass(42)
+obj_value = obj.get_value()
+obj.set_value(100)
+new_value = obj.get_value()
+print(f"✓ 类操作: 初始值={obj_value}, 新值={new_value}")
+
+# ============================================================================
+# 测试10：脚本级别的复杂组合操作
+# ============================================================================
+print("\n[10] 脚本级别复杂组合操作")
+
+# 组合多种操作
+combined_results = []
+for i in range(10):
+    if (value := i * 2) > 10:
+        filtered = [x for x in range(value) if x % 2 == 0]
+        mapped = {f"key_{x}": x * 2 for x in filtered[:5]}
+        combined_results.append({
+            "value": value,
+            "filtered_count": len(filtered),
+            "mapped": mapped
+        })
+
+print(f"✓ 复杂组合操作: {len(combined_results)} 个结果")
+
+# ============================================================================
+# 测试总结
+# ============================================================================
+print("\n" + "=" * 80)
+print("脚本级别测试完成！")
+print("=" * 80)
+print("\n所有测试都在脚本顶层执行，验证了解释器的脚本解析和执行能力！")
+print("=" * 80)
+

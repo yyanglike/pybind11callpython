@@ -1,0 +1,2 @@
+dict_str = "{'a': 1}"
+print(f"✓ 字典操作: {dict_str}")

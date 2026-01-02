@@ -1,1 +1,5 @@
-print("hello world")
+my_dict = {"a": 1, "b": 2, "c": 3}
+my_dict["d"] = 4
+my_dict.update({"e": 5, "f": 6})
+del my_dict["b"]
+print("Done")

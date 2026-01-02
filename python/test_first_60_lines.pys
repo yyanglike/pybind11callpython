@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""
+终极复杂测试脚本 - 测试所有语法特性和复杂场景（脚本级别）
+
+测试策略：直接在脚本顶层执行代码，测试脚本解析和执行能力
+"""
+
+import json
+import math
+import random
+import sys
+
+print("=" * 80)
+print("终极复杂测试 - 测试所有语法特性和复杂场景（脚本级别）")
+print("=" * 80)
+
+# ============================================================================
+# 第一部分：复杂数据结构操作（脚本级别）
+# ============================================================================
+print("\n[1] 复杂数据结构操作测试（脚本级别）")
+
+# 直接在脚本中创建和使用数据结构
+my_list = [1, 2, 3, 4, 5]
+my_list.append(6)
+my_list.extend([7, 8, 9])
+my_list.insert(0, 0)
+del my_list[1]  # 删除索引1的元素
+# 避免在 f-string 中使用复杂对象
+list_str = str(my_list)
+print(f"✓ 列表操作: {list_str}")
+
+my_dict = {"a": 1, "b": 2, "c": 3}
+my_dict["d"] = 4
+my_dict.update({"e": 5, "f": 6})
+del my_dict["b"]  # 删除键
+dict_str = str(my_dict)
+print(f"✓ 字典操作: {dict_str}")
+
+my_set = {1, 2, 3, 4, 5}
+my_set.add(6)
+my_set.update({7, 8})
+my_set.discard(2)
+print(f"✓ 集合操作: {my_set}")
+
+my_tuple = (1, 2, 3, 4, 5)
+print(f"✓ 元组操作: {my_tuple}")
+
+# ============================================================================
+# 第二部分：所有控制流语句（脚本级别）
+# ============================================================================
+print("\n[2] 控制流语句测试（脚本级别）")
+
+# if/elif/else 在脚本级别
+if_elif_else_results = []
+for i in range(10):
+    if i % 3 == 0:
+        if_elif_else_results.append("divisible_by_3")
+    elif i % 3 == 1:
+        if_elif_else_results.append("remainder_1")
+    else:

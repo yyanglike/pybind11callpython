@@ -356,7 +356,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
             } else {
                 throw runtime_error("Unary - operator not supported for this type");
             }
-        } else if (op == "!") {
+        } else if (op == "!" || op == "not") {
             return ScriptValue::createBoolean(!value->toBoolean());
         } else if (op == "+") {
             if (value->isInteger() || value->isDouble() || value->isBoolean() || value->isString()) {

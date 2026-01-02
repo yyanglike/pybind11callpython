@@ -792,6 +792,14 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             // 忽略
         }
         
+        // 注入 __fstr__ 函数，确保 f-string 预处理后的代码可以执行
+        if (variable_manager_.hasVariable("__fstr__")) {
+            auto fstr_val = variable_manager_.getVariable("__fstr__");
+            if (fstr_val && fstr_val->isPythonObject()) {
+                globals["__fstr__"] = fstr_val->toPythonObject();
+            }
+        }
+        
         // 注入已导入的模块，确保import语句可以找到模块
         // 优化：使用缓存的模块名列表
         size_t current_module_count = variable_manager_.getModuleCount();
@@ -1197,30 +1205,67 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
             reportError("Python iteration error: " + string(e.what()), ctx);
         }
     } else if (iterableValue->isList()) {
-        auto& list = iterableValue->getList();
-        for (auto& item : list) {
-            continue_flag_ = false;
-            variable_manager_.setVariable(varName, item);
-            
-            // 执行循环体
-            visit(suiteCtx);
-            
-            if (break_flag_) {
-                break_flag_ = false;
-                break;
-            }
-            
-            if (continue_flag_) {
+        // List 类型：转换为 PythonObject 以便迭代
+        py::object pyList = iterableValue->toPythonObject();
+        try {
+            for (auto item : pyList) {
                 continue_flag_ = false;
-                continue;
+                py::object pyItem = py::reinterpret_borrow<py::object>(item);
+                auto itemValue = ScriptValue::fromPythonObject(pyItem);
+                variable_manager_.setVariable(varName, itemValue);
+                
+                // 执行循环体
+                visit(suiteCtx);
+                
+                if (break_flag_) {
+                    break_flag_ = false;
+                    break;
+                }
+                
+                if (continue_flag_) {
+                    continue_flag_ = false;
+                    continue;
+                }
+                
+                if (error_handler_.hasError()) {
+                    break;
+                }
             }
-            
-            if (error_handler_.hasError()) {
-                break;
-            }
+        } catch (const py::error_already_set& e) {
+            reportError("Python iteration error: " + string(e.what()), ctx);
         }
     } else {
-        reportError("Cannot iterate over non-iterable type", ctx);
+        // 尝试转换为 PythonObject 并迭代
+        try {
+            py::object pyIterable = iterableValue->toPythonObject();
+            for (auto item : pyIterable) {
+                continue_flag_ = false;
+                py::object pyItem = py::reinterpret_borrow<py::object>(item);
+                auto itemValue = ScriptValue::fromPythonObject(pyItem);
+                variable_manager_.setVariable(varName, itemValue);
+                
+                // 执行循环体
+                visit(suiteCtx);
+                
+                if (break_flag_) {
+                    break_flag_ = false;
+                    break;
+                }
+                
+                if (continue_flag_) {
+                    continue_flag_ = false;
+                    continue;
+                }
+                
+                if (error_handler_.hasError()) {
+                    break;
+                }
+            }
+        } catch (const py::error_already_set& e) {
+            reportError("Cannot iterate over non-iterable type: " + string(e.what()), ctx);
+        } catch (const exception& e) {
+            reportError("Cannot iterate over non-iterable type: " + string(e.what()), ctx);
+        }
     }
     
     return any();
@@ -1553,6 +1598,12 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             variable_manager_.setVariable(varName, result);
         } else {
             // 简单赋值
+            // 在脚本级别，将 List 和 Dictionary 转换为 PythonObject 以便后续方法调用
+            // 这样可以支持 list.append(), dict.update() 等操作
+            if (rightValue && (rightValue->isList() || rightValue->isDictionary())) {
+                py::object pyObj = rightValue->toPythonObject();
+                rightValue = ScriptValue::createPythonObject(pyObj);
+            }
             variable_manager_.setVariable(varName, rightValue);
             // 调试：检查赋值是否成功
             if (!rightValue) {
@@ -3351,10 +3402,18 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                     if (py::isinstance<py::none>(pyObj)) {
                         logger_.debug("Function call returned None (Python None)");
                     }
+                } else if (resultValue->isDictionary() || resultValue->isList()) {
+                    // 将 Dictionary 和 List 转换为 PythonObject，以确保后续操作可以调用 Python 方法
+                    py::object pyObj = resultValue->toPythonObject();
+                    resultValue = ScriptValue::createPythonObject(pyObj);
                 }
                 currentValue = resultValue;
             } catch (const py::error_already_set& e) {
-                reportError("Python function call error: " + string(e.what()), callOp);
+                // 提取更详细的错误信息
+                string errorMsg = string(e.what());
+                // 清除 Python 错误状态，避免影响后续操作
+                PyErr_Clear();
+                reportError("Python function call error: " + errorMsg, callOp);
                 return any();
             }
         }
@@ -3410,7 +3469,10 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
                 py::object result = pyObj[pyIndex];
                 return ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
-                reportError("Python subscript error: " + string(e.what()), ctx);
+                // 清除 Python 错误状态，避免影响后续操作
+                string errorMsg = string(e.what());
+                PyErr_Clear();
+                reportError("Python subscript error: " + errorMsg, ctx);
                 return nullptr;
             }
         } else if (target->isList()) {
@@ -3449,7 +3511,10 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
                 target->setPythonObject(pyObj);
                 return ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
-                reportError("Python subscript error: " + string(e.what()), ctx);
+                // 清除 Python 错误状态，避免影响后续操作
+                string errorMsg = string(e.what());
+                PyErr_Clear();
+                reportError("Python subscript error: " + errorMsg, ctx);
                 return nullptr;
             }
         } else {
@@ -3625,6 +3690,19 @@ any AstVisitor::visitListLiteral(PyScriptParser::ListLiteralContext *ctx) {
 }
 
 any AstVisitor::visitDictLiteral(PyScriptParser::DictLiteralContext *ctx) {
+    // 如果正在定义函数，跳过求值，返回null
+    if (defining_function_) {
+        logger_.debug("Skipping dict literal evaluation during function definition");
+        return any(ScriptValue::createNull());
+    }
+    
+    // 额外检查：如果节点在函数定义体内，跳过求值（防止函数定义完成后 ANTLR 继续访问函数体内的节点）
+    bool inside_function = isNodeInsideFunctionDef(ctx);
+    if (inside_function) {
+        logger_.debug("Skipping dict literal evaluation (inside function definition)");
+        return any(ScriptValue::createNull());
+    }
+    
     // dictComprehension 分支
     if (ctx->dictComprehension()) {
         return visitDictComprehension(ctx->dictComprehension());
@@ -4289,7 +4367,7 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
     // listElements: expression (COMMA expression)* COMMA? | expression FOR IDENTIFIER IN expression (IF expression)? (FOR IDENTIFIER IN expression (IF expression)?)* 
     auto startToken = ctx->getStart();
     int line = startToken ? startToken->getLine() : -1;
-    logger_.info("visitListElements called at line " + std::to_string(line) + " (defining_function_=" + std::string(defining_function_ ? "true" : "false") + ")");
+    // logger_.info("visitListElements called at line " + std::to_string(line) + " (defining_function_=" + std::string(defining_function_ ? "true" : "false") + ")");
     
     // 如果正在定义函数，跳过列表推导式的求值，返回特殊标记阻止访问子节点
     if (defining_function_) {
@@ -5103,8 +5181,16 @@ any AstVisitor::visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) 
     } catch (py::error_already_set& e) {
         // raise语句会抛出异常，这是正常的
         // 将异常传播到Python层
-        e.restore();
-        throw;
+        // 注意：restore() 不是 const 方法，但 error_already_set 的引用允许修改
+        // 如果 restore() 失败，清除错误状态
+        try {
+            e.restore();
+            throw;
+        } catch (...) {
+            // 如果 restore() 失败，清除错误状态
+            PyErr_Clear();
+            throw;
+        }
     }
     return any();
 }
@@ -5257,7 +5343,15 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
                             logger_.info("Synced updated List/Dictionary back to variable_manager: " + varName);
                         }
                     } catch (const py::error_already_set& e) {
-                        reportError("Python del subscript error: " + string(e.what()), ctx);
+                        // 清除 Python 错误状态，避免影响后续操作
+                        string errorMsg = string(e.what());
+                        PyErr_Clear();
+                        // 对于 KeyError，这是预期的错误，不应该报告为脚本错误
+                        if (errorMsg.find("KeyError") != string::npos) {
+                            // 重新抛出异常，让 Python 的 try/except 处理
+                            throw;
+                        }
+                        reportError("Python del subscript error: " + errorMsg, ctx);
                     }
                 } else {
                     reportError("Cannot evaluate key for del subscript", ctx);
@@ -5318,23 +5412,39 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
                             }
                         }
                     } catch (const py::error_already_set& e) {
-                        logger_.error("Exception in __delitem__: " + string(e.what()));
+                        // 清除 Python 错误状态，避免影响后续操作
+                        string errorMsg = string(e.what());
+                        PyErr_Clear();
+                        
+                        // 对于 KeyError 或 IndexError，这是预期的错误，应该重新抛出让 Python 的 try/except 处理
+                        if (errorMsg.find("KeyError") != string::npos || errorMsg.find("IndexError") != string::npos) {
+                            // 重新抛出异常，让 Python 的 try/except 处理
+                            throw;
+                        }
+                        
+                        logger_.error("Exception in __delitem__: " + errorMsg);
                         // 如果 __delitem__ 失败，尝试使用 exec
-                        py::dict locals;
-                        locals["obj"] = pyObj;
-                        locals["key"] = key;
-                        string delCode = "del obj[key]";
-                        py::exec(py::str(delCode), py::globals(), locals);
-                        
-                        // 重新获取更新后的对象（从locals中获取）
-                        py::object updatedObj = locals["obj"];
-                        
-                        // 如果对象是变量，同步回变量管理器
-                        if (isVariable && !varName.empty()) {
-                            // 强制使用 PythonObject 类型，避免深拷贝导致不同步
-                            auto updatedValue = ScriptValue::createPythonObject(updatedObj);
-                            variable_manager_.setVariable(varName, updatedValue);
-                            logger_.debug("Synced updated object back to variable_manager (via exec): " + varName);
+                        try {
+                            py::dict locals;
+                            locals["obj"] = pyObj;
+                            locals["key"] = key;
+                            string delCode = "del obj[key]";
+                            py::exec(py::str(delCode), py::globals(), locals);
+                            
+                            // 重新获取更新后的对象（从locals中获取）
+                            py::object updatedObj = locals["obj"];
+                            
+                            // 如果对象是变量，同步回变量管理器
+                            if (isVariable && !varName.empty()) {
+                                // 强制使用 PythonObject 类型，避免深拷贝导致不同步
+                                auto updatedValue = ScriptValue::createPythonObject(updatedObj);
+                                variable_manager_.setVariable(varName, updatedValue);
+                                logger_.debug("Synced updated object back to variable_manager (via exec): " + varName);
+                            }
+                        } catch (const py::error_already_set& e2) {
+                            // 如果 exec 也失败，清除错误状态并重新抛出
+                            PyErr_Clear();
+                            throw;
                         }
                     }
                     logger_.debug("Deleted subscript");
@@ -5350,7 +5460,15 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
             reportError("Cannot delete subscript: object is not a Python object", ctx);
         }
     } catch (const py::error_already_set& e) {
-        reportError("Python del subscript error: " + string(e.what()), ctx);
+        // 清除 Python 错误状态，避免影响后续操作
+        string errorMsg = string(e.what());
+        PyErr_Clear();
+        // 对于 KeyError 或 IndexError，这是预期的错误，应该重新抛出让 Python 的 try/except 处理
+        if (errorMsg.find("KeyError") != string::npos || errorMsg.find("IndexError") != string::npos) {
+            // 重新抛出异常，让 Python 的 try/except 处理
+            throw;
+        }
+        reportError("Python del subscript error: " + errorMsg, ctx);
     }
     return any();
 }

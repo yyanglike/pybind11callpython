@@ -82,66 +82,148 @@ bool ScriptInterpreter::execute(const string& script) {
             std::string out;
             out.reserve(in.size());
             size_t i = 0;
+            // 跟踪字符串字面量状态（不包括 f-string）
+            bool in_string = false;
+            char string_quote = 0;
+            bool in_triple_string = false;
             while (i < in.size()) {
                 char c = in[i];
-                if ((c == 'f' || c == 'F') && i + 1 < in.size() && (in[i + 1] == '"' || in[i + 1] == '\'')) {
-                    // 检测单引号/双引号/三引号
-                    bool triple = false;
-                    char quote = in[i + 1];
-                    size_t j = i + 2;
-                    if (j + 1 < in.size() && in[j] == quote && in[j + 1] == quote) {
-                        triple = true;
-                        j += 2;
-                    }
-                    bool closed = false;
-                    while (j < in.size()) {
-                        char cc = in[j];
-                        if (cc == '\\') {
-                            j += 2; // skip escaped
-                            continue;
+                
+                // 先检查是否是 f-string（必须在字符串外部）
+                if (!in_string && (c == 'f' || c == 'F') && i + 1 < in.size() && (in[i + 1] == '"' || in[i + 1] == '\'')) {
+                    // 确保前面不是标识符字符（字母、数字、下划线）
+                    bool is_fstring = true;
+                    if (i > 0) {
+                        char prev = in[i - 1];
+                        if ((prev >= 'a' && prev <= 'z') || (prev >= 'A' && prev <= 'Z') || 
+                            (prev >= '0' && prev <= '9') || prev == '_') {
+                            is_fstring = false;
                         }
-                        if (!triple) {
-                            if (cc == quote) {
-                                closed = true;
-                                ++j;
-                                break;
+                    }
+                    if (is_fstring) {
+                        // 这是 f-string，处理它
+                        // 检测单引号/双引号/三引号
+                        bool triple = false;
+                        char quote = in[i + 1];
+                        size_t j = i + 2;
+                        if (j + 1 < in.size() && in[j] == quote && in[j + 1] == quote) {
+                            triple = true;
+                            j += 2;
+                        }
+                        bool closed = false;
+                        int brace_depth = 0; // 跟踪 f-string 中的大括号深度
+                        while (j < in.size()) {
+                            char cc = in[j];
+                            if (cc == '\\') {
+                                // 跳过转义字符，但要确保不越界
+                                if (j + 1 < in.size()) {
+                                    j += 2; // skip escaped character
+                                } else {
+                                    // 反斜杠在字符串末尾，跳过它
+                                    ++j;
+                                }
+                                continue;
                             }
-                        } else {
-                            if (cc == quote && j + 2 < in.size() && in[j + 1] == quote && in[j + 2] == quote) {
-                                closed = true;
-                                j += 3;
-                                break;
+                            // 跟踪大括号深度（用于 f-string 中的表达式）
+                            if (cc == '{') {
+                                brace_depth++;
+                            } else if (cc == '}') {
+                                brace_depth--;
+                            }
+                            // 只有在没有未闭合的大括号时，才检查字符串结束
+                            if (brace_depth == 0) {
+                                if (!triple) {
+                                    if (cc == quote) {
+                                        closed = true;
+                                        ++j;
+                                        break;
+                                    }
+                                } else {
+                                    if (cc == quote && j + 2 < in.size() && in[j + 1] == quote && in[j + 2] == quote) {
+                                        closed = true;
+                                        j += 3;
+                                        break;
+                                    }
+                                }
+                            }
+                            ++j;
+                        }
+                        std::string raw = in.substr(i, j - i); // f"...", f'''...''' 或 f"""..."""
+                        // 选择包裹引号：若原串用单引号（含三引号），则用双引号作为包裹，反之亦然
+                        char wrapper = (quote == '\'') ? '"' : '\'';
+                        // 对包裹引号、反斜线以及换行/回车做转义（换行转为 \n，避免单行字符串解析失败）
+                        std::string escaped;
+                        escaped.reserve(raw.size() * 2);
+                        for (char rc : raw) {
+                            if (rc == '\n') {
+                                escaped += "\\n";
+                            } else if (rc == '\r') {
+                                escaped += "\\r";
+                            } else {
+                                if (rc == '\\' || rc == wrapper) escaped.push_back('\\');
+                                escaped.push_back(rc);
                             }
                         }
-                        ++j;
-                    }
-                    std::string raw = in.substr(i, j - i); // f"...", f'''...''' 或 f"""..."""
-                    // 选择包裹引号：若原串用单引号（含三引号），则用双引号作为包裹，反之亦然
-                    char wrapper = (quote == '\'') ? '"' : '\'';
-                    // 对包裹引号、反斜线以及换行/回车做转义（换行转为 \n，避免单行字符串解析失败）
-                    std::string escaped;
-                    escaped.reserve(raw.size() * 2);
-                    for (char rc : raw) {
-                        if (rc == '\n') {
-                            escaped += "\\n";
-                        } else if (rc == '\r') {
-                            escaped += "\\r";
-                        } else {
-                            if (rc == '\\' || rc == wrapper) escaped.push_back('\\');
-                            escaped.push_back(rc);
+                        out += "__fstr__(";
+                        out.push_back(wrapper);
+                        out += escaped;
+                        out.push_back(wrapper);
+                        out += ")";
+                        i = j;
+                        if (!closed) {
+                            // 未闭合时保留剩余文本，避免截断
+                            out += in.substr(i);
+                            break;
                         }
+                        continue;
                     }
-                    out += "__fstr__(";
-                    out.push_back(wrapper);
-                    out += escaped;
-                    out.push_back(wrapper);
-                    out += ")";
-                    i = j;
-                    if (!closed) {
-                        // 未闭合时保留剩余文本，避免截断
-                        out += in.substr(i);
-                        break;
+                }
+                
+                // 处理字符串字面量的开始和结束（不包括 f-string）
+                if (!in_string && (c == '"' || c == '\'')) {
+                    // 检查是否是三引号
+                    if (i + 2 < in.size() && in[i+1] == c && in[i+2] == c) {
+                        in_string = true;
+                        in_triple_string = true;
+                        string_quote = c;
+                        i += 3;
+                        out += std::string(1, c) + std::string(1, c) + std::string(1, c);
+                        continue;
+                    } else {
+                        in_string = true;
+                        in_triple_string = false;
+                        string_quote = c;
+                        out.push_back(c);
+                        ++i;
+                        continue;
                     }
+                } else if (in_string) {
+                    // 在字符串内部，检查转义字符
+                    if (c == '\\' && i + 1 < in.size()) {
+                        out.push_back(c);
+                        out.push_back(in[i+1]);
+                        i += 2;
+                        continue;
+                    }
+                    // 检查字符串结束
+                    if (!in_triple_string && c == string_quote) {
+                        in_string = false;
+                        string_quote = 0;
+                        out.push_back(c);
+                        ++i;
+                        continue;
+                    } else if (in_triple_string && c == string_quote && 
+                               i + 2 < in.size() && in[i+1] == string_quote && in[i+2] == string_quote) {
+                        in_string = false;
+                        in_triple_string = false;
+                        string_quote = 0;
+                        out += std::string(1, c) + std::string(1, c) + std::string(1, c);
+                        i += 3;
+                        continue;
+                    }
+                    // 字符串内容，直接输出
+                    out.push_back(c);
+                    ++i;
                     continue;
                 }
                 out.push_back(c);
