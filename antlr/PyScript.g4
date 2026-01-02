@@ -89,6 +89,10 @@ smallStatement
     | expressionStatement
     | importStatement
     | passStatement
+    | raiseStatement
+    | delStatement
+    | globalStatement
+    | nonlocalStatement
     | BREAK
     | CONTINUE
     ;
@@ -228,6 +232,32 @@ returnStatement
     : RETURN expression?
     ;
 
+raiseStatement
+    : RAISE expression? (FROM expression)?
+    ;
+
+delStatement
+    : DEL delTargets
+    ;
+
+delTargets
+    : delTarget (COMMA delTarget)*
+    ;
+
+delTarget
+    : primary LBRACK subscriptArg RBRACK            # delSubscript
+    | primary DOT IDENTIFIER                        # delAttribute
+    | IDENTIFIER                                    # delVariable
+    ;
+
+globalStatement
+    : GLOBAL IDENTIFIER (COMMA IDENTIFIER)*
+    ;
+
+nonlocalStatement
+    : NONLOCAL IDENTIFIER (COMMA IDENTIFIER)*
+    ;
+
 importStatement
     : IMPORT dottedName (AS IDENTIFIER)?                    # simpleImport
     | FROM dottedName IMPORT importItem (COMMA importItem)* # fromImport
@@ -257,11 +287,22 @@ expressionStatement
  * ========================= */
 
 expression
+    : assignmentExpression # assignmentExpr
+    | yieldExpression      # yieldExpr
+    ;
+
+assignmentExpression
     : conditionalExpression # conditionalExpr
+    | assignmentTarget WALRUS conditionalExpression # walrusExpr
     ;
 
 conditionalExpression
     : logicalOr (IF logicalOr ELSE conditionalExpression)? # conditional
+    ;
+
+yieldExpression
+    : YIELD conditionalExpression?
+    | YIELD FROM conditionalExpression
     ;
 
 logicalOr
@@ -457,6 +498,11 @@ BREAK   : 'break';
 CONTINUE: 'continue';
 NEW     : 'new';
 LAMBDA  : 'lambda';
+YIELD   : 'yield';
+RAISE   : 'raise';
+DEL     : 'del';
+GLOBAL  : 'global';
+NONLOCAL: 'nonlocal';
 
 TRY     : 'try';
 EXCEPT  : 'except';
@@ -505,6 +551,7 @@ BITWISE_XOR : '^';
 BITWISE_NOT : '~';
 
 ASSIGN  : '=';
+WALRUS  : ':=';
 PLUS_ASSIGN    : '+=';
 MINUS_ASSIGN   : '-=';
 MUL_ASSIGN     : '*=';

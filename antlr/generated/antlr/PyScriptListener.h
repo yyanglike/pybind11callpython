@@ -92,6 +92,30 @@ public:
   virtual void enterReturnStatement(PyScriptParser::ReturnStatementContext *ctx) = 0;
   virtual void exitReturnStatement(PyScriptParser::ReturnStatementContext *ctx) = 0;
 
+  virtual void enterRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) = 0;
+  virtual void exitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) = 0;
+
+  virtual void enterDelStatement(PyScriptParser::DelStatementContext *ctx) = 0;
+  virtual void exitDelStatement(PyScriptParser::DelStatementContext *ctx) = 0;
+
+  virtual void enterDelTargets(PyScriptParser::DelTargetsContext *ctx) = 0;
+  virtual void exitDelTargets(PyScriptParser::DelTargetsContext *ctx) = 0;
+
+  virtual void enterDelSubscript(PyScriptParser::DelSubscriptContext *ctx) = 0;
+  virtual void exitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) = 0;
+
+  virtual void enterDelAttribute(PyScriptParser::DelAttributeContext *ctx) = 0;
+  virtual void exitDelAttribute(PyScriptParser::DelAttributeContext *ctx) = 0;
+
+  virtual void enterDelVariable(PyScriptParser::DelVariableContext *ctx) = 0;
+  virtual void exitDelVariable(PyScriptParser::DelVariableContext *ctx) = 0;
+
+  virtual void enterGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) = 0;
+  virtual void exitGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) = 0;
+
+  virtual void enterNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) = 0;
+  virtual void exitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) = 0;
+
   virtual void enterSimpleImport(PyScriptParser::SimpleImportContext *ctx) = 0;
   virtual void exitSimpleImport(PyScriptParser::SimpleImportContext *ctx) = 0;
 
@@ -110,11 +134,23 @@ public:
   virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
   virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
 
+  virtual void enterAssignmentExpr(PyScriptParser::AssignmentExprContext *ctx) = 0;
+  virtual void exitAssignmentExpr(PyScriptParser::AssignmentExprContext *ctx) = 0;
+
+  virtual void enterYieldExpr(PyScriptParser::YieldExprContext *ctx) = 0;
+  virtual void exitYieldExpr(PyScriptParser::YieldExprContext *ctx) = 0;
+
   virtual void enterConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) = 0;
   virtual void exitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) = 0;
 
+  virtual void enterWalrusExpr(PyScriptParser::WalrusExprContext *ctx) = 0;
+  virtual void exitWalrusExpr(PyScriptParser::WalrusExprContext *ctx) = 0;
+
   virtual void enterConditional(PyScriptParser::ConditionalContext *ctx) = 0;
   virtual void exitConditional(PyScriptParser::ConditionalContext *ctx) = 0;
+
+  virtual void enterYieldExpression(PyScriptParser::YieldExpressionContext *ctx) = 0;
+  virtual void exitYieldExpression(PyScriptParser::YieldExpressionContext *ctx) = 0;
 
   virtual void enterLogicalOr(PyScriptParser::LogicalOrContext *ctx) = 0;
   virtual void exitLogicalOr(PyScriptParser::LogicalOrContext *ctx) = 0;

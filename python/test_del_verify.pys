@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""
+验证 del 操作的正确性
+"""
+
+my_list = [1, 2, 3]
+print(f"Before: my_list={my_list}")
+
+# 执行 del 操作
+del my_list[0]
+
+# 立即检查变量
+print(f"After del: my_list={my_list}")
+print(f"Type: {type(my_list)}")
+print(f"Length: {len(my_list)}")
+
+# 再次访问
+result = my_list
+print(f"Direct access: result={result}")
+

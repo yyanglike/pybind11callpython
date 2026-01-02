@@ -398,6 +398,14 @@ any AstVisitor::visitSmallStatement(PyScriptParser::SmallStatementContext *ctx) 
         }
     } else if (ctx->passStatement()) {
         return visit(ctx->passStatement());
+    } else if (ctx->raiseStatement()) {
+        return visit(ctx->raiseStatement());
+    } else if (ctx->delStatement()) {
+        return visit(ctx->delStatement());
+    } else if (ctx->globalStatement()) {
+        return visit(ctx->globalStatement());
+    } else if (ctx->nonlocalStatement()) {
+        return visit(ctx->nonlocalStatement());
     } else {
         // 检查是否是 BREAK 或 CONTINUE token
         // 由于 ANTLR 没有为这些规则生成单独的 context，我们通过检查 children 来识别
@@ -2518,7 +2526,8 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
             } else if (var->isPythonObject()) {
                 py::object pyObj = var->toPythonObject();
                 if (py::isinstance<py::none>(pyObj)) {
-                    logger_.debug("Variable '" + name + "' is None (Python None) at line " + std::to_string(line));
+                    logger_.warn("Variable '" + name + "' is None (Python None) at line " + std::to_string(line) + 
+                               " - this may indicate a synchronization issue");
                 }
                 if (isFunctionCall) {
                     logger_.debug("Found variable '" + name + "' for function call at line " + std::to_string(line) + 
@@ -5036,4 +5045,437 @@ void AstVisitor::resetPerformanceStats() {
     exec_cache_hits_.store(0);
     exec_cache_misses_.store(0);
     // 注意：不清空 exec_cache_ 和 exec_cache_source_，保留缓存以便后续使用
+}
+
+any AstVisitor::visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) {
+    logger_.debug("visitRaiseStatement called");
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        return any(true);
+    }
+    
+    // 在Python中执行raise语句
+    try {
+        py::gil_scoped_acquire acquire;
+        py::dict globals = py::globals();
+        
+        // 同步变量到globals
+        for (const auto& varName : cached_var_names_) {
+            auto val = variable_manager_.getVariable(varName);
+            if (val) {
+                try {
+                    globals[varName.c_str()] = val->toPythonObject();
+                } catch (...) {
+                    // 忽略转换失败
+                }
+            }
+        }
+        
+        // 构建raise语句字符串
+        string raiseStmt = "raise";
+        auto expressions = ctx->expression();
+        
+        if (!expressions.empty()) {
+            // 计算异常表达式
+            auto exceptionValue = evaluateExpression(expressions[0]);
+            if (exceptionValue && exceptionValue->isPythonObject()) {
+                py::object exceptionObj = exceptionValue->toPythonObject();
+                globals["__exception__"] = exceptionObj;
+                raiseStmt = "raise __exception__";
+                
+                // 如果有 FROM 子句
+                if (ctx->FROM() && expressions.size() > 1) {
+                    auto fromValue = evaluateExpression(expressions[1]);
+                    if (fromValue && fromValue->isPythonObject()) {
+                        py::object fromObj = fromValue->toPythonObject();
+                        globals["__from_exception__"] = fromObj;
+                        raiseStmt += " from __from_exception__";
+                    }
+                }
+            } else {
+                reportError("Cannot evaluate exception expression in raise statement", ctx);
+                return any();
+            }
+        }
+        
+        // 执行raise语句
+        py::exec(py::str(raiseStmt), globals, globals);
+    } catch (py::error_already_set& e) {
+        // raise语句会抛出异常，这是正常的
+        // 将异常传播到Python层
+        e.restore();
+        throw;
+    }
+    return any();
+}
+
+any AstVisitor::visitDelStatement(PyScriptParser::DelStatementContext *ctx) {
+    logger_.debug("visitDelStatement called");
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        return any(true);
+    }
+    
+    return visit(ctx->delTargets());
+}
+
+any AstVisitor::visitDelTargets(PyScriptParser::DelTargetsContext *ctx) {
+    logger_.debug("visitDelTargets called");
+    for (auto delTargetCtx : ctx->delTarget()) {
+        visit(delTargetCtx);
+    }
+    return any();
+}
+
+any AstVisitor::visitDelVariable(PyScriptParser::DelVariableContext *ctx) {
+    auto startToken = ctx->getStart();
+    int line = startToken ? startToken->getLine() : -1;
+    logger_.info("visitDelVariable called at line " + std::to_string(line));
+    
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        logger_.debug("Skipping del variable evaluation during function definition");
+        return any(true);
+    }
+    
+    // 删除变量：IDENTIFIER
+    string varName = ctx->IDENTIFIER()->getText();
+    logger_.info("Deleting variable: " + varName + " at line " + std::to_string(line));
+    variable_manager_.removeVariable(varName);
+    logger_.info("Variable deleted: " + varName);
+    return any();
+}
+
+any AstVisitor::visitDelAttribute(PyScriptParser::DelAttributeContext *ctx) {
+    auto startToken = ctx->getStart();
+    int line = startToken ? startToken->getLine() : -1;
+    logger_.info("visitDelAttribute called at line " + std::to_string(line));
+    
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        logger_.debug("Skipping del attribute evaluation during function definition");
+        return any(true);
+    }
+    
+    // 删除属性：obj.attr
+    // 在Python中执行 del obj.attr
+    try {
+        py::gil_scoped_acquire acquire;
+        auto primaryValue = visit(ctx->primary());
+        shared_ptr<ScriptValue> objValue;
+        try {
+            objValue = any_cast<shared_ptr<ScriptValue>>(primaryValue);
+        } catch (...) {
+            reportError("Cannot evaluate object for del attribute", ctx);
+            return any();
+        }
+        
+        if (objValue && objValue->isPythonObject()) {
+            py::object pyObj = objValue->toPythonObject();
+            string attrName = ctx->IDENTIFIER()->getText();
+            py::delattr(pyObj, attrName.c_str());
+            logger_.debug("Deleted attribute: " + attrName);
+        } else {
+            reportError("Cannot delete attribute: object is not a Python object", ctx);
+        }
+    } catch (const py::error_already_set& e) {
+        reportError("Python del attribute error: " + string(e.what()), ctx);
+    }
+    return any();
+}
+
+any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
+    auto startToken = ctx->getStart();
+    int line = startToken ? startToken->getLine() : -1;
+    logger_.info("visitDelSubscript called at line " + std::to_string(line));
+    
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        logger_.debug("Skipping del subscript evaluation during function definition");
+        return any(true);
+    }
+    
+    // 删除下标：primary LBRACK subscriptArg RBRACK
+    // 在Python中执行 del obj[key]
+    try {
+        py::gil_scoped_acquire acquire;
+        auto primaryCtx = ctx->primary();
+        string varName;
+        bool isVariable = false;
+        
+        // 检查 primary 是否是变量名
+        if (primaryCtx->IDENTIFIER()) {
+            varName = primaryCtx->IDENTIFIER()->getText();
+            isVariable = true;
+            logger_.info("Del subscript on variable: " + varName + " at line " + std::to_string(line));
+        }
+        
+        logger_.info("Visiting primary context for del subscript");
+        auto primaryValue = visit(primaryCtx);
+        shared_ptr<ScriptValue> objValue;
+        try {
+            objValue = any_cast<shared_ptr<ScriptValue>>(primaryValue);
+        } catch (...) {
+            logger_.error("Cannot cast primaryValue to ScriptValue for del subscript at line " + std::to_string(line));
+            reportError("Cannot evaluate object for del subscript", ctx);
+            return any();
+        }
+        
+        if (!objValue) {
+            logger_.error("objValue is null for del subscript at line " + std::to_string(line));
+            reportError("Cannot evaluate object for del subscript", ctx);
+            return any();
+        }
+        
+        logger_.info("objValue type: isPythonObject=" + std::string(objValue->isPythonObject() ? "true" : "false") + 
+                    ", isList=" + std::string(objValue->isList() ? "true" : "false") +
+                    ", isDictionary=" + std::string(objValue->isDictionary() ? "true" : "false"));
+        
+        // 如果对象是 List 或 Dictionary 类型，需要先转换为 PythonObject
+        if (objValue->isList() || objValue->isDictionary()) {
+            py::object pyObj = objValue->toPythonObject();
+            logger_.info("Converted List/Dictionary to Python object for del subscript");
+            
+            // 继续处理删除操作
+            auto subscriptArgCtx = ctx->subscriptArg();
+            auto expressions = subscriptArgCtx->expression();
+            auto colons = subscriptArgCtx->COLON();
+            
+            if (colons.empty() && !expressions.empty()) {
+                auto keyValue = evaluateExpression(expressions[0]);
+                if (keyValue) {
+                    // 将 keyValue 转换为 Python 对象
+                    py::object key = keyValue->toPythonObject();
+                    try {
+                        pyObj.attr("__delitem__")(key);
+                        logger_.info("Successfully called __delitem__ on List/Dictionary");
+                        
+                        // 同步回变量管理器
+                        if (isVariable && !varName.empty()) {
+                            auto updatedValue = ScriptValue::createPythonObject(pyObj);
+                            variable_manager_.setVariable(varName, updatedValue);
+                            logger_.info("Synced updated List/Dictionary back to variable_manager: " + varName);
+                        }
+                    } catch (const py::error_already_set& e) {
+                        reportError("Python del subscript error: " + string(e.what()), ctx);
+                    }
+                } else {
+                    reportError("Cannot evaluate key for del subscript", ctx);
+                }
+            } else {
+                reportError("del statement for slice not yet fully implemented", ctx);
+            }
+        } else if (objValue->isPythonObject()) {
+            py::object pyObj = objValue->toPythonObject();
+            logger_.info("Got Python object for del subscript, type=" + py::str(py::type::of(pyObj)).cast<string>());
+            auto subscriptArgCtx = ctx->subscriptArg();
+            
+            // 处理下标参数
+            // subscriptArg: expression? (COLON expression? (COLON expression?)?)?
+            auto expressions = subscriptArgCtx->expression();
+            auto colons = subscriptArgCtx->COLON();
+            
+            if (colons.empty() && !expressions.empty()) {
+                // 单个表达式，作为键（不是slice）
+                auto keyValue = evaluateExpression(expressions[0]);
+                if (keyValue) {
+                    // 将 keyValue 转换为 Python 对象（支持所有类型）
+                    py::object key = keyValue->toPythonObject();
+                    // 使用Python的del操作 - 直接删除
+                    // 注意：del 操作会修改对象本身，所以我们需要直接操作对象
+                    try {
+                        // 使用对象的 __delitem__ 方法
+                        logger_.info("Calling __delitem__ on object for variable: " + varName);
+                        pyObj.attr("__delitem__")(key);
+                        logger_.info("Successfully called __delitem__, object after deletion: " + py::str(pyObj).cast<string>());
+                        
+                        // 如果对象是变量，同步回变量管理器
+                        // 注意：pyObj 是引用，对象已经被修改，所以直接同步
+                        if (isVariable && !varName.empty()) {
+                            // 验证对象仍然有效
+                            if (py::isinstance<py::none>(pyObj)) {
+                                logger_.error("ERROR: pyObj became None after __delitem__ for variable: " + varName + " at line " + std::to_string(line));
+                            } else {
+                                logger_.info("Syncing updated object back to variable_manager for: " + varName);
+                                // 强制使用 PythonObject 类型，避免深拷贝导致不同步
+                                auto updatedValue = ScriptValue::createPythonObject(pyObj);
+                                variable_manager_.setVariable(varName, updatedValue);
+                                logger_.info("Variable set in variable_manager: " + varName);
+                                
+                                // 验证同步是否成功
+                                auto syncedVar = variable_manager_.getVariable(varName);
+                                if (!syncedVar) {
+                                    logger_.error("ERROR: syncedVar is null after setting variable " + varName);
+                                } else if (!syncedVar->isPythonObject()) {
+                                    logger_.error("ERROR: syncedVar is not PythonObject for variable " + varName + 
+                                                ", type=" + std::to_string(static_cast<int>(syncedVar->getType())));
+                                } else {
+                                    py::object syncedObj = syncedVar->toPythonObject();
+                                    logger_.info("Successfully synced variable " + varName + 
+                                                ", type=" + py::str(py::type::of(syncedObj)).cast<string>() +
+                                                ", value=" + py::str(syncedObj).cast<string>());
+                                }
+                            }
+                        }
+                    } catch (const py::error_already_set& e) {
+                        logger_.error("Exception in __delitem__: " + string(e.what()));
+                        // 如果 __delitem__ 失败，尝试使用 exec
+                        py::dict locals;
+                        locals["obj"] = pyObj;
+                        locals["key"] = key;
+                        string delCode = "del obj[key]";
+                        py::exec(py::str(delCode), py::globals(), locals);
+                        
+                        // 重新获取更新后的对象（从locals中获取）
+                        py::object updatedObj = locals["obj"];
+                        
+                        // 如果对象是变量，同步回变量管理器
+                        if (isVariable && !varName.empty()) {
+                            // 强制使用 PythonObject 类型，避免深拷贝导致不同步
+                            auto updatedValue = ScriptValue::createPythonObject(updatedObj);
+                            variable_manager_.setVariable(varName, updatedValue);
+                            logger_.debug("Synced updated object back to variable_manager (via exec): " + varName);
+                        }
+                    }
+                    logger_.debug("Deleted subscript");
+                } else {
+                    reportError("Cannot evaluate key for del subscript", ctx);
+                }
+            } else {
+                // slice操作，需要更复杂的处理
+                // 这里简化处理，实际应该支持完整的slice语法
+                reportError("del statement for slice not yet fully implemented", ctx);
+            }
+        } else {
+            reportError("Cannot delete subscript: object is not a Python object", ctx);
+        }
+    } catch (const py::error_already_set& e) {
+        reportError("Python del subscript error: " + string(e.what()), ctx);
+    }
+    return any();
+}
+
+any AstVisitor::visitGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) {
+    logger_.debug("visitGlobalStatement called");
+    // global语句在函数定义时处理，这里只记录
+    for (auto id : ctx->IDENTIFIER()) {
+        string varName = id->getText();
+        logger_.debug("global variable declared: " + varName);
+        // 实际处理应该在函数定义时进行
+    }
+    return any();
+}
+
+any AstVisitor::visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) {
+    logger_.debug("visitNonlocalStatement called");
+    // nonlocal语句在函数定义时处理，这里只记录
+    for (auto id : ctx->IDENTIFIER()) {
+        string varName = id->getText();
+        logger_.debug("nonlocal variable declared: " + varName);
+        // 实际处理应该在函数定义时进行
+    }
+    return any();
+}
+
+any AstVisitor::visitYieldExpr(PyScriptParser::YieldExprContext *ctx) {
+    logger_.debug("visitYieldExpr called");
+    // yield表达式应该在生成器函数中使用
+    // 这里简化处理，实际应该返回生成器对象
+    if (ctx->yieldExpression()) {
+        return visit(ctx->yieldExpression());
+    }
+    return any(ScriptValue::createNull());
+}
+
+any AstVisitor::visitWalrusExpr(PyScriptParser::WalrusExprContext *ctx) {
+    logger_.debug("visitWalrusExpr called");
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        return any(true);
+    }
+    
+    // Walrus运算符 := 用于在表达式中赋值
+    auto assignmentTargetCtx = ctx->assignmentTarget();
+    auto expressionCtx = ctx->conditionalExpression();
+    
+    if (!assignmentTargetCtx || !expressionCtx) {
+        reportError("Invalid walrus expression", ctx);
+        return any();
+    }
+    
+    // 计算右侧表达式
+    auto rightValueAny = visit(expressionCtx);
+    shared_ptr<ScriptValue> rightValue;
+    try {
+        rightValue = any_cast<shared_ptr<ScriptValue>>(rightValueAny);
+    } catch (...) {
+        reportError("Cannot evaluate right-hand side of walrus expression", ctx);
+        return any();
+    }
+    if (!rightValue) {
+        reportError("Cannot evaluate right-hand side of walrus expression", ctx);
+        return any();
+    }
+    
+    // 赋值到目标
+    if (assignmentTargetCtx->IDENTIFIER()) {
+        string varName = assignmentTargetCtx->IDENTIFIER()->getText();
+        variable_manager_.setVariable(varName, rightValue);
+        logger_.debug("Walrus assignment: " + varName + " = " + rightValue->toString());
+    } else {
+        // 其他赋值目标（属性、下标）需要更复杂的处理
+        reportError("Walrus operator with complex assignment target not yet fully implemented", ctx);
+    }
+    
+    return any(rightValue);
+}
+
+any AstVisitor::visitYieldExpression(PyScriptParser::YieldExpressionContext *ctx) {
+    logger_.debug("visitYieldExpression called");
+    // 如果正在定义函数，跳过求值
+    if (defining_function_) {
+        return any(true);
+    }
+    
+    // yield表达式应该在生成器函数中使用
+    // 这里简化处理，实际应该返回生成器对象
+    if (ctx->FROM()) {
+        // yield from expression
+        if (ctx->conditionalExpression()) {
+            auto exprValue = visit(ctx->conditionalExpression());
+            try {
+                auto scriptValue = any_cast<shared_ptr<ScriptValue>>(exprValue);
+                logger_.debug("yield from expression evaluated");
+                return any(scriptValue);
+            } catch (...) {
+                logger_.warn("yield from expression returned non-ScriptValue");
+                return any(ScriptValue::createNull());
+            }
+        }
+    } else {
+        // yield expression
+        if (ctx->conditionalExpression()) {
+            auto exprValue = visit(ctx->conditionalExpression());
+            try {
+                auto scriptValue = any_cast<shared_ptr<ScriptValue>>(exprValue);
+                logger_.debug("yield expression evaluated");
+                return any(scriptValue);
+            } catch (...) {
+                logger_.warn("yield expression returned non-ScriptValue");
+                return any(ScriptValue::createNull());
+            }
+        } else {
+            // yield (no expression)
+            logger_.debug("yield (no expression)");
+            return any(ScriptValue::createNull());
+        }
+    }
+    return any(ScriptValue::createNull());
+}
+
+any AstVisitor::visitAssignmentExpr(PyScriptParser::AssignmentExprContext *ctx) {
+    logger_.debug("visitAssignmentExpr called");
+    // 委托给子节点处理
+    // assignmentExpression 有两个备选项：conditionalExpr 和 walrusExpr
+    return visitChildren(ctx);
 }

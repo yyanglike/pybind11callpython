@@ -119,6 +119,38 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDelStatement(PyScriptParser::DelStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDelTargets(PyScriptParser::DelTargetsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDelAttribute(PyScriptParser::DelAttributeContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDelVariable(PyScriptParser::DelVariableContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -143,11 +175,27 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitAssignmentExpr(PyScriptParser::AssignmentExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitYieldExpr(PyScriptParser::YieldExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) override {
     return visitChildren(ctx);
   }
 
+  virtual std::any visitWalrusExpr(PyScriptParser::WalrusExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitConditional(PyScriptParser::ConditionalContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitYieldExpression(PyScriptParser::YieldExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
 

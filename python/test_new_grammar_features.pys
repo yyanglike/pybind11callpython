@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""
+综合测试新添加的语法特性
+
+测试内容：
+1. yield 表达式和生成器函数
+2. raise 语句和异常处理
+3. del 语句（删除变量）
+4. global 和 nonlocal 关键字
+5. Walrus 运算符 (:=)
+6. 嵌套推导式
+
+注意：某些功能的完整实现可能需要进一步开发，这里主要测试语法解析是否正确。
+"""
+
+print("=" * 60)
+print("测试新语法特性")
+print("=" * 60)
+
+# ============================================================
+# 1. 测试 yield 表达式和生成器函数
+# ============================================================
+print("\n1. 测试 yield 表达式和生成器函数")
+
+def simple_generator(n):
+    """简单的生成器函数"""
+    for i in range(n):
+        yield i * i
+
+def generator_with_yield_from():
+    """使用 yield from 的生成器"""
+    yield from range(5)
+    yield from [10, 20, 30]
+
+# 测试生成器
+gen1 = simple_generator(5)
+results1 = list(gen1)
+print(f"simple_generator(5): {results1}")
+assert results1 == [0, 1, 4, 9, 16], f"Expected [0, 1, 4, 9, 16], got {results1}"
+
+gen2 = generator_with_yield_from()
+results2 = list(gen2)
+print(f"generator_with_yield_from(): {results2}")
+assert results2 == [0, 1, 2, 3, 4, 10, 20, 30], f"Expected [0, 1, 2, 3, 4, 10, 20, 30], got {results2}"
+
+# ============================================================
+# 2. 测试 raise 语句
+# ============================================================
+print("\n2. 测试 raise 语句")
+
+def test_raise():
+    """测试 raise 语句"""
+    try:
+        raise ValueError("Test error message")
+    except ValueError as e:
+        print(f"Caught exception: {type(e).__name__}")
+        return True
+    return False
+
+def test_raise_from():
+    """测试 raise from"""
+    try:
+        try:
+            raise ValueError("Original error")
+        except ValueError as e1:
+            raise RuntimeError("Wrapped error") from e1
+    except RuntimeError as e2:
+        print(f"Caught RuntimeError: {type(e2).__name__}")
+        return True
+    return False
+
+result1 = test_raise()
+assert result1, "test_raise failed"
+
+result2 = test_raise_from()
+assert result2, "test_raise_from failed"
+
+# ============================================================
+# 3. 测试 del 语句
+# ============================================================
+print("\n3. 测试 del 语句")
+
+# 删除变量
+x = 10
+y = 20
+z = 30
+print(f"Before del: x={x}, y={y}, z={z}")
+
+del x
+del y, z
+print("After del: variables deleted")
+
+# 删除列表元素（使用索引）
+my_list = [1, 2, 3, 4, 5]
+print(f"Before del: my_list={my_list}")
+del my_list[1]
+del my_list[1]  # 删除第二个元素（原来的索引2）
+print(f"After del my_list[1] twice: {my_list}")
+
+# 删除字典键
+my_dict = {"a": 1, "b": 2, "c": 3}
+print(f"Before del: my_dict={my_dict}")
+del my_dict["b"]
+print(f"After del my_dict['b']: {my_dict}")
+
+# ============================================================
+# 4. 测试 global 和 nonlocal 关键字
+# ============================================================
+print("\n4. 测试 global 和 nonlocal 关键字")
+
+# 测试 global
+global_var = 100
+
+def test_global():
+    global global_var
+    global_var = 200
+    print(f"Inside test_global: global_var={global_var}")
+
+test_global()
+print(f"After test_global: global_var={global_var}")
+
+# 测试 nonlocal
+def outer_function():
+    outer_var = 10
+    
+    def inner_function():
+        nonlocal outer_var
+        outer_var = 20
+        print(f"Inside inner_function: outer_var={outer_var}")
+    
+    inner_function()
+    print(f"After inner_function: outer_var={outer_var}")
+    return outer_var
+
+result = outer_function()
+print(f"outer_function returned: {result}")
+
+# ============================================================
+# 5. 测试 Walrus 运算符 (:=)
+# ============================================================
+print("\n5. 测试 Walrus 运算符 (:=)")
+
+# 在 while 循环中使用
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+i = 0
+sum_result = 0
+while i < len(numbers) and (n := numbers[i]) < 7:
+    sum_result += n
+    i += 1
+
+print(f"Sum of numbers < 7: {sum_result}")
+
+# 在列表推导式中使用
+data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+squared_evens = [y for x in data if (y := x * x) % 2 == 0]
+print(f"Squared evens: {squared_evens}")
+
+# 在条件表达式中使用
+if (value := len(data)) > 5:
+    print(f"Data length is {value}, which is > 5")
+
+# ============================================================
+# 6. 测试嵌套推导式
+# ============================================================
+print("\n6. 测试嵌套推导式")
+
+# 嵌套列表推导式
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+flattened = [item for row in matrix for item in row]
+print(f"Flattened matrix: {flattened}")
+assert flattened == [1, 2, 3, 4, 5, 6, 7, 8, 9], f"Expected [1, 2, 3, 4, 5, 6, 7, 8, 9], got {flattened}"
+
+# 嵌套字典推导式
+nested_dict = {i: {j: i * j for j in range(1, 4)} for i in range(1, 4)}
+print(f"Nested dict: {nested_dict}")
+
+# 嵌套集合推导式
+nested_set = {x * y for x in range(1, 4) for y in range(1, 4) if x != y}
+print(f"Nested set: {sorted(nested_set)}")
+
+# 带条件的嵌套推导式
+filtered_matrix = [[item for item in row if item % 2 == 0] for row in matrix]
+print(f"Filtered matrix (even only): {filtered_matrix}")
+
+# ============================================================
+# 7. 综合测试：组合使用多个特性
+# ============================================================
+print("\n7. 综合测试：组合使用多个特性")
+
+def complex_function():
+    """综合使用多个特性的复杂函数"""
+    global global_counter
+    global_counter = 0
+    
+    def inner_generator(n):
+        local_counter = 0
+        for i in range(n):
+            if (value := i * i) > 10:
+                local_counter += value
+                yield value
+        return local_counter
+    
+    results = list(inner_generator(10))
+    return results, global_counter
+
+results, counter = complex_function()
+print(f"Generator results: {results}")
+print(f"Global counter: {counter}")
+
+# 测试异常处理和 del
+def test_exception_and_del():
+    """测试异常处理和 del 的组合"""
+    local_vars = {"a": 1, "b": 2, "c": 3}
+    
+    try:
+        if (x := local_vars.get("a")) is None:
+            raise ValueError("a not found")
+        del local_vars["a"]
+        return x, local_vars
+    except ValueError as e:
+        print(f"Exception: {e}")
+        return None, None
+
+result_val, remaining_vars = test_exception_and_del()
+print(f"Result: {result_val}, Remaining vars: {remaining_vars}")
+
+# ============================================================
+# 8. 测试复杂嵌套场景
+# ============================================================
+print("\n8. 测试复杂嵌套场景")
+
+def nested_comprehensions_with_walrus():
+    """使用 walrus 运算符的嵌套推导式"""
+    data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    
+    # 使用 walrus 运算符在推导式中
+    result = [
+        (squared := x * x) 
+        for row in data 
+        for x in row 
+        if (squared := x * x) > 10
+    ]
+    
+    return result
+
+walrus_result = nested_comprehensions_with_walrus()
+print(f"Walrus in nested comprehension: {walrus_result}")
+
+# 测试多层嵌套的生成器
+def multi_level_generator():
+    """多层嵌套的生成器"""
+    def level1():
+        for i in range(3):
+            yield i
+    
+    def level2():
+        yield from level1()
+        for j in range(10, 13):
+            yield j
+    
+    def level3():
+        yield from level2()
+        yield from [20, 21, 22]
+    
+    return list(level3())
+
+multi_result = multi_level_generator()
+print(f"Multi-level generator: {multi_result}")
+
+print("\n" + "=" * 60)
+print("语法测试完成！")
+print("=" * 60)

@@ -14,20 +14,20 @@ public:
   enum {
     DEF = 1, IF = 2, ELSE = 3, ELIF = 4, FOR = 5, WHILE = 6, RETURN = 7, 
     IMPORT = 8, FROM = 9, AS = 10, IN = 11, PASS = 12, BREAK = 13, CONTINUE = 14, 
-    NEW = 15, LAMBDA = 16, TRY = 17, EXCEPT = 18, FINALLY = 19, WITH = 20, 
-    ASYNC = 21, AWAIT = 22, CLASS = 23, AT = 24, TRUE = 25, FALSE = 26, 
-    NONE = 27, AND = 28, OR = 29, NOT = 30, IS = 31, IS_NOT = 32, NOT_IN = 33, 
-    PLUS = 34, MINUS = 35, MUL = 36, DIV = 37, FLOOR_DIV = 38, MOD = 39, 
-    EQ = 40, NE = 41, LT = 42, LE = 43, GT = 44, GE = 45, LEFT_SHIFT = 46, 
-    RIGHT_SHIFT = 47, BITWISE_AND = 48, BITWISE_OR = 49, BITWISE_XOR = 50, 
-    BITWISE_NOT = 51, ASSIGN = 52, PLUS_ASSIGN = 53, MINUS_ASSIGN = 54, 
-    MUL_ASSIGN = 55, DIV_ASSIGN = 56, FLOOR_DIV_ASSIGN = 57, MOD_ASSIGN = 58, 
-    POW_ASSIGN = 59, BITWISE_AND_ASSIGN = 60, BITWISE_OR_ASSIGN = 61, BITWISE_XOR_ASSIGN = 62, 
-    LEFT_SHIFT_ASSIGN = 63, RIGHT_SHIFT_ASSIGN = 64, SEMI = 65, LPAREN = 66, 
-    RPAREN = 67, LBRACK = 68, RBRACK = 69, LBRACE = 70, RBRACE = 71, COMMA = 72, 
-    COLON = 73, DOT = 74, DOUBLE_STAR = 75, NEWLINE = 76, IDENTIFIER = 77, 
-    INTEGER = 78, FLOAT = 79, STRING = 80, WS = 81, COMMENT = 82, INDENT = 83, 
-    DEDENT = 84
+    NEW = 15, LAMBDA = 16, YIELD = 17, RAISE = 18, DEL = 19, GLOBAL = 20, 
+    NONLOCAL = 21, TRY = 22, EXCEPT = 23, FINALLY = 24, WITH = 25, ASYNC = 26, 
+    AWAIT = 27, CLASS = 28, AT = 29, TRUE = 30, FALSE = 31, NONE = 32, AND = 33, 
+    OR = 34, NOT = 35, IS = 36, IS_NOT = 37, NOT_IN = 38, PLUS = 39, MINUS = 40, 
+    MUL = 41, DIV = 42, FLOOR_DIV = 43, MOD = 44, EQ = 45, NE = 46, LT = 47, 
+    LE = 48, GT = 49, GE = 50, LEFT_SHIFT = 51, RIGHT_SHIFT = 52, BITWISE_AND = 53, 
+    BITWISE_OR = 54, BITWISE_XOR = 55, BITWISE_NOT = 56, ASSIGN = 57, WALRUS = 58, 
+    PLUS_ASSIGN = 59, MINUS_ASSIGN = 60, MUL_ASSIGN = 61, DIV_ASSIGN = 62, 
+    FLOOR_DIV_ASSIGN = 63, MOD_ASSIGN = 64, POW_ASSIGN = 65, BITWISE_AND_ASSIGN = 66, 
+    BITWISE_OR_ASSIGN = 67, BITWISE_XOR_ASSIGN = 68, LEFT_SHIFT_ASSIGN = 69, 
+    RIGHT_SHIFT_ASSIGN = 70, SEMI = 71, LPAREN = 72, RPAREN = 73, LBRACK = 74, 
+    RBRACK = 75, LBRACE = 76, RBRACE = 77, COMMA = 78, COLON = 79, DOT = 80, 
+    DOUBLE_STAR = 81, NEWLINE = 82, IDENTIFIER = 83, INTEGER = 84, FLOAT = 85, 
+    STRING = 86, WS = 87, COMMENT = 88, INDENT = 89, DEDENT = 90
   };
 
   enum {
@@ -38,18 +38,20 @@ public:
     RuleDecoratedDef = 14, RuleDecorators = 15, RuleDecorator = 16, RuleSuite = 17, 
     RuleFunctionDef = 18, RuleParameterList = 19, RuleParameter = 20, RuleIfStatement = 21, 
     RuleWhileStatement = 22, RuleForStatement = 23, RulePassStatement = 24, 
-    RuleReturnStatement = 25, RuleImportStatement = 26, RuleImportItem = 27, 
-    RuleAssignment = 28, RuleAssignmentTarget = 29, RuleExpressionStatement = 30, 
-    RuleExpression = 31, RuleConditionalExpression = 32, RuleLogicalOr = 33, 
-    RuleLogicalAnd = 34, RuleBitwiseOr = 35, RuleBitwiseXor = 36, RuleBitwiseAnd = 37, 
-    RuleEquality = 38, RuleComparison = 39, RuleShift = 40, RuleAdditive = 41, 
-    RuleMultiplicative = 42, RulePower = 43, RuleUnary = 44, RulePrimary = 45, 
-    RuleTupleLiteral = 46, RuleNewExpression = 47, RuleAtom = 48, RulePostfixOp = 49, 
-    RuleSubscriptArg = 50, RuleArgumentList = 51, RuleArgument = 52, RuleListLiteral = 53, 
-    RuleListElements = 54, RuleComprehension = 55, RuleCompFor = 56, RuleDictLiteral = 57, 
-    RuleDictComprehension = 58, RuleDictItem = 59, RuleSetLiteral = 60, 
-    RuleSetElements = 61, RuleGeneratorExpression = 62, RuleLiteral = 63, 
-    RuleLambdaExpression = 64, RuleDottedName = 65
+    RuleReturnStatement = 25, RuleRaiseStatement = 26, RuleDelStatement = 27, 
+    RuleDelTargets = 28, RuleDelTarget = 29, RuleGlobalStatement = 30, RuleNonlocalStatement = 31, 
+    RuleImportStatement = 32, RuleImportItem = 33, RuleAssignment = 34, 
+    RuleAssignmentTarget = 35, RuleExpressionStatement = 36, RuleExpression = 37, 
+    RuleAssignmentExpression = 38, RuleConditionalExpression = 39, RuleYieldExpression = 40, 
+    RuleLogicalOr = 41, RuleLogicalAnd = 42, RuleBitwiseOr = 43, RuleBitwiseXor = 44, 
+    RuleBitwiseAnd = 45, RuleEquality = 46, RuleComparison = 47, RuleShift = 48, 
+    RuleAdditive = 49, RuleMultiplicative = 50, RulePower = 51, RuleUnary = 52, 
+    RulePrimary = 53, RuleTupleLiteral = 54, RuleNewExpression = 55, RuleAtom = 56, 
+    RulePostfixOp = 57, RuleSubscriptArg = 58, RuleArgumentList = 59, RuleArgument = 60, 
+    RuleListLiteral = 61, RuleListElements = 62, RuleComprehension = 63, 
+    RuleCompFor = 64, RuleDictLiteral = 65, RuleDictComprehension = 66, 
+    RuleDictItem = 67, RuleSetLiteral = 68, RuleSetElements = 69, RuleGeneratorExpression = 70, 
+    RuleLiteral = 71, RuleLambdaExpression = 72, RuleDottedName = 73
   };
 
   explicit PyScriptParser(antlr4::TokenStream *input);
@@ -95,13 +97,21 @@ public:
   class ForStatementContext;
   class PassStatementContext;
   class ReturnStatementContext;
+  class RaiseStatementContext;
+  class DelStatementContext;
+  class DelTargetsContext;
+  class DelTargetContext;
+  class GlobalStatementContext;
+  class NonlocalStatementContext;
   class ImportStatementContext;
   class ImportItemContext;
   class AssignmentContext;
   class AssignmentTargetContext;
   class ExpressionStatementContext;
   class ExpressionContext;
+  class AssignmentExpressionContext;
   class ConditionalExpressionContext;
+  class YieldExpressionContext;
   class LogicalOrContext;
   class LogicalAndContext;
   class BitwiseOrContext;
@@ -197,6 +207,10 @@ public:
     ExpressionStatementContext *expressionStatement();
     ImportStatementContext *importStatement();
     PassStatementContext *passStatement();
+    RaiseStatementContext *raiseStatement();
+    DelStatementContext *delStatement();
+    GlobalStatementContext *globalStatement();
+    NonlocalStatementContext *nonlocalStatement();
     antlr4::tree::TerminalNode *BREAK();
     antlr4::tree::TerminalNode *CONTINUE();
 
@@ -625,6 +639,149 @@ public:
 
   ReturnStatementContext* returnStatement();
 
+  class  RaiseStatementContext : public antlr4::ParserRuleContext {
+  public:
+    RaiseStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *RAISE();
+    std::vector<ExpressionContext *> expression();
+    ExpressionContext* expression(size_t i);
+    antlr4::tree::TerminalNode *FROM();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  RaiseStatementContext* raiseStatement();
+
+  class  DelStatementContext : public antlr4::ParserRuleContext {
+  public:
+    DelStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *DEL();
+    DelTargetsContext *delTargets();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  DelStatementContext* delStatement();
+
+  class  DelTargetsContext : public antlr4::ParserRuleContext {
+  public:
+    DelTargetsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<DelTargetContext *> delTarget();
+    DelTargetContext* delTarget(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  DelTargetsContext* delTargets();
+
+  class  DelTargetContext : public antlr4::ParserRuleContext {
+  public:
+    DelTargetContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    DelTargetContext() = default;
+    void copyFrom(DelTargetContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
+    virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  DelAttributeContext : public DelTargetContext {
+  public:
+    DelAttributeContext(DelTargetContext *ctx);
+
+    PrimaryContext *primary();
+    antlr4::tree::TerminalNode *DOT();
+    antlr4::tree::TerminalNode *IDENTIFIER();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  DelVariableContext : public DelTargetContext {
+  public:
+    DelVariableContext(DelTargetContext *ctx);
+
+    antlr4::tree::TerminalNode *IDENTIFIER();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  DelSubscriptContext : public DelTargetContext {
+  public:
+    DelSubscriptContext(DelTargetContext *ctx);
+
+    PrimaryContext *primary();
+    antlr4::tree::TerminalNode *LBRACK();
+    SubscriptArgContext *subscriptArg();
+    antlr4::tree::TerminalNode *RBRACK();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  DelTargetContext* delTarget();
+
+  class  GlobalStatementContext : public antlr4::ParserRuleContext {
+  public:
+    GlobalStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *GLOBAL();
+    std::vector<antlr4::tree::TerminalNode *> IDENTIFIER();
+    antlr4::tree::TerminalNode* IDENTIFIER(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  GlobalStatementContext* globalStatement();
+
+  class  NonlocalStatementContext : public antlr4::ParserRuleContext {
+  public:
+    NonlocalStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *NONLOCAL();
+    std::vector<antlr4::tree::TerminalNode *> IDENTIFIER();
+    antlr4::tree::TerminalNode* IDENTIFIER(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  NonlocalStatementContext* nonlocalStatement();
+
   class  ImportStatementContext : public antlr4::ParserRuleContext {
   public:
     ImportStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -765,9 +922,59 @@ public:
    
   };
 
-  class  ConditionalExprContext : public ExpressionContext {
+  class  AssignmentExprContext : public ExpressionContext {
   public:
-    ConditionalExprContext(ExpressionContext *ctx);
+    AssignmentExprContext(ExpressionContext *ctx);
+
+    AssignmentExpressionContext *assignmentExpression();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  YieldExprContext : public ExpressionContext {
+  public:
+    YieldExprContext(ExpressionContext *ctx);
+
+    YieldExpressionContext *yieldExpression();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  ExpressionContext* expression();
+
+  class  AssignmentExpressionContext : public antlr4::ParserRuleContext {
+  public:
+    AssignmentExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    AssignmentExpressionContext() = default;
+    void copyFrom(AssignmentExpressionContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
+    virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  WalrusExprContext : public AssignmentExpressionContext {
+  public:
+    WalrusExprContext(AssignmentExpressionContext *ctx);
+
+    AssignmentTargetContext *assignmentTarget();
+    antlr4::tree::TerminalNode *WALRUS();
+    ConditionalExpressionContext *conditionalExpression();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  ConditionalExprContext : public AssignmentExpressionContext {
+  public:
+    ConditionalExprContext(AssignmentExpressionContext *ctx);
 
     ConditionalExpressionContext *conditionalExpression();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -776,7 +983,7 @@ public:
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
 
-  ExpressionContext* expression();
+  AssignmentExpressionContext* assignmentExpression();
 
   class  ConditionalExpressionContext : public antlr4::ParserRuleContext {
   public:
@@ -807,6 +1014,23 @@ public:
   };
 
   ConditionalExpressionContext* conditionalExpression();
+
+  class  YieldExpressionContext : public antlr4::ParserRuleContext {
+  public:
+    YieldExpressionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *YIELD();
+    ConditionalExpressionContext *conditionalExpression();
+    antlr4::tree::TerminalNode *FROM();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  YieldExpressionContext* yieldExpression();
 
   class  LogicalOrContext : public antlr4::ParserRuleContext {
   public:

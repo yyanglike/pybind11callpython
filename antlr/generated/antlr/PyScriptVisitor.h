@@ -71,6 +71,22 @@ public:
 
     virtual std::any visitReturnStatement(PyScriptParser::ReturnStatementContext *context) = 0;
 
+    virtual std::any visitRaiseStatement(PyScriptParser::RaiseStatementContext *context) = 0;
+
+    virtual std::any visitDelStatement(PyScriptParser::DelStatementContext *context) = 0;
+
+    virtual std::any visitDelTargets(PyScriptParser::DelTargetsContext *context) = 0;
+
+    virtual std::any visitDelSubscript(PyScriptParser::DelSubscriptContext *context) = 0;
+
+    virtual std::any visitDelAttribute(PyScriptParser::DelAttributeContext *context) = 0;
+
+    virtual std::any visitDelVariable(PyScriptParser::DelVariableContext *context) = 0;
+
+    virtual std::any visitGlobalStatement(PyScriptParser::GlobalStatementContext *context) = 0;
+
+    virtual std::any visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *context) = 0;
+
     virtual std::any visitSimpleImport(PyScriptParser::SimpleImportContext *context) = 0;
 
     virtual std::any visitFromImport(PyScriptParser::FromImportContext *context) = 0;
@@ -83,9 +99,17 @@ public:
 
     virtual std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *context) = 0;
 
+    virtual std::any visitAssignmentExpr(PyScriptParser::AssignmentExprContext *context) = 0;
+
+    virtual std::any visitYieldExpr(PyScriptParser::YieldExprContext *context) = 0;
+
     virtual std::any visitConditionalExpr(PyScriptParser::ConditionalExprContext *context) = 0;
 
+    virtual std::any visitWalrusExpr(PyScriptParser::WalrusExprContext *context) = 0;
+
     virtual std::any visitConditional(PyScriptParser::ConditionalContext *context) = 0;
+
+    virtual std::any visitYieldExpression(PyScriptParser::YieldExpressionContext *context) = 0;
 
     virtual std::any visitLogicalOr(PyScriptParser::LogicalOrContext *context) = 0;
 

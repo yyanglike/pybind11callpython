@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""
+追踪 del 操作的详细流程
+"""
+
+print("=== 测试 del 操作追踪 ===")
+
+# 步骤1: 创建列表
+my_list = [1, 2, 3]
+print(f"Step 1: Created my_list={my_list}")
+
+# 步骤2: 检查变量是否存在
+print(f"Step 2: Check if my_list exists: {my_list is not None}")
+
+# 步骤3: 执行 del 操作
+print("Step 3: Executing del my_list[0]...")
+del my_list[0]
+
+# 步骤4: 立即检查变量
+print(f"Step 4: After del, my_list={my_list}")
+print(f"Step 5: Type check: type={type(my_list)}")
+print(f"Step 6: Is None? {my_list is None}")
+
+# 步骤5: 再次访问
+x = my_list
+print(f"Step 7: Assigned to x: x={x}")
+

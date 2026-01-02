@@ -116,6 +116,18 @@ public:
     std::any visitForStatement(PyScriptParser::ForStatementContext *ctx) override;
     std::any visitPassStatement(PyScriptParser::PassStatementContext *ctx) override;
     std::any visitReturnStatement(PyScriptParser::ReturnStatementContext *ctx) override;
+    std::any visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) override;
+    std::any visitDelStatement(PyScriptParser::DelStatementContext *ctx) override;
+    std::any visitDelTargets(PyScriptParser::DelTargetsContext *ctx) override;
+    std::any visitDelVariable(PyScriptParser::DelVariableContext *ctx) override;
+    std::any visitDelAttribute(PyScriptParser::DelAttributeContext *ctx) override;
+    std::any visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) override;
+    std::any visitGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) override;
+    std::any visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) override;
+    std::any visitYieldExpr(PyScriptParser::YieldExprContext *ctx) override;
+    std::any visitWalrusExpr(PyScriptParser::WalrusExprContext *ctx) override;
+    std::any visitYieldExpression(PyScriptParser::YieldExpressionContext *ctx) override;
+    std::any visitAssignmentExpr(PyScriptParser::AssignmentExprContext *ctx) override;
     std::any visitSuite(PyScriptParser::SuiteContext *ctx) override;
     std::any visitAssignment(PyScriptParser::AssignmentContext *ctx) override;
     std::any visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) override;

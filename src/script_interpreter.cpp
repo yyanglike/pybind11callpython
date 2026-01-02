@@ -403,6 +403,66 @@ any ScriptInterpreter::visitReturnStatement(PyScriptParser::ReturnStatementConte
     return ast_visitor_.visitReturnStatement(ctx);
 }
 
+any ScriptInterpreter::visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitRaiseStatement(ctx);
+}
+
+any ScriptInterpreter::visitDelStatement(PyScriptParser::DelStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitDelStatement(ctx);
+}
+
+any ScriptInterpreter::visitDelTargets(PyScriptParser::DelTargetsContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitDelTargets(ctx);
+}
+
+any ScriptInterpreter::visitDelVariable(PyScriptParser::DelVariableContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitDelVariable(ctx);
+}
+
+any ScriptInterpreter::visitDelAttribute(PyScriptParser::DelAttributeContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitDelAttribute(ctx);
+}
+
+any ScriptInterpreter::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitDelSubscript(ctx);
+}
+
+any ScriptInterpreter::visitGlobalStatement(PyScriptParser::GlobalStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitGlobalStatement(ctx);
+}
+
+any ScriptInterpreter::visitNonlocalStatement(PyScriptParser::NonlocalStatementContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitNonlocalStatement(ctx);
+}
+
+any ScriptInterpreter::visitYieldExpr(PyScriptParser::YieldExprContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitYieldExpr(ctx);
+}
+
+any ScriptInterpreter::visitWalrusExpr(PyScriptParser::WalrusExprContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitWalrusExpr(ctx);
+}
+
+any ScriptInterpreter::visitYieldExpression(PyScriptParser::YieldExpressionContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitYieldExpression(ctx);
+}
+
+any ScriptInterpreter::visitAssignmentExpr(PyScriptParser::AssignmentExprContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitAssignmentExpr(ctx);
+}
+
 any ScriptInterpreter::visitSuite(PyScriptParser::SuiteContext *ctx) {
     // 委托给AstVisitor处理
     return ast_visitor_.visitSuite(ctx);
