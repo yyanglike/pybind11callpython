@@ -2713,12 +2713,14 @@ any AstVisitor::visitMultiElementTuple(PyScriptParser::MultiElementTupleContext 
     }
     
     // 创建 Python 元组
+    // 确保在创建 tuple 时持有 GIL
     py::gil_scoped_acquire acquire;
     py::tuple pyTuple(elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
         pyTuple[i] = elements[i]->toPythonObject();
     }
-    py::gil_scoped_release release;
+    // 注意：不要在这里释放 GIL，因为 ScriptValue::fromPythonObject 可能需要 GIL
+    // py::gil_scoped_release release;
     
     return any(ScriptValue::fromPythonObject(pyTuple));
 }
@@ -2745,10 +2747,12 @@ any AstVisitor::visitSingleElementTuple(PyScriptParser::SingleElementTupleContex
     }
     
     // 创建单元素 Python 元组
+    // 确保在创建 tuple 时持有 GIL
     py::gil_scoped_acquire acquire;
     py::tuple pyTuple(1);
     pyTuple[0] = val->toPythonObject();
-    py::gil_scoped_release release;
+    // 注意：不要在这里释放 GIL，因为 ScriptValue::fromPythonObject 可能需要 GIL
+    // py::gil_scoped_release release;
     
     return any(ScriptValue::fromPythonObject(pyTuple));
 }
@@ -5105,19 +5109,31 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
         }
         
         // 清除 Python 错误状态，避免影响后续操作
-        PyErr_Clear();
+        // 注意：在清除错误之前需要确保持有 GIL
+        {
+            py::gil_scoped_acquire acquire;
+            PyErr_Clear();
+        }
         
         for (auto exceptClause : ctx->exceptClause()) {
             auto exceptSuite = exceptClause->suite();
             if (exceptSuite) {
                 try {
-                    visit(exceptSuite);
+                    // 确保在访问 except 块时持有 GIL
+                    // visit 函数内部可能会访问 Python 对象（如创建 tuple），需要 GIL
+                    {
+                        py::gil_scoped_acquire acquire_gil;
+                        visit(exceptSuite);
+                    }
                     handled = true;
                     exception_matched = true;
                     break;
                 } catch (const py::error_already_set& ex) {
                     // 如果 except 块执行时出错，清除错误状态
-                    PyErr_Clear();
+                    {
+                        py::gil_scoped_acquire acquire;
+                        PyErr_Clear();
+                    }
                     logger_.error("Python error in except block");
                 } catch (const std::exception& ex) {
                     // 如果 except 块执行时出错，记录错误但继续
