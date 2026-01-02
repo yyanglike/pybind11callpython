@@ -990,8 +990,11 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
                     }
                 } catch (const py::error_already_set& e) {
                     logger_.error("Error during function definition exec for " + funcName + ": " + string(e.what()));
-                    // 清除Python错误状态
-                    PyErr_Clear();
+                    // 清除Python错误状态，确保持有 GIL
+                    {
+                        py::gil_scoped_acquire acquire;
+                        PyErr_Clear();
+                    }
                     throw;
                 }
                 
@@ -1399,8 +1402,11 @@ any AstVisitor::visitFromImport(PyScriptParser::FromImportContext *ctx) {
         current_from_module_ = py::none();
         
     } catch (const py::error_already_set& e) {
-        // 确保重置当前模块
-        current_from_module_ = py::none();
+        // 确保重置当前模块，确保持有 GIL
+        {
+            py::gil_scoped_acquire acquire;
+            current_from_module_ = py::none();
+        }
         logger_.error(std::string("Python import error: ") + e.what());
         reportError("Failed to import module: " + string(e.what()), ctx);
     } catch (const exception& e) {
@@ -3455,8 +3461,11 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
             } catch (const py::error_already_set& e) {
                 // 提取更详细的错误信息
                 string errorMsg = string(e.what());
-                // 清除 Python 错误状态，避免影响后续操作
-                PyErr_Clear();
+                // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
+                {
+                    py::gil_scoped_acquire acquire;
+                    PyErr_Clear();
+                }
                 reportError("Python function call error: " + errorMsg, callOp);
                 return any();
             }
@@ -5069,6 +5078,8 @@ any AstVisitor::visitWithStatement(PyScriptParser::WithStatementContext *ctx) {
     if (rethrow && !suppress) {
         try {
             if (!excVal.is_none()) {
+                // 确保在访问 Python 对象时持有 GIL
+                py::gil_scoped_acquire acquire;
                 std::string msg = py::str(excVal);
                 throw std::runtime_error(msg);
             }
@@ -5160,8 +5171,11 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
                     exception_matched = true;
                     break;
                 } catch (const py::error_already_set& ex) {
-                    // 如果 except 块执行时出错，清除错误状态
-                    PyErr_Clear();
+                    // 如果 except 块执行时出错，清除错误状态，确保持有 GIL
+                    {
+                        py::gil_scoped_acquire acquire;
+                        PyErr_Clear();
+                    }
                     logger_.error("Python error in except block");
                 } catch (const std::exception& ex) {
                     // 如果 except 块执行时出错，记录错误但继续
@@ -5179,7 +5193,11 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
     } catch (...) {
         // 捕获所有其他异常
         logger_.error("Unknown exception in try statement");
-        PyErr_Clear();
+        // 清除 Python 错误状态，确保持有 GIL
+        {
+            py::gil_scoped_acquire acquire;
+            PyErr_Clear();
+        }
         reportError("Unknown exception in try statement", ctx);
     }
     
@@ -5290,8 +5308,11 @@ any AstVisitor::visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) 
             e.restore();
             throw;
         } catch (...) {
-            // 如果 restore() 失败，清除错误状态
-            PyErr_Clear();
+            // 如果 restore() 失败，清除错误状态，确保持有 GIL
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
             throw;
         }
     }
