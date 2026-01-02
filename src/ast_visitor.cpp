@@ -3146,11 +3146,33 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                     continue;
                 }
             }
-            // 原生 set 快路径（脚本 set 为 Python 对象）
+            // 原生 set/list/dict 快路径（脚本容器可能被转换为 Python 对象）
             if (currentValue->isPythonObject()) {
                 try {
                     py::object obj = currentValue->getPythonObject();
-                    if (py::isinstance<py::set>(obj)) {
+                    // 检查是否是 Python list，如果是，提供快路径
+                    if (py::isinstance<py::list>(obj)) {
+                        if (memberName == "append") {
+                            py::object fn = py::cpp_function([obj](py::args args) {
+                                if (py::len(args) != 1) throw std::runtime_error("append expects 1 arg");
+                                py::list pyList = obj.cast<py::list>();
+                                pyList.append(py::reinterpret_borrow<py::object>(args[0]));
+                                return py::none();
+                            });
+                            currentValue = ScriptValue::fromPythonObject(fn);
+                            continue;
+                        } else if (memberName == "extend") {
+                            py::object fn = py::cpp_function([obj](py::args args) {
+                                if (py::len(args) != 1) throw std::runtime_error("extend expects 1 iterable");
+                                py::list pyList = obj.cast<py::list>();
+                                py::object iterable = py::reinterpret_borrow<py::object>(args[0]);
+                                pyList.attr("extend")(iterable);
+                                return py::none();
+                            });
+                            currentValue = ScriptValue::fromPythonObject(fn);
+                            continue;
+                        }
+                    } else if (py::isinstance<py::set>(obj)) {
                         if (memberName == "add") {
                             py::object fn = py::cpp_function([obj](py::args args) {
                                 if (py::len(args) != 1) throw std::runtime_error("add expects 1 arg");
@@ -5075,23 +5097,39 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
     } catch (const py::error_already_set& e) {
         // 检查是否有匹配的 except 子句
         bool exception_matched = false;
+        string errorMsg;
+        try {
+            errorMsg = string(e.what());
+        } catch (...) {
+            errorMsg = "Python exception";
+        }
+        
+        // 清除 Python 错误状态，避免影响后续操作
+        PyErr_Clear();
+        
         for (auto exceptClause : ctx->exceptClause()) {
             auto exceptSuite = exceptClause->suite();
             if (exceptSuite) {
-                // 清除 Python 错误状态，避免影响 except 块中的代码
-                // 注意：必须在执行 except 块之前清除，否则会影响 except 块中的代码执行
-                PyErr_Clear();
-                visit(exceptSuite);
-                handled = true;
-                exception_matched = true;
-                break;
+                try {
+                    visit(exceptSuite);
+                    handled = true;
+                    exception_matched = true;
+                    break;
+                } catch (const py::error_already_set& ex) {
+                    // 如果 except 块执行时出错，清除错误状态
+                    PyErr_Clear();
+                    logger_.error("Python error in except block");
+                } catch (const std::exception& ex) {
+                    // 如果 except 块执行时出错，记录错误但继续
+                    logger_.error(std::string("Error in except block: ") + ex.what());
+                } catch (...) {
+                    logger_.error("Unknown error in except block");
+                }
             }
         }
         
         if (!handled && !exception_matched) {
-            // 如果没有匹配的 except 子句，清除错误状态并报告错误
-            string errorMsg = string(e.what());
-            PyErr_Clear();
+            // 如果没有匹配的 except 子句，报告错误
             reportError("Unhandled exception in try statement: " + errorMsg, ctx);
         }
     } catch (const std::exception& e) {
@@ -5100,10 +5138,21 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
         for (auto exceptClause : ctx->exceptClause()) {
             auto exceptSuite = exceptClause->suite();
             if (exceptSuite) {
-                visit(exceptSuite);
-                handled = true;
-                exception_matched = true;
-                break;
+                try {
+                    visit(exceptSuite);
+                    handled = true;
+                    exception_matched = true;
+                    break;
+                } catch (const py::error_already_set& ex) {
+                    // 如果 except 块执行时出错，清除错误状态
+                    PyErr_Clear();
+                    logger_.error("Python error in except block");
+                } catch (const std::exception& ex) {
+                    // 如果 except 块执行时出错，记录错误但继续
+                    logger_.error(std::string("Error in except block: ") + ex.what());
+                } catch (...) {
+                    logger_.error("Unknown error in except block");
+                }
             }
         }
         
@@ -5111,6 +5160,11 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
             // 如果没有匹配的 except 子句，报告错误
             reportError("Unhandled exception in try statement: " + string(e.what()), ctx);
         }
+    } catch (...) {
+        // 捕获所有其他异常
+        logger_.error("Unknown exception in try statement");
+        PyErr_Clear();
+        reportError("Unknown exception in try statement", ctx);
     }
     
     if (ctx->FINALLY()) {
