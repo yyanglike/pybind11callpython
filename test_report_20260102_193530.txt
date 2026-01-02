@@ -1,0 +1,184 @@
+=========================================
+Test Execution Report
+Date: Fri Jan  2 19:35:30 CST 2026
+=========================================
+
+----------------------------------------
+[1/145] Testing: python/advanced_complex_test.pys
+----------------------------------------
+[1] ✓ advanced_complex_test.pys
+----------------------------------------
+[2/145] Testing: python/debug_huge.pys
+----------------------------------------
+[2] ✓ debug_huge.pys
+----------------------------------------
+[3/145] Testing: python/debug_import.pys
+----------------------------------------
+[3] ✓ debug_import.pys
+----------------------------------------
+[4/145] Testing: python/debug_minimal.pys
+----------------------------------------
+[4] ✓ debug_minimal.pys
+----------------------------------------
+[5/145] Testing: python/debug_return.pys
+----------------------------------------
+[5] ✓ debug_return.pys
+----------------------------------------
+[6/145] Testing: python/debug_step3.pys
+----------------------------------------
+[6] ✓ debug_step3.pys
+----------------------------------------
+[7/145] Testing: python/huge_complex_program_debug.pys
+----------------------------------------
+[7] ✓ huge_complex_program_debug.pys
+----------------------------------------
+[8/145] Testing: python/huge_complex_program_fixed.pys
+----------------------------------------
+[8] ✓ huge_complex_program_fixed.pys
+----------------------------------------
+[9/145] Testing: python/simple_local_import_test.pys
+----------------------------------------
+[9] ✓ simple_local_import_test.pys
+----------------------------------------
+[10/145] Testing: python/simple_test.pys
+----------------------------------------
+[10] ✓ simple_test.pys
+----------------------------------------
+[11/145] Testing: python/step1.pys
+----------------------------------------
+[11] ✓ step1.pys
+----------------------------------------
+[12/145] Testing: python/step2.pys
+----------------------------------------
+[12] ✓ step2.pys
+----------------------------------------
+[13/145] Testing: python/step_by_step_test.pys
+----------------------------------------
+[13] ✓ step_by_step_test.pys
+----------------------------------------
+[14/145] Testing: python/test_all_new_features.pys
+----------------------------------------
+[14] ✓ test_all_new_features.pys
+----------------------------------------
+[15/145] Testing: python/test_assign_print.pys
+----------------------------------------
+[15] ✓ test_assign_print.pys
+----------------------------------------
+[16/145] Testing: python/test_assignment_only.pys
+----------------------------------------
+[16] ✓ test_assignment_only.pys
+----------------------------------------
+[17/145] Testing: python/test_assignment_operators.pys
+----------------------------------------
+[17] ✓ test_assignment_operators.pys
+----------------------------------------
+[18/145] Testing: python/test_assignment_target.pys
+----------------------------------------
+[18] ✓ test_assignment_target.pys
+----------------------------------------
+[19/145] Testing: python/test_async_chain.pys
+----------------------------------------
+[19] ✓ test_async_chain.pys
+----------------------------------------
+[20/145] Testing: python/test_async_def_and_await.pys
+----------------------------------------
+[20] ✓ test_async_def_and_await.pys
+----------------------------------------
+[21/145] Testing: python/test_async_for_nested.pys
+----------------------------------------
+[21] ✓ test_async_for_nested.pys
+----------------------------------------
+[22/145] Testing: python/test_async_with_ctx.pys
+----------------------------------------
+[22] ✓ test_async_with_ctx.pys
+----------------------------------------
+[23/145] Testing: python/test_basic_import.pys
+----------------------------------------
+[23] ✓ test_basic_import.pys
+----------------------------------------
+[24/145] Testing: python/test_bitwise_operators.pys
+----------------------------------------
+[24] ✓ test_bitwise_operators.pys
+----------------------------------------
+[25/145] Testing: python/test_blank_line_before_return.pys
+----------------------------------------
+[25] ✓ test_blank_line_before_return.pys
+----------------------------------------
+[26/145] Testing: python/test_break_continue.pys
+----------------------------------------
+[26] ✓ test_break_continue.pys
+----------------------------------------
+[27/145] Testing: python/test_cache_many_redefinitions.pys
+----------------------------------------
+[27] ✓ test_cache_many_redefinitions.pys
+----------------------------------------
+[28/145] Testing: python/test_cache_performance.pys
+----------------------------------------
+[28] ✓ test_cache_performance.pys
+----------------------------------------
+[29/145] Testing: python/test_cache_repeated_def.pys
+----------------------------------------
+[29] ✓ test_cache_repeated_def.pys
+----------------------------------------
+[30/145] Testing: python/test_cache_repeated_execution.pys
+----------------------------------------
+[30] ✓ test_cache_repeated_execution.pys
+----------------------------------------
+[31/145] Testing: python/test_class_context.pys
+----------------------------------------
+[31] ✓ test_class_context.pys
+----------------------------------------
+[32/145] Testing: python/test_class_decorator_exception.pys
+----------------------------------------
+[32] ✓ test_class_decorator_exception.pys
+----------------------------------------
+[33/145] Testing: python/test_class_decorators.pys
+----------------------------------------
+[33] ✓ test_class_decorators.pys
+----------------------------------------
+[34/145] Testing: python/test_class_inherit_decorators.pys
+----------------------------------------
+[34] ✓ test_class_inherit_decorators.pys
+----------------------------------------
+[35/145] Testing: python/test_complex_features.pys
+----------------------------------------
+[35] ✓ test_complex_features.pys
+----------------------------------------
+[36/145] Testing: python/test_complex_import.pys
+----------------------------------------
+[36] ✓ test_complex_import.pys
+----------------------------------------
+[37/145] Testing: python/test_comprehension_multifor_if.pys
+----------------------------------------
+[37] ✓ test_comprehension_multifor_if.pys
+----------------------------------------
+[38/145] Testing: python/test_conditional_expression.pys
+----------------------------------------
+[38] ✓ test_conditional_expression.pys
+----------------------------------------
+[39/145] Testing: python/test_debug.pys
+----------------------------------------
+[39] ✓ test_debug.pys
+----------------------------------------
+[40/145] Testing: python/test_del_debug.pys
+----------------------------------------
+[40] ✓ test_del_debug.pys
+----------------------------------------
+[41/145] Testing: python/test_del_operation.pys
+----------------------------------------
+[41] ✓ test_del_operation.pys
+----------------------------------------
+[42/145] Testing: python/test_del_simple.pys
+----------------------------------------
+[42] ✓ test_del_simple.pys
+----------------------------------------
+[43/145] Testing: python/test_del_trace.pys
+----------------------------------------
+[43] ✓ test_del_trace.pys
+----------------------------------------
+[44/145] Testing: python/test_del_verify.pys
+----------------------------------------
+[44] ✓ test_del_verify.pys
+----------------------------------------
+[45/145] Testing: python/test_destructive.pys
+----------------------------------------

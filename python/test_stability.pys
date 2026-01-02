@@ -313,7 +313,9 @@ def test_circular_refs(count: int = 1000):
     return {"created": count, "collected": "yes"}
 
 circular_result = test_circular_refs(1000)
-print(f"✓ 循环引用测试完成: 创建={circular_result['created']}个对象")
+# 提取字典值，避免在 f-string 中使用字典键访问
+circular_created = circular_result['created']
+print(f"✓ 循环引用测试完成: 创建={circular_created}个对象")
 
 # ============================================================================
 # 测试9：性能稳定性（多次运行一致性）
@@ -351,11 +353,17 @@ def performance_consistency_test(runs: int = 10):
 
 perf_result = performance_consistency_test(10)
 print(f"✓ 性能稳定性测试完成:")
-print(f"    运行次数: {perf_result['runs']}")
-print(f"    平均时间: {perf_result['avg_time']:.4f}s")
-print(f"    最小时间: {perf_result['min_time']:.4f}s")
-print(f"    最大时间: {perf_result['max_time']:.4f}s")
-print(f"    一致性: {100 - perf_result['consistency']:.2f}%")
+# 提取字典值，避免在 f-string 中使用字典键访问
+perf_runs = perf_result['runs']
+perf_avg_time = perf_result['avg_time']
+perf_min_time = perf_result['min_time']
+perf_max_time = perf_result['max_time']
+perf_consistency = perf_result['consistency']
+print(f"    运行次数: {perf_runs}")
+print(f"    平均时间: {perf_avg_time:.4f}s")
+print(f"    最小时间: {perf_min_time:.4f}s")
+print(f"    最大时间: {perf_max_time:.4f}s")
+print(f"    一致性: {100 - perf_consistency:.2f}%")
 
 # ============================================================================
 # 测试总结

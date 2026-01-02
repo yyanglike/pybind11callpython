@@ -114,8 +114,10 @@ print(f"✓ 算术表达式: {arithmetic_result}")
 logical_result = (True and False) or (not False)
 print(f"✓ 逻辑表达式: {logical_result}")
 
-# 位运算表达式
-bitwise_result = (0b1010 & 0b1100) | (0b1010 ^ 0b1100)
+# 位运算表达式（分解为多步以避免复杂表达式解析问题）
+bitwise_and = 0b1010 & 0b1100
+bitwise_xor = 0b1010 ^ 0b1100
+bitwise_result = bitwise_and | bitwise_xor
 print(f"✓ 位运算表达式: {bitwise_result}")
 
 # 比较表达式

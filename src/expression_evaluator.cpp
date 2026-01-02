@@ -53,6 +53,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 newList.insert(newList.end(), rightList.begin(), rightList.end());
                 return make_shared<ScriptValue>(newList);
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = left->toPythonObject() + right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
@@ -69,6 +70,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::createDouble(res);
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = py::module_::import("operator").attr("floordiv")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
@@ -76,27 +78,37 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() & right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
-                py::object result = py::module_::import("operator").attr("and_")(left->toPythonObject(), right->toPythonObject());
+                py::gil_scoped_acquire acquire;
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result = lhs.attr("__and__")(rhs);
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "|") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() | right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
-                py::object result = py::module_::import("operator").attr("or_")(left->toPythonObject(), right->toPythonObject());
+                py::gil_scoped_acquire acquire;
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result = lhs.attr("__or__")(rhs);
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "^") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() ^ right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
-                py::object result = py::module_::import("operator").attr("xor")(left->toPythonObject(), right->toPythonObject());
+                py::gil_scoped_acquire acquire;
+                py::object lhs = left->toPythonObject();
+                py::object rhs = right->toPythonObject();
+                py::object result = lhs.attr("__xor__")(rhs);
                 return ScriptValue::fromPythonObject(result);
             }
         } else if (op == "<<") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() << right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = py::module_::import("operator").attr("lshift")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
@@ -104,6 +116,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() >> right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = py::module_::import("operator").attr("rshift")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
@@ -115,6 +128,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                     return ScriptValue::createDouble(left->toDouble() - right->toDouble());
                 }
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = left->toPythonObject() - right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
@@ -126,6 +140,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                     return ScriptValue::createDouble(left->toDouble() * right->toDouble());
                 }
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = left->toPythonObject() * right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
@@ -147,6 +162,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                     return ScriptValue::createDouble(result);
                 }
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 // Use Python's built-in pow function
                 py::object pow_func = py::module_::import("builtins").attr("pow");
                 py::object result = pow_func(left->toPythonObject(), right->toPythonObject());
@@ -160,6 +176,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::createDouble(left->toDouble() / divisor);
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = left->toPythonObject() / right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
@@ -175,6 +192,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::createInteger(left->getInteger() % divisor);
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 // Use Python's modulo operator for Python objects
                 py::object mod_func = py::module_::import("operator").attr("mod");
                 py::object result = mod_func(left->toPythonObject(), right->toPythonObject());
@@ -182,6 +200,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             } else {
                 // For non-integer numeric types, attempt to perform modulo as Python would
                 try {
+                    py::gil_scoped_acquire acquire;
                     // Try to convert to Python objects and use Python's modulo
                     py::object lhs = left->toPythonObject();
                     py::object rhs = right->toPythonObject();
@@ -202,6 +221,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() < right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LT));
@@ -214,6 +234,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() > right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GT));
@@ -226,6 +247,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() <= right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LE));
@@ -238,6 +260,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() >= right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GE));
@@ -257,6 +280,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
         } else if (op == "is") {
             // is运算符：检查对象身份（id）
             if (left->isPythonObject() && right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 bool is_same = lhs.ptr() == rhs.ptr();
@@ -268,6 +292,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
         } else if (op == "is not") {
             // is not运算符：检查对象身份不相等
             if (left->isPythonObject() && right->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 bool is_same = lhs.ptr() == rhs.ptr();
@@ -293,6 +318,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
         // 尝试统一回退到 Python 运算符
         if (!left->isNull() && !right->isNull()) {
             try {
+                py::gil_scoped_acquire acquire;
                 py::object lhs = left->toPythonObject();
                 py::object rhs = right->toPythonObject();
                 py::object result;
@@ -320,6 +346,16 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                     result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_EQ));
                 } else if (op == "!=") {
                     result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_NE));
+                } else if (op == "&") {
+                    result = lhs.attr("__and__")(rhs);
+                } else if (op == "|") {
+                    result = lhs.attr("__or__")(rhs);
+                } else if (op == "^") {
+                    result = lhs.attr("__xor__")(rhs);
+                } else if (op == "<<") {
+                    result = lhs.attr("__lshift__")(rhs);
+                } else if (op == ">>") {
+                    result = lhs.attr("__rshift__")(rhs);
                 }
                 if (result && !result.is_none()) {
                     return ScriptValue::fromPythonObject(result);
@@ -351,6 +387,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
             } else if (value->isDouble()) {
                 return ScriptValue::createDouble(-value->getDouble());
             } else if (value->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = -value->getPythonObject();
                 return ScriptValue::fromPythonObject(result);
             } else {
@@ -362,6 +399,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
             if (value->isInteger() || value->isDouble() || value->isBoolean() || value->isString()) {
                 return value;
             } else if (value->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = py::module_::import("operator").attr("pos")(value->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             } else {
@@ -371,6 +409,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateUnaryOperation(
             if (value->isInteger()) {
                 return ScriptValue::createInteger(~value->getInteger());
             } else if (value->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
                 py::object result = py::module_::import("operator").attr("invert")(value->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             } else {
@@ -398,6 +437,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::lenOf(const shared_ptr<ScriptValue>
     }
     if (value->isPythonObject()) {
         try {
+            py::gil_scoped_acquire acquire;
             py::object obj = value->toPythonObject();
             return ScriptValue::createInteger(static_cast<long long>(py::len(obj)));
         } catch (const py::error_already_set& e) {
@@ -428,6 +468,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::contains(const shared_ptr<ScriptVal
     }
     if (container->isPythonObject()) {
         try {
+            py::gil_scoped_acquire acquire;
             py::object res = py::module_::import("operator").attr("contains")(container->toPythonObject(), needle ? needle->toPythonObject() : py::none());
             return ScriptValue::fromPythonObject(res);
         } catch (const py::error_already_set& e) {

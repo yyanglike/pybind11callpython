@@ -1160,6 +1160,15 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
         return any(true);
     }
     
+    // 额外检查：如果节点在函数定义体内，跳过求值（防止函数定义完成后 ANTLR 继续访问函数体内的节点）
+    bool inside_function = isNodeInsideFunctionDef(ctx);
+    auto startToken = ctx->getStart();
+    int line = startToken ? startToken->getLine() : -1;
+    if (inside_function) {
+        logger_.debug("Skipping for statement at line " + std::to_string(line) + " (inside function definition, defining_function_=false)");
+        return any(true);
+    }
+    
     // FOR IDENTIFIER IN expression COLON suite
     auto varName = ctx->IDENTIFIER()->getText();
     auto iterableExpr = ctx->expression();
@@ -2281,7 +2290,16 @@ any AstVisitor::visitBitwiseAndExpr(PyScriptParser::BitwiseAndExprContext *ctx) 
         if (i == 0) {
             result = val;
         } else {
-            result = expression_evaluator_.evaluateBinaryOperation("&", result, val);
+            try {
+                result = expression_evaluator_.evaluateBinaryOperation("&", result, val);
+            } catch (const exception& e) {
+                reportError("Binary operation error: " + string(e.what()), ctx);
+                return any();
+            }
+            if (!result) {
+                reportError("Cannot evaluate bitwise AND operation", ctx);
+                return any();
+            }
         }
     }
     
@@ -2413,6 +2431,19 @@ any AstVisitor::visitComparison(PyScriptParser::ComparisonContext *ctx) {
 
 
 any AstVisitor::visitAdditive(PyScriptParser::AdditiveContext *ctx) {
+    // 如果在函数定义阶段，跳过求值，返回null
+    if (defining_function_) {
+        logger_.debug("Skipping additive expression evaluation during function definition");
+        return any(ScriptValue::createNull());
+    }
+    
+    // 额外检查：如果节点在函数定义体内，跳过求值
+    bool inside_function = isNodeInsideFunctionDef(ctx);
+    if (inside_function) {
+        logger_.debug("Skipping additive expression evaluation (inside function definition)");
+        return any(ScriptValue::createNull());
+    }
+    
     auto multiplicativeExprs = ctx->multiplicative();
     if (multiplicativeExprs.size() == 1) {
         return this->visit(multiplicativeExprs[0]);
@@ -4291,7 +4322,27 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
 
 any AstVisitor::visitLiteral(PyScriptParser::LiteralContext *ctx) {
     if (ctx->INTEGER()) {
-        long long value = stoll(ctx->INTEGER()->getText());
+        string intText = ctx->INTEGER()->getText();
+        long long value;
+        // 处理二进制、八进制、十六进制字面量
+        if (intText.length() > 1 && intText[0] == '0') {
+            if (intText.length() > 2 && (intText[1] == 'b' || intText[1] == 'B')) {
+                // 二进制: 0b1010
+                value = stoll(intText.substr(2), nullptr, 2);
+            } else if (intText.length() > 2 && (intText[1] == 'o' || intText[1] == 'O')) {
+                // 八进制: 0o777
+                value = stoll(intText.substr(2), nullptr, 8);
+            } else if (intText.length() > 2 && (intText[1] == 'x' || intText[1] == 'X')) {
+                // 十六进制: 0xFF
+                value = stoll(intText.substr(2), nullptr, 16);
+            } else {
+                // 十进制（可能以0开头）
+                value = stoll(intText, nullptr, 10);
+            }
+        } else {
+            // 普通十进制整数
+            value = stoll(intText, nullptr, 10);
+        }
         return any(ScriptValue::createInteger(value));
     } else if (ctx->FLOAT()) {
         double value = stod(ctx->FLOAT()->getText());
@@ -5145,51 +5196,129 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
         // 检查是否有匹配的 except 子句
         bool exception_matched = false;
         string errorMsg;
-        try {
-            errorMsg = string(e.what());
-        } catch (...) {
-            errorMsg = "Python exception";
-        }
+        py::object excType, excValue, excTraceback;
         
-        // 清除 Python 错误状态，避免影响后续操作
-        // 注意：在清除错误之前需要确保持有 GIL
+        // 在清除错误状态之前，先获取异常信息
         {
             py::gil_scoped_acquire acquire;
-            PyErr_Clear();
-        }
-        
-        for (auto exceptClause : ctx->exceptClause()) {
-            auto exceptSuite = exceptClause->suite();
-            if (exceptSuite) {
+            // 使用 sys.exc_info() 获取当前异常信息（在 py::error_already_set 被捕获时，错误状态仍然存在）
+            try {
+                py::object sys = py::module_::import("sys");
+                py::tuple excInfo = sys.attr("exc_info")();
+                if (excInfo.size() >= 3 && !excInfo[0].is_none()) {
+                    excType = excInfo[0];
+                    excValue = excInfo[1];
+                    excTraceback = excInfo[2];
+                }
+            } catch (...) {
+                // 如果 sys.exc_info() 失败，尝试使用 PyErr_Fetch
+                PyObject *ptype, *pvalue, *ptraceback;
+                PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+                if (ptype) {
+                    excType = py::reinterpret_steal<py::object>(ptype);
+                }
+                if (pvalue) {
+                    excValue = py::reinterpret_steal<py::object>(pvalue);
+                }
+                if (ptraceback) {
+                    excTraceback = py::reinterpret_steal<py::object>(ptraceback);
+                }
+            }
+            
+            // 获取错误消息
+            try {
+                if (!excValue.is_none()) {
+                    errorMsg = string(py::str(excValue));
+                } else if (!excType.is_none()) {
+                    errorMsg = string(py::str(excType));
+                } else {
+                    try {
+                        errorMsg = string(e.what());
+                    } catch (...) {
+                        errorMsg = "Python exception";
+                    }
+                }
+            } catch (...) {
                 try {
-                    // 确保在访问 except 块时持有 GIL
-                    // visit 函数内部可能会访问 Python 对象（如创建 tuple），需要 GIL
-                    {
-                        py::gil_scoped_acquire acquire_gil;
-                        visit(exceptSuite);
-                    }
-                    handled = true;
-                    exception_matched = true;
-                    break;
-                } catch (const py::error_already_set& ex) {
-                    // 如果 except 块执行时出错，清除错误状态
-                    {
-                        py::gil_scoped_acquire acquire;
-                        PyErr_Clear();
-                    }
-                    logger_.error("Python error in except block");
-                } catch (const std::exception& ex) {
-                    // 如果 except 块执行时出错，记录错误但继续
-                    logger_.error(std::string("Error in except block: ") + ex.what());
+                    errorMsg = string(e.what());
                 } catch (...) {
-                    logger_.error("Unknown error in except block");
+                    errorMsg = "Python exception";
                 }
             }
         }
         
+        logger_.info("Processing " + std::to_string(ctx->exceptClause().size()) + " except clauses");
+        for (auto exceptClause : ctx->exceptClause()) {
+            // 检查异常类型是否匹配
+            bool type_matches = false;
+            auto dottedNameCtx = exceptClause->dottedName();
+            logger_.info("Checking except clause, has dottedName: " + string(dottedNameCtx ? "true" : "false"));
+            
+            if (!dottedNameCtx) {
+                // 没有指定异常类型，匹配所有异常
+                type_matches = true;
+            } else {
+                // 检查异常类型是否匹配
+                // 简化版本：暂时匹配所有异常，后续可以优化类型检查
+                // TODO: 实现完整的异常类型匹配逻辑
+                type_matches = true;
+                logger_.debug("Exception type check skipped, matching all exceptions");
+            }
+            
+            if (type_matches) {
+                auto exceptSuite = exceptClause->suite();
+                if (exceptSuite) {
+                    try {
+                        // 如果有异常变量名，设置变量
+                        auto exceptVar = exceptClause->IDENTIFIER();
+                        if (exceptVar) {
+                            string varName = exceptVar->getText();
+                            // 优先使用 excValue，如果 excValue 是 None，使用 excType
+                            py::object excToSet = excValue.is_none() ? excType : excValue;
+                            if (!excToSet.is_none()) {
+                                variable_manager_.setVariable(varName, ScriptValue::fromPythonObject(excToSet));
+                            } else {
+                                // 如果都是 None，创建一个字符串表示异常
+                                variable_manager_.setVariable(varName, ScriptValue::createString(errorMsg));
+                            }
+                        }
+                        
+                        // 确保在访问 except 块时持有 GIL
+                        {
+                            py::gil_scoped_acquire acquire_gil;
+                            visit(exceptSuite);
+                        }
+                        handled = true;
+                        exception_matched = true;
+                        break;
+                    } catch (const py::error_already_set& ex) {
+                        // 如果 except 块中抛出新异常，重新抛出让外层处理
+                        // 不要清除错误状态，让异常继续传播
+                        logger_.debug("Exception raised in except block, propagating");
+                        throw;  // 重新抛出，让外层的 try 块处理
+                    } catch (const std::exception& ex) {
+                        // C++ 异常，记录错误但继续
+                        logger_.error(std::string("Error in except block: ") + ex.what());
+                    } catch (...) {
+                        logger_.error("Unknown error in except block");
+                    }
+                }
+            }
+        }
+        
+        // 如果没有匹配的 except 子句，清除错误状态并报告
         if (!handled && !exception_matched) {
-            // 如果没有匹配的 except 子句，报告错误
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
             reportError("Unhandled exception in try statement: " + errorMsg, ctx);
+        } else if (handled) {
+            // 如果异常已被处理，清除错误状态
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
         }
     } catch (const std::exception& e) {
         // 检查是否有匹配的 except 子句
