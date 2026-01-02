@@ -3522,9 +3522,12 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
                 py::object result = pyObj[pyIndex];
                 return ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
-                // 清除 Python 错误状态，避免影响后续操作
+                // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
                 string errorMsg = string(e.what());
-                PyErr_Clear();
+                {
+                    py::gil_scoped_acquire acquire;
+                    PyErr_Clear();
+                }
                 reportError("Python subscript error: " + errorMsg, ctx);
                 return nullptr;
             }
@@ -3564,9 +3567,12 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
                 target->setPythonObject(pyObj);
                 return ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
-                // 清除 Python 错误状态，避免影响后续操作
+                // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
                 string errorMsg = string(e.what());
-                PyErr_Clear();
+                {
+                    py::gil_scoped_acquire acquire;
+                    PyErr_Clear();
+                }
                 reportError("Python subscript error: " + errorMsg, ctx);
                 return nullptr;
             }
@@ -5467,9 +5473,12 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
                             logger_.info("Synced updated List/Dictionary back to variable_manager: " + varName);
                         }
                     } catch (const py::error_already_set& e) {
-                        // 清除 Python 错误状态，避免影响后续操作
+                        // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
                         string errorMsg = string(e.what());
-                        PyErr_Clear();
+                        {
+                            py::gil_scoped_acquire acquire;
+                            PyErr_Clear();
+                        }
                         // 对于 KeyError，这是预期的错误，不应该报告为脚本错误
                         if (errorMsg.find("KeyError") != string::npos) {
                             // 重新抛出异常，让 Python 的 try/except 处理
@@ -5536,9 +5545,12 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
                             }
                         }
                     } catch (const py::error_already_set& e) {
-                        // 清除 Python 错误状态，避免影响后续操作
+                        // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
                         string errorMsg = string(e.what());
-                        PyErr_Clear();
+                        {
+                            py::gil_scoped_acquire acquire;
+                            PyErr_Clear();
+                        }
                         
                         // 对于 KeyError 或 IndexError，这是预期的错误，应该重新抛出让 Python 的 try/except 处理
                         if (errorMsg.find("KeyError") != string::npos || errorMsg.find("IndexError") != string::npos) {
@@ -5566,8 +5578,11 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
                                 logger_.debug("Synced updated object back to variable_manager (via exec): " + varName);
                             }
                         } catch (const py::error_already_set& e2) {
-                            // 如果 exec 也失败，清除错误状态并重新抛出
-                            PyErr_Clear();
+                            // 如果 exec 也失败，清除错误状态并重新抛出，确保持有 GIL
+                            {
+                                py::gil_scoped_acquire acquire;
+                                PyErr_Clear();
+                            }
                             throw;
                         }
                     }
@@ -5584,9 +5599,12 @@ any AstVisitor::visitDelSubscript(PyScriptParser::DelSubscriptContext *ctx) {
             reportError("Cannot delete subscript: object is not a Python object", ctx);
         }
     } catch (const py::error_already_set& e) {
-        // 清除 Python 错误状态，避免影响后续操作
+        // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
         string errorMsg = string(e.what());
-        PyErr_Clear();
+        {
+            py::gil_scoped_acquire acquire;
+            PyErr_Clear();
+        }
         // 对于 KeyError 或 IndexError，这是预期的错误，应该重新抛出让 Python 的 try/except 处理
         if (errorMsg.find("KeyError") != string::npos || errorMsg.find("IndexError") != string::npos) {
             // 重新抛出异常，让 Python 的 try/except 处理
