@@ -106,6 +106,9 @@ public:
   virtual void enterAssignment(PyScriptParser::AssignmentContext * /*ctx*/) override { }
   virtual void exitAssignment(PyScriptParser::AssignmentContext * /*ctx*/) override { }
 
+  virtual void enterAssignmentTarget(PyScriptParser::AssignmentTargetContext * /*ctx*/) override { }
+  virtual void exitAssignmentTarget(PyScriptParser::AssignmentTargetContext * /*ctx*/) override { }
+
   virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
   virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext * /*ctx*/) override { }
 
@@ -154,8 +157,11 @@ public:
   virtual void enterPrimary(PyScriptParser::PrimaryContext * /*ctx*/) override { }
   virtual void exitPrimary(PyScriptParser::PrimaryContext * /*ctx*/) override { }
 
-  virtual void enterTuple(PyScriptParser::TupleContext * /*ctx*/) override { }
-  virtual void exitTuple(PyScriptParser::TupleContext * /*ctx*/) override { }
+  virtual void enterMultiElementTuple(PyScriptParser::MultiElementTupleContext * /*ctx*/) override { }
+  virtual void exitMultiElementTuple(PyScriptParser::MultiElementTupleContext * /*ctx*/) override { }
+
+  virtual void enterSingleElementTuple(PyScriptParser::SingleElementTupleContext * /*ctx*/) override { }
+  virtual void exitSingleElementTuple(PyScriptParser::SingleElementTupleContext * /*ctx*/) override { }
 
   virtual void enterNewExpression(PyScriptParser::NewExpressionContext * /*ctx*/) override { }
   virtual void exitNewExpression(PyScriptParser::NewExpressionContext * /*ctx*/) override { }
@@ -172,17 +178,8 @@ public:
   virtual void enterFunctionCallOp(PyScriptParser::FunctionCallOpContext * /*ctx*/) override { }
   virtual void exitFunctionCallOp(PyScriptParser::FunctionCallOpContext * /*ctx*/) override { }
 
-  virtual void enterAttributeAccess(PyScriptParser::AttributeAccessContext * /*ctx*/) override { }
-  virtual void exitAttributeAccess(PyScriptParser::AttributeAccessContext * /*ctx*/) override { }
-
-  virtual void enterSubscriptAccess(PyScriptParser::SubscriptAccessContext * /*ctx*/) override { }
-  virtual void exitSubscriptAccess(PyScriptParser::SubscriptAccessContext * /*ctx*/) override { }
-
   virtual void enterSubscriptArg(PyScriptParser::SubscriptArgContext * /*ctx*/) override { }
   virtual void exitSubscriptArg(PyScriptParser::SubscriptArgContext * /*ctx*/) override { }
-
-  virtual void enterFunctionCall(PyScriptParser::FunctionCallContext * /*ctx*/) override { }
-  virtual void exitFunctionCall(PyScriptParser::FunctionCallContext * /*ctx*/) override { }
 
   virtual void enterArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }
   virtual void exitArgumentList(PyScriptParser::ArgumentListContext * /*ctx*/) override { }

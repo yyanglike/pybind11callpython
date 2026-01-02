@@ -1,35 +1,43 @@
-# 测试元组字面量
+# 专门测试 tupleLiteral 优先级修复
 
-# 基本元组
-tuple1 = (1, 2, 3)
-print("tuple1:", tuple1)
+print("=== 测试 tupleLiteral vs 括号表达式 ===")
 
-# 空元组
-tuple2 = ()
-print("tuple2 (empty):", tuple2)
+# 测试1: 多元素元组
+t1 = (1, 2, 3)
+print("t1 = (1, 2, 3) =", t1)
+print("isinstance(t1, tuple) =", isinstance(t1, tuple))
 
-# 单元素元组
-tuple3 = (42,)
-print("tuple3 (single):", tuple3)
+# 测试2: 单元素元组（带逗号）
+t2 = (1,)
+print("t2 = (1,) =", t2)
+print("isinstance(t2, tuple) =", isinstance(t2, tuple))
+print("len(t2) =", len(t2))
 
-# 多元素元组
-tuple4 = (1, 2, 3, 4, 5)
-print("tuple4:", tuple4)
+# 测试3: 括号表达式（单个元素，无逗号）
+e1 = (1)
+print("e1 = (1) =", e1)
+print("isinstance(e1, tuple) =", isinstance(e1, tuple))
+print("type(e1) =", type(e1))
 
-# 混合类型元组
-tuple5 = (1, "hello", 3.14, True)
-print("tuple5:", tuple5)
+# 测试4: 嵌套元组
+t3 = ((1, 2), (3, 4))
+print("t3 = ((1, 2), (3, 4)) =", t3)
+print("isinstance(t3, tuple) =", isinstance(t3, tuple))
 
-# 嵌套元组
-tuple6 = ((1, 2), (3, 4), (5, 6))
-print("tuple6 (nested):", tuple6)
+# 测试5: 元组解包
+a, b = (10, 20)
+print("a, b = (10, 20), a =", a, ", b =", b)
 
-# 元组解包
-a, b, c = (10, 20, 30)
-print("a =", a, ", b =", b, ", c =", c)
+# 测试6: 元组作为函数参数
+def test_func(x, y):
+    return x + y
 
-# 元组索引
-tuple7 = (100, 200, 300)
-print("tuple7[0] =", tuple7[0])
-print("tuple7[1] =", tuple7[1])
+result = test_func(*(5, 10))
+print("test_func(*(5, 10)) =", result)
 
+# 测试7: 空元组
+t4 = ()
+print("t4 = () =", t4)
+print("isinstance(t4, tuple) =", isinstance(t4, tuple))
+
+print("\n=== tupleLiteral 测试完成 ===")

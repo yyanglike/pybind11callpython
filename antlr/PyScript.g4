@@ -238,7 +238,14 @@ importItem
     ;
 
 assignment
-    : (IDENTIFIER | attributeAccess | subscriptAccess) (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | FLOOR_DIV_ASSIGN | MOD_ASSIGN | POW_ASSIGN | BITWISE_AND_ASSIGN | BITWISE_OR_ASSIGN | BITWISE_XOR_ASSIGN | LEFT_SHIFT_ASSIGN | RIGHT_SHIFT_ASSIGN) expression
+    : assignmentTarget (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | FLOOR_DIV_ASSIGN | MOD_ASSIGN | POW_ASSIGN | BITWISE_AND_ASSIGN | BITWISE_OR_ASSIGN | BITWISE_XOR_ASSIGN | LEFT_SHIFT_ASSIGN | RIGHT_SHIFT_ASSIGN) expression
+    ;
+
+// 赋值目标：标识符、属性访问、下标访问
+assignmentTarget
+    : IDENTIFIER
+    | primary DOT IDENTIFIER
+    | primary LBRACK subscriptArg RBRACK
     ;
 
 expressionStatement
@@ -313,8 +320,8 @@ unary
 primary
     : literal
     | IDENTIFIER
-    | LPAREN expression RPAREN
     | LPAREN tupleLiteral RPAREN
+    | LPAREN expression RPAREN
     | listLiteral
     | dictLiteral
     | setLiteral
@@ -325,7 +332,8 @@ primary
     ;
 
 tupleLiteral
-    : expression (COMMA expression)* COMMA? # tuple
+    : expression COMMA (expression COMMA)* expression? COMMA?  # multiElementTuple
+    | expression COMMA                                        # singleElementTuple
     ;
 
 newExpression
@@ -342,21 +350,8 @@ postfixOp
     | LPAREN argumentList? RPAREN    # functionCallOp
     ;
 
-// 辅助规则用于赋值目标
-attributeAccess
-    : atom DOT IDENTIFIER
-    ;
-
-subscriptAccess
-    : atom LBRACK subscriptArg RBRACK
-    ;
-
 subscriptArg
     : expression? (COLON expression? (COLON expression?)?)?
-    ;
-
-functionCall
-    : atom LPAREN argumentList? RPAREN
     ;
 
 argumentList
@@ -388,7 +383,7 @@ comprehension
     ;
 
 compFor
-    : FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
+    : FOR (IDENTIFIER | tupleLiteral) IN expression (IF expression)?
     ;
 
 dictLiteral
@@ -592,6 +587,14 @@ STRING
     | '\'' (~['\\\r\n] | '\\' .)* '\''
     | '"""' (~["] | '"' ~["] | '""' ~["])* '"""'
     | '\'\'\'' (~['] | '\'' ~['] | '\'\'' ~['])* '\'\'\''
+    | [rR] '"' (~["\\\r\n] | '\\' .)* '"'           // Raw string
+    | [rR] '\'' (~['\\\r\n] | '\\' .)* '\''        // Raw string
+    | [rR] '"""' (~["] | '"' ~["] | '""' ~["])* '"""'  // Raw triple-quoted string
+    | [rR] '\'\'\'' (~['] | '\'' ~['] | '\'\'' ~['])* '\'\'\''  // Raw triple-quoted string
+    | [bB] '"' (~["\\\r\n] | '\\' .)* '"'           // Bytes string
+    | [bB] '\'' (~['\\\r\n] | '\\' .)* '\''        // Bytes string
+    | [bB] '"""' (~["] | '"' ~["] | '""' ~["])* '"""'  // Bytes triple-quoted string
+    | [bB] '\'\'\'' (~['] | '\'' ~['] | '\'\'' ~['])* '\'\'\''  // Bytes triple-quoted string
     ;
 
 /* =========================

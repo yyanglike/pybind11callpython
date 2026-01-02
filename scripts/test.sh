@@ -23,6 +23,7 @@ show_help() {
 测试模式:
   all          - 运行所有测试用例（默认）
   new          - 运行新功能测试
+  grammar      - 运行语法修复相关测试
   simple       - 运行简单测试
   list         - 列出所有测试用例
   specific     - 运行指定的测试用例（需要提供文件路径）
@@ -160,6 +161,52 @@ run_all_tests() {
         echo ""
         echo "Full report saved to: $REPORT_FILE"
     fi
+    
+    if [ $FAILED -gt 0 ]; then
+        exit 1
+    else
+        exit 0
+    fi
+}
+
+# 运行语法修复测试
+run_grammar_fixes_tests() {
+    local quiet="${1:-false}"
+    
+    local TEST_SCRIPTS=(
+        "python/test_grammar_fixes.pys"
+        "python/test_tuple_literal.pys"
+        "python/test_assignment_target.pys"
+        "python/test_string_literals.pys"
+    )
+    
+    local PASSED=0
+    local FAILED=0
+    
+    if [ "$quiet" != "true" ]; then
+        echo "========================================="
+        echo "Running Grammar Fixes Tests"
+        echo "========================================="
+        echo ""
+    fi
+    
+    for script in "${TEST_SCRIPTS[@]}"; do
+        if run_test "$script" "$quiet"; then
+            PASSED=$((PASSED + 1))
+        else
+            FAILED=$((FAILED + 1))
+        fi
+        if [ "$quiet" != "true" ]; then
+            echo ""
+        fi
+    done
+    
+    echo "========================================="
+    echo "Test Summary"
+    echo "========================================="
+    echo "Total tests: $((PASSED + FAILED))"
+    echo "Passed: $PASSED"
+    echo "Failed: $FAILED"
     
     if [ $FAILED -gt 0 ]; then
         exit 1
@@ -318,6 +365,9 @@ case "$MODE" in
         ;;
     new)
         run_new_features_tests "$QUIET"
+        ;;
+    grammar)
+        run_grammar_fixes_tests "$QUIET"
         ;;
     simple)
         run_simple_tests

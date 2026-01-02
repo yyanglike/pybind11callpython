@@ -16,6 +16,8 @@
 #include <unordered_map>
 #include <atomic>
 #include <functional>
+#include <vector>
+#include <limits>
 #include "dynamic_python_caller.h"
 
 // 简单的字符串哈希函数（用于缓存键）
@@ -669,6 +671,74 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         
         string funcDef = fullText.substr(startOffset, stopOffset - startOffset + 1);
         
+        // 去除公共前导缩进，使函数定义可以在顶层执行
+        // 1. 按行分割
+        std::vector<std::string> lines;
+        std::istringstream iss(funcDef);
+        std::string line;
+        while (std::getline(iss, line)) {
+            lines.push_back(line);
+        }
+        
+        // 2. 找到最小缩进（排除空行）
+        size_t minIndent = std::numeric_limits<size_t>::max();
+        for (const auto& l : lines) {
+            if (l.empty() || l.find_first_not_of(" \t") == std::string::npos) {
+                continue; // 跳过空行或仅空白行
+            }
+            size_t indent = 0;
+            for (char c : l) {
+                if (c == ' ') {
+                    indent++;
+                } else if (c == '\t') {
+                    indent += 4; // tab折算为4个空格
+                } else {
+                    break;
+                }
+            }
+            if (indent < minIndent) {
+                minIndent = indent;
+            }
+        }
+        
+        // 3. 如果找到最小缩进，从所有行中去除
+        if (minIndent != std::numeric_limits<size_t>::max() && minIndent > 0) {
+            std::ostringstream oss;
+            for (size_t i = 0; i < lines.size(); ++i) {
+                const auto& l = lines[i];
+                if (l.empty() || l.find_first_not_of(" \t") == std::string::npos) {
+                    // 空行或仅空白行，直接添加
+                    oss << l;
+                } else {
+                    // 去除前导缩进
+                    size_t toRemove = 0;
+                    size_t removed = 0;
+                    for (char c : l) {
+                        if (removed >= minIndent) break;
+                        if (c == ' ') {
+                            toRemove++;
+                            removed++;
+                        } else if (c == '\t') {
+                            toRemove++;
+                            removed += 4;
+                            if (removed > minIndent) {
+                                // 如果tab导致超过最小缩进，需要部分处理
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                    oss << l.substr(toRemove);
+                }
+                if (i < lines.size() - 1) {
+                    oss << "\n";
+                }
+            }
+            funcDef = oss.str();
+            logger_.debug("Stripped " + to_string(minIndent) + " characters of leading indentation from function definition");
+        }
+        
         logger_.debug("Function definition raw text length: " + to_string(funcDef.length()));
         logger_.debug("First 200 chars: " + funcDef.substr(0, min((size_t)200, funcDef.length())));
         
@@ -788,8 +858,19 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         }
         
         // 注入脚本变量到 globals，确保函数定义时可以访问外部变量
-        // 优化：使用缓存的变量名列表（已在上面更新）
-        for (const auto& varName : cached_var_names_) {
+        // 注意：需要重新获取变量列表，因为循环变量可能在函数定义时刚被设置
+        // 优化：使用缓存的变量名列表，但如果变量数量变化则更新
+        size_t current_var_count = variable_manager_.getVariableCount();
+        std::vector<std::string> var_names_to_inject;
+        if (cached_var_names_.empty() || cached_var_count_ != current_var_count) {
+            var_names_to_inject = variable_manager_.getAllVariableNames();
+            cached_var_names_ = var_names_to_inject;
+            cached_var_count_ = current_var_count;
+        } else {
+            var_names_to_inject = cached_var_names_;
+        }
+        
+        for (const auto& varName : var_names_to_inject) {
             auto val = variable_manager_.getVariable(varName);
             if (val) {
                 try {
@@ -824,10 +905,12 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             }
             
             // 优化：使用缓存的变量名列表，避免重复创建和排序
+            // 注意：在循环中定义函数时，需要确保循环变量也被包含在内
             size_t current_var_count = variable_manager_.getVariableCount();
             if (cached_var_names_.empty() || cached_var_count_ != current_var_count) {
                 cached_var_names_ = variable_manager_.getAllVariableNames();
                 cached_var_count_ = current_var_count;
+                logger_.debug("Updated cached_var_names_, count=" + std::to_string(cached_var_names_.size()));
             }
             
             bool has_python_objects = false;
@@ -866,12 +949,35 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             // 如果缓存未命中，执行 exec
             if (!cache_hit) {
                 exec_cache_misses_++;
-                if (!builtins_module_.is_none()) {
-                    builtins_module_.attr("exec")(funcDef, globals, globals);
-                } else {
-                    py::exec(py::str(funcDef), globals, globals);
+                try {
+                    if (!builtins_module_.is_none()) {
+                        builtins_module_.attr("exec")(funcDef, globals, globals);
+                    } else {
+                        py::exec(py::str(funcDef), globals, globals);
+                    }
+                    logger_.debug("Function definition exec completed for: " + funcName);
+                    
+                    // 检查函数是否在globals中
+                    if (globals.contains(funcName.c_str())) {
+                        func = globals[funcName.c_str()];
+                        logger_.debug("Function " + funcName + " found in globals after exec");
+                    } else {
+                        logger_.warn("Function " + funcName + " not found in globals after exec");
+                        // 尝试列出globals中的所有键来调试
+                        logger_.debug("Globals keys after exec:");
+                        for (auto item : globals) {
+                            std::string key = py::str(item.first).cast<std::string>();
+                            if (key.find("test_func") != std::string::npos || key.find("func") != std::string::npos) {
+                                logger_.debug("  Found key: " + key);
+                            }
+                        }
+                    }
+                } catch (const py::error_already_set& e) {
+                    logger_.error("Error during function definition exec for " + funcName + ": " + string(e.what()));
+                    // 清除Python错误状态
+                    PyErr_Clear();
+                    throw;
                 }
-                func = globals[funcName.c_str()];
                 
                 // 缓存结果（延迟缓存策略：只在函数定义多次时才缓存）
                 if (should_use_cache) {
@@ -886,8 +992,33 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
                 }
             }
             
+            // 确保函数对象有效
+            if (func.is_none()) {
+                reportError("Function definition returned None for: " + funcName, ctx);
+                return any();
+            }
+            
+            // 立即设置到变量管理器，确保后续调用能找到
             variable_manager_.setVariable(funcName, ScriptValue::fromPythonObject(func));
             logger_.info(std::string("Function defined: ") + funcName);
+            
+            // 验证函数是否正确设置到变量管理器
+            auto verifyVar = variable_manager_.getVariable(funcName);
+            if (!verifyVar || !verifyVar->isPythonObject()) {
+                logger_.warn("Warning: Function " + funcName + " not properly set in variable_manager after definition");
+                // 如果设置失败，尝试从globals中重新获取并设置
+                try {
+                    if (globals.contains(funcName.c_str())) {
+                        py::object funcFromGlobals = globals[funcName.c_str()];
+                        variable_manager_.setVariable(funcName, ScriptValue::fromPythonObject(funcFromGlobals));
+                        logger_.debug("Function " + funcName + " re-synced from globals to variable_manager");
+                    }
+                } catch (...) {
+                    // 忽略错误
+                }
+            } else {
+                logger_.debug("Function " + funcName + " verified in variable_manager");
+            }
         } catch (const py::error_already_set& e) {
             reportError("Failed to define function " + funcName + ": " + string(e.what()), ctx);
         }
@@ -1299,6 +1430,12 @@ bool AstVisitor::isNodeInsideFunctionDef(antlr4::ParserRuleContext* ctx) const {
     return false;
 }
 
+any AstVisitor::visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) {
+    // assignmentTarget 规则仅用于语法解析，实际处理在 visitAssignment 中
+    // 这里返回空值，避免影响赋值操作
+    return any(ScriptValue::createNull());
+}
+
 any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     // 如果在函数定义阶段，跳过赋值求值，返回null
     if (defining_function_) {
@@ -1317,10 +1454,17 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     
     logger_.debug("visitAssignment: Evaluating assignment (defining_function_=false)");
     
+    // 获取赋值目标
+    auto targetCtx = ctx->assignmentTarget();
+    if (!targetCtx) {
+        reportError("Missing assignment target", ctx);
+        return any();
+    }
+    
     // 有三种赋值形式：标识符赋值、属性赋值、下标赋值
-    if (ctx->IDENTIFIER()) {
+    if (targetCtx->IDENTIFIER()) {
         // 标识符赋值: IDENTIFIER ASSIGN expression
-        string varName = ctx->IDENTIFIER()->getText();
+        string varName = targetCtx->IDENTIFIER()->getText();
         
         auto rightExpr = ctx->expression(); // 右侧表达式
         if (!rightExpr) {
@@ -1423,18 +1567,15 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         } catch (...) {
             logger_.debug(std::string("Assigned variable '") + varName + "' (no toString)");
         }
-    } else if (ctx->attributeAccess()) {
-        // 属性赋值: attributeAccess ASSIGN expression
-        auto attrCtx = ctx->attributeAccess();
-        
-        // 需要获取对象和属性名
-        auto atomCtx = attrCtx->atom();
-        if (!atomCtx) {
+    } else if (targetCtx->DOT()) {
+        // 属性赋值: primary DOT IDENTIFIER ASSIGN expression
+        auto primaryCtx = targetCtx->primary();
+        if (!primaryCtx) {
             reportError("Attribute assignment missing object", ctx);
             return any();
         }
 
-        auto objectAny = visit(atomCtx);
+        auto objectAny = visit(primaryCtx);
         shared_ptr<ScriptValue> objectValue;
         try {
             objectValue = any_cast<shared_ptr<ScriptValue>>(objectAny);
@@ -1448,8 +1589,8 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             return any();
         }
 
-        // 获取属性名（注意：attributeAccess: atom DOT IDENTIFIER）
-        auto identifier = attrCtx->IDENTIFIER();
+        // 获取属性名
+        auto identifier = targetCtx->IDENTIFIER();
         if (!identifier) {
             reportError("Missing identifier in attribute assignment", ctx);
             return any();
@@ -1572,16 +1713,15 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
                 return any();
             }
         }
-    } else if (ctx->subscriptAccess()) {
-        // 下标赋值: subscriptAccess ASSIGN expression
-        auto subscriptCtx = ctx->subscriptAccess();
-        auto atomCtx = subscriptCtx->atom();
-        if (!atomCtx) {
-            reportError("Subscript access missing object", ctx);
+    } else if (targetCtx->LBRACK()) {
+        // 下标赋值: primary LBRACK subscriptArg RBRACK ASSIGN expression
+        auto primaryCtx = targetCtx->primary();
+        if (!primaryCtx) {
+            reportError("Subscript assignment missing object", ctx);
             return any();
         }
         
-        auto objectAny = visit(atomCtx);
+        auto objectAny = visit(primaryCtx);
         shared_ptr<ScriptValue> objectValue;
         try {
             objectValue = any_cast<shared_ptr<ScriptValue>>(objectAny);
@@ -1595,7 +1735,7 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             return any();
         }
         
-        auto subscriptArgCtx = subscriptCtx->subscriptArg();
+        auto subscriptArgCtx = targetCtx->subscriptArg();
         if (!subscriptArgCtx) {
             reportError("Missing subscript argument", ctx);
             return any();
@@ -2351,18 +2491,102 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
         // 标识符
         string name = ctx->IDENTIFIER()->getText();
         
+        // 添加调试信息：检查是否是函数调用场景
+        auto startToken = ctx->getStart();
+        int line = startToken ? startToken->getLine() : -1;
+        bool isFunctionCall = false;
+        if (ctx->parent) {
+            // 检查父节点是否是atom，且atom有postfixOp（函数调用）
+            auto parentCtx = ctx->parent;
+            if (auto atomCtx = dynamic_cast<PyScriptParser::AtomContext*>(parentCtx)) {
+                if (!atomCtx->postfixOp().empty()) {
+                    for (auto postfixOp : atomCtx->postfixOp()) {
+                        if (dynamic_cast<PyScriptParser::FunctionCallOpContext*>(postfixOp)) {
+                            isFunctionCall = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
         auto var = getVariable(name);
         if (var) {
             // 检查变量值是否为 None
             if (var->isNull()) {
-                logger_.debug("Variable '" + name + "' is null");
+                logger_.debug("Variable '" + name + "' is null at line " + std::to_string(line));
             } else if (var->isPythonObject()) {
                 py::object pyObj = var->toPythonObject();
                 if (py::isinstance<py::none>(pyObj)) {
-                    logger_.debug("Variable '" + name + "' is None (Python None)");
+                    logger_.debug("Variable '" + name + "' is None (Python None) at line " + std::to_string(line));
+                }
+                if (isFunctionCall) {
+                    logger_.debug("Found variable '" + name + "' for function call at line " + std::to_string(line) + 
+                                ", isPythonObject=" + (var->isPythonObject() ? "true" : "false"));
+                }
+            } else {
+                // 变量存在但不是 PythonObject，这在函数调用时会有问题
+                if (isFunctionCall) {
+                    string typeStr = "type=" + std::to_string(static_cast<int>(var->getType())) +
+                                   ", isNull=" + (var->isNull() ? "true" : "false") +
+                                   ", isPythonObject=" + (var->isPythonObject() ? "true" : "false");
+                    // 使用 reportError 确保信息被输出
+                    reportError("Variable '" + name + "' found but is not PythonObject at line " + 
+                               std::to_string(line) + ": " + typeStr, ctx);
+                    // 尝试从Python globals重新获取
+                    try {
+                        py::dict globals = py::globals();
+                        if (globals.contains(name.c_str())) {
+                            py::object pyObj = globals[name.c_str()];
+                            if (py::isinstance<py::function>(pyObj) || py::hasattr(pyObj, "__call__")) {
+                                var = ScriptValue::fromPythonObject(pyObj);
+                                variable_manager_.setVariable(name, var);
+                                logger_.info("Replaced variable '" + name + "' with PythonObject from globals at line " + 
+                                           std::to_string(line));
+                                return any(var);
+                            }
+                        }
+                    } catch (...) {
+                        // 忽略错误
+                    }
                 }
             }
             return any(var);
+        }
+        
+        // 如果没有找到变量，尝试从Python globals中查找（用于循环中定义的函数）
+        // 这可以解决循环中函数定义后立即调用时找不到函数的问题
+        if (isFunctionCall) {
+            logger_.debug("Function call to '" + name + "' at line " + std::to_string(line) + 
+                        ": variable not found in variable_manager, trying Python globals");
+        }
+        try {
+            py::dict globals = py::globals();
+            if (globals.contains(name.c_str())) {
+                py::object pyObj = globals[name.c_str()];
+                // 检查是否是函数对象
+                if (py::isinstance<py::function>(pyObj) || py::hasattr(pyObj, "__call__")) {
+                    auto scriptValue = ScriptValue::fromPythonObject(pyObj);
+                    // 同步到变量管理器，以便后续查找
+                    variable_manager_.setVariable(name, scriptValue);
+                    logger_.debug("Found function '" + name + "' in Python globals at line " + std::to_string(line) + 
+                                ", synced to variable_manager");
+                    return any(scriptValue);
+                } else if (isFunctionCall) {
+                    logger_.warn("Variable '" + name + "' found in globals at line " + std::to_string(line) + 
+                               " but is not callable (type: " + py::str(py::type::of(pyObj)).cast<string>() + ")");
+                }
+            } else if (isFunctionCall) {
+                logger_.warn("Function '" + name + "' not found in variable_manager or Python globals at line " + 
+                           std::to_string(line));
+            }
+        } catch (const std::exception& e) {
+            if (isFunctionCall) {
+                logger_.warn("Exception while checking Python globals for '" + name + "' at line " + 
+                           std::to_string(line) + ": " + e.what());
+            }
+        } catch (...) {
+            // 忽略其他错误
         }
         
         // 如果没有找到变量，在函数定义阶段返回一个空列表，避免NoneType错误
@@ -2376,47 +2600,14 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
         // 注意：这里返回 null 会导致后续的 any_cast 失败，所以应该返回 ScriptValue::createNull()
         return any(ScriptValue::createNull());
     } else if (ctx->LPAREN()) {
-        // 括号表达式: LPAREN (expression | tupleLiteral) RPAREN
-        // 由于 ANTLR 没有为 tupleLiteral 生成单独的 context，
-        // 我们通过检查 expression 的内容来判断是否是元组
-        if (ctx->expression()) {
-            auto exprCtx = ctx->expression();
-            // 检查 expression 是否包含多个子表达式（通过检查是否有逗号）
-            // 如果有逗号，则可能是元组字面量
-            bool hasComma = false;
-            for (auto child : exprCtx->children) {
-                auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
-                if (terminal && terminal->getSymbol()->getType() == PyScriptParser::COMMA) {
-                    hasComma = true;
-                    break;
-                }
-            }
-            
-            if (hasComma) {
-                // 元组字面量：包含逗号的表达式列表
-                // 通过访问 expression 的所有子表达式来构建元组
-                // ExpressionContext 没有直接的 logicalOr() 方法，需要通过 conditionalExpression() 访问
-                // 但这里我们直接访问 children 来获取逗号分隔的表达式
-                vector<shared_ptr<ScriptValue>> tupleItems;
-                for (auto child : exprCtx->children) {
-                    auto exprChild = dynamic_cast<PyScriptParser::ExpressionContext*>(child);
-                    if (exprChild) {
-                        auto value = evaluateExpression(exprChild);
-                        if (value) {
-                            tupleItems.push_back(value);
-                        } else {
-                            return any();
-                        }
-                    }
-                }
-                if (!tupleItems.empty()) {
-                    auto tupleValue = make_shared<ScriptValue>(tupleItems);
-                    return any(tupleValue);
-                }
-            }
-            
+        // 括号表达式: LPAREN (tupleLiteral | expression) RPAREN
+        // 优先检查 tupleLiteral（因为语法文件中 tupleLiteral 在 expression 之前）
+        if (ctx->tupleLiteral()) {
+            auto tupleCtx = ctx->tupleLiteral();
+            return visit(tupleCtx);
+        } else if (ctx->expression()) {
             // 普通括号表达式
-            return visit(exprCtx);
+            return visit(ctx->expression());
         }
         // 空括号，可能是空元组
         return any(ScriptValue::createList());
@@ -2440,8 +2631,8 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
     return any();
 }
 
-any AstVisitor::visitTuple(PyScriptParser::TupleContext *ctx) {
-    // 处理元组字面量: expression (COMMA expression)* COMMA?
+any AstVisitor::visitMultiElementTuple(PyScriptParser::MultiElementTupleContext *ctx) {
+    // 处理多元素元组: expression COMMA (expression COMMA)* expression? COMMA?
     vector<shared_ptr<ScriptValue>> elements;
     auto expressions = ctx->expression();
     
@@ -2467,6 +2658,36 @@ any AstVisitor::visitTuple(PyScriptParser::TupleContext *ctx) {
     for (size_t i = 0; i < elements.size(); ++i) {
         pyTuple[i] = elements[i]->toPythonObject();
     }
+    py::gil_scoped_release release;
+    
+    return any(ScriptValue::fromPythonObject(pyTuple));
+}
+
+any AstVisitor::visitSingleElementTuple(PyScriptParser::SingleElementTupleContext *ctx) {
+    // 处理单元素元组: expression COMMA
+    auto exprCtx = ctx->expression();
+    if (!exprCtx) {
+        reportError("Missing expression in single element tuple", ctx);
+        return any();
+    }
+    
+    auto exprAny = visit(exprCtx);
+    shared_ptr<ScriptValue> val;
+    try {
+        val = any_cast<shared_ptr<ScriptValue>>(exprAny);
+    } catch (const bad_any_cast&) {
+        reportError("Cannot evaluate tuple element", ctx);
+        return any();
+    }
+    if (!val) {
+        reportError("Cannot evaluate tuple element", ctx);
+        return any();
+    }
+    
+    // 创建单元素 Python 元组
+    py::gil_scoped_acquire acquire;
+    py::tuple pyTuple(1);
+    pyTuple[0] = val->toPythonObject();
     py::gil_scoped_release release;
     
     return any(ScriptValue::fromPythonObject(pyTuple));
@@ -2624,13 +2845,70 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
     try {
         currentValue = any_cast<shared_ptr<ScriptValue>>(primaryAny);
     } catch (const bad_any_cast&) {
+        // 检查是否是函数调用的情况
+        if (!ctx->postfixOp().empty()) {
+            auto firstPostfixOp = ctx->postfixOp()[0];
+            if (dynamic_cast<PyScriptParser::FunctionCallOpContext*>(firstPostfixOp)) {
+                // 函数调用但primary返回了非ScriptValue，可能是函数未找到
+                logger_.warn("Function call: primary expression returned non-ScriptValue, may be function not found");
+            }
+        }
         reportError("Cannot evaluate primary expression", ctx);
         return any();
     }
     
     if (!currentValue) {
-        reportError("Cannot evaluate primary expression", ctx);
-        return any();
+        // 检查是否是函数调用的情况
+        if (!ctx->postfixOp().empty()) {
+            auto firstPostfixOp = ctx->postfixOp()[0];
+            if (auto callOp = dynamic_cast<PyScriptParser::FunctionCallOpContext*>(firstPostfixOp)) {
+                // 函数调用但currentValue为null，说明函数未找到
+                // 尝试从primary中获取函数名，然后重新查找
+                if (primaryCtx && primaryCtx->IDENTIFIER()) {
+                    string funcName = primaryCtx->IDENTIFIER()->getText();
+                    auto startToken = ctx->getStart();
+                    int line = startToken ? startToken->getLine() : -1;
+                    logger_.warn("Function call: currentValue is null for function '" + funcName + 
+                               "' at line " + std::to_string(line) + ", attempting recovery");
+                    
+                    // 尝试重新从变量管理器查找
+                    auto retryVar = getVariable(funcName);
+                    if (retryVar && retryVar->isPythonObject()) {
+                        logger_.info("Successfully recovered function '" + funcName + 
+                                   "' from variable_manager at line " + std::to_string(line));
+                        currentValue = retryVar;
+                    } else {
+                        // 尝试从Python globals查找
+                        try {
+                            py::dict globals = py::globals();
+                            if (globals.contains(funcName.c_str())) {
+                                py::object pyObj = globals[funcName.c_str()];
+                                if (py::isinstance<py::function>(pyObj) || py::hasattr(pyObj, "__call__")) {
+                                    currentValue = ScriptValue::fromPythonObject(pyObj);
+                                    variable_manager_.setVariable(funcName, currentValue);
+                                    logger_.info("Successfully recovered function '" + funcName + 
+                                               "' from Python globals at line " + std::to_string(line));
+                                }
+                            }
+                        } catch (...) {
+                            // 忽略错误
+                        }
+                    }
+                }
+                
+                if (!currentValue) {
+                    logger_.error("Function call: failed to recover function, currentValue still null");
+                    reportError("Cannot evaluate primary expression", ctx);
+                    return any();
+                }
+            } else {
+                reportError("Cannot evaluate primary expression", ctx);
+                return any();
+            }
+        } else {
+            reportError("Cannot evaluate primary expression", ctx);
+            return any();
+        }
     }
     
     // 应用所有的后缀操作符
@@ -2948,9 +3226,78 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
             }
             
             // 调用函数
-            if (!currentValue->isPythonObject()) {
-                reportError("Cannot call non-function type", callOp);
+            auto callOpStartToken = callOp->getStart();
+            int callLine = callOpStartToken ? callOpStartToken->getLine() : -1;
+            
+            if (!currentValue) {
+                logger_.error("Function call at line " + std::to_string(callLine) + ": currentValue is null");
+                reportError("Cannot call: function not found", callOp);
                 return any();
+            }
+            if (!currentValue->isPythonObject()) {
+                // 添加详细的调试信息 - 使用 reportError 确保信息被输出
+                string errorMsg = "Cannot call non-function type at line " + std::to_string(callLine) + 
+                            ": currentValue type=" + std::to_string(static_cast<int>(currentValue->getType())) +
+                            ", isNull=" + (currentValue->isNull() ? "true" : "false") +
+                            ", isPythonObject=" + (currentValue->isPythonObject() ? "true" : "false");
+                logger_.warn(errorMsg);
+                
+                // 尝试从变量管理器重新查找
+                // 检查是否是函数名查找问题
+                if (auto primaryCtx = ctx->primary()) {
+                    if (primaryCtx->IDENTIFIER()) {
+                        string funcName = primaryCtx->IDENTIFIER()->getText();
+                        logger_.warn("Attempting to re-fetch function '" + funcName + "' from variable_manager at line " + std::to_string(callLine));
+                        
+                        // 检查变量管理器中是否有这个函数
+                        bool hasVar = variable_manager_.hasVariable(funcName);
+                        logger_.warn("Variable '" + funcName + "' exists in variable_manager: " + std::string(hasVar ? "true" : "false"));
+                        
+                        auto retryVar = getVariable(funcName);
+                        if (retryVar) {
+                            logger_.warn("Retry getVariable returned: isNull=" + std::string(retryVar->isNull() ? "true" : "false") +
+                                       ", isPythonObject=" + std::string(retryVar->isPythonObject() ? "true" : "false"));
+                            if (retryVar->isPythonObject()) {
+                                logger_.info("Successfully re-fetched function '" + funcName + "' from variable_manager");
+                                currentValue = retryVar;
+                            }
+                        } else {
+                            logger_.warn("Retry getVariable returned nullptr for function '" + funcName + "'");
+                        }
+                        
+                        if (!currentValue || !currentValue->isPythonObject()) {
+                            // 尝试从Python globals查找
+                            try {
+                                py::dict globals = py::globals();
+                                bool hasInGlobals = globals.contains(funcName.c_str());
+                                logger_.warn("Function '" + funcName + "' exists in Python globals: " + std::string(hasInGlobals ? "true" : "false"));
+                                
+                                if (hasInGlobals) {
+                                    py::object pyObj = globals[funcName.c_str()];
+                                    string objType = py::str(py::type::of(pyObj)).cast<string>();
+                                    logger_.warn("Function '" + funcName + "' type in globals: " + objType);
+                                    
+                                    if (py::isinstance<py::function>(pyObj) || py::hasattr(pyObj, "__call__")) {
+                                        currentValue = ScriptValue::fromPythonObject(pyObj);
+                                        variable_manager_.setVariable(funcName, currentValue);
+                                        logger_.info("Successfully fetched function '" + funcName + "' from Python globals");
+                                    } else {
+                                        logger_.warn("Function '" + funcName + "' in globals is not callable (type: " + objType + ")");
+                                    }
+                                }
+                            } catch (const std::exception& e) {
+                                logger_.warn("Exception while checking Python globals: " + string(e.what()));
+                            } catch (...) {
+                                logger_.warn("Unknown exception while checking Python globals");
+                            }
+                        }
+                    }
+                }
+                
+                if (!currentValue || !currentValue->isPythonObject()) {
+                    reportError("Cannot call non-function type: " + errorMsg, callOp);
+                    return any();
+                }
             }
             
             try {
@@ -3222,20 +3569,6 @@ any AstVisitor::visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) 
     return any();
 }
 
-any AstVisitor::visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) {
-    // 这个规则用于赋值目标，已经在visitAssignment中处理
-    return any();
-}
-
-any AstVisitor::visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) {
-    // 这个规则用于赋值目标，已经在visitAssignment中处理
-    return any();
-}
-
-any AstVisitor::visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) {
-    // 这个规则可能不再使用，由atom中的functionCallOp处理
-    return any();
-}
 
 any AstVisitor::visitArgumentList(PyScriptParser::ArgumentListContext *ctx) {
     // 参数列表已经在调用处处理
@@ -3379,15 +3712,18 @@ any AstVisitor::visitDictComprehension(PyScriptParser::DictComprehensionContext 
     }
     
     for (auto compForCtx : compFors) {
-        // compFor: FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
-        auto identifiers = compForCtx->IDENTIFIER();
-        if (identifiers.empty()) {
-            reportError("Invalid compFor: missing identifier", ctx);
+        // compFor: FOR (IDENTIFIER | tupleLiteral) IN expression (IF expression)?
+        std::string varName;
+        if (compForCtx->IDENTIFIER()) {
+            varName = compForCtx->IDENTIFIER()->getText();
+        } else if (compForCtx->tupleLiteral()) {
+            // 对于 tupleLiteral，暂时不支持，报错
+            reportError("Tuple unpacking in compFor not yet supported", ctx);
+            return any();
+        } else {
+            reportError("Invalid compFor: missing identifier or tuple", ctx);
             return any();
         }
-        
-        // 获取第一个标识符（支持多个标识符的情况，但这里先只处理第一个）
-        std::string varName = identifiers[0]->getText();
         
         // 获取 IN 后面的表达式
         auto iterExprs = compForCtx->expression();
@@ -3703,15 +4039,18 @@ any AstVisitor::visitGeneratorExpression(PyScriptParser::GeneratorExpressionCont
     }
     
     for (auto compForCtx : compFors) {
-        // compFor: FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
-        auto identifiers = compForCtx->IDENTIFIER();
-        if (identifiers.empty()) {
-            reportError("Invalid compFor: missing identifier", ctx);
+        // compFor: FOR (IDENTIFIER | tupleLiteral) IN expression (IF expression)?
+        std::string varName;
+        if (compForCtx->IDENTIFIER()) {
+            varName = compForCtx->IDENTIFIER()->getText();
+        } else if (compForCtx->tupleLiteral()) {
+            // 对于 tupleLiteral，暂时不支持，报错
+            reportError("Tuple unpacking in compFor not yet supported", ctx);
+            return any();
+        } else {
+            reportError("Invalid compFor: missing identifier or tuple", ctx);
             return any();
         }
-        
-        // 获取第一个标识符（支持多个标识符的情况，但这里先只处理第一个）
-        std::string varName = identifiers[0]->getText();
         
         // 获取 IN 后面的表达式
         auto iterExprs = compForCtx->expression();
@@ -3941,7 +4280,7 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
     // listElements: expression (COMMA expression)* COMMA? | expression FOR IDENTIFIER IN expression (IF expression)? (FOR IDENTIFIER IN expression (IF expression)?)* 
     auto startToken = ctx->getStart();
     int line = startToken ? startToken->getLine() : -1;
-    logger_.info("visitListElements called at line " + std::to_string(line) + " (defining_function_=" + (defining_function_ ? "true" : "false") + ")");
+    logger_.info("visitListElements called at line " + std::to_string(line) + " (defining_function_=" + std::string(defining_function_ ? "true" : "false") + ")");
     
     // 如果正在定义函数，跳过列表推导式的求值，返回特殊标记阻止访问子节点
     if (defining_function_) {
@@ -3982,15 +4321,18 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
         }
         
         for (auto compForCtx : compFors) {
-            // compFor: FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression (IF expression)?
-            auto identifiers = compForCtx->IDENTIFIER();
-            if (identifiers.empty()) {
-                reportError("Invalid compFor: missing identifier", ctx);
+            // compFor: FOR (IDENTIFIER | tupleLiteral) IN expression (IF expression)?
+            std::string varName;
+            if (compForCtx->IDENTIFIER()) {
+                varName = compForCtx->IDENTIFIER()->getText();
+            } else if (compForCtx->tupleLiteral()) {
+                // 对于 tupleLiteral，暂时不支持，报错
+                reportError("Tuple unpacking in compFor not yet supported", ctx);
+                return any();
+            } else {
+                reportError("Invalid compFor: missing identifier or tuple", ctx);
                 return any();
             }
-            
-            // 获取第一个标识符（支持多个标识符的情况，但这里先只处理第一个）
-            std::string varName = identifiers[0]->getText();
             
             // 获取 IN 后面的表达式
             auto iterExprs = compForCtx->expression();

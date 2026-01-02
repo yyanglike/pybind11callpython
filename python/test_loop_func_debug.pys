@@ -1,0 +1,7 @@
+# 调试循环中函数定义
+for i in range(2):
+    def test_func(x):
+        return x * x + i
+    print(f"i={i}, test_func defined")
+    result = test_func(5)
+    print(f"i={i}, result={result}")

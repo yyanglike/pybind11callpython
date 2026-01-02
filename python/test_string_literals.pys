@@ -1,0 +1,61 @@
+# 测试原始字符串和字节字符串
+
+print("=== 测试原始字符串 ===")
+
+# 测试1: 普通原始字符串
+raw1 = r"hello\nworld"
+print("raw1 = r\"hello\\nworld\" =", raw1)
+print("len(raw1) =", len(raw1))
+
+raw2 = r'path\to\file'
+print("raw2 = r'path\\to\\file' =", raw2)
+
+# 测试2: 原始字符串（大写R）
+raw3 = R"test\string"
+print("raw3 = R\"test\\string\" =", raw3)
+
+# 测试3: 原始三引号字符串
+raw4 = r"""multi
+line
+raw
+string"""
+print("raw4 = r\"\"\"multi...\"\"\" =", raw4)
+
+raw5 = R'''another
+raw
+string'''
+print("raw5 = R'''another...''' =", raw5)
+
+print("\n=== 测试字节字符串 ===")
+
+# 测试1: 普通字节字符串
+bytes1 = b"hello"
+print("bytes1 = b\"hello\" =", bytes1)
+print("type(bytes1) =", type(bytes1))
+print("len(bytes1) =", len(bytes1))
+
+bytes2 = b'world'
+print("bytes2 = b'world' =", bytes2)
+
+# 测试2: 字节字符串（大写B）
+bytes3 = B"test"
+print("bytes3 = B\"test\" =", bytes3)
+
+# 测试3: 字节三引号字符串
+bytes4 = b"""multi
+line
+bytes"""
+print("bytes4 = b\"\"\"multi...\"\"\" =", bytes4)
+print("type(bytes4) =", type(bytes4))
+
+bytes5 = B'''another
+bytes
+string'''
+print("bytes5 = B'''another...''' =", bytes5)
+
+# 测试4: 字节字符串操作
+bytes6 = b"hello" + b" " + b"world"
+print("bytes6 = b\"hello\" + b\" \" + b\"world\" =", bytes6)
+
+print("\n=== 字符串字面量测试完成 ===")
+

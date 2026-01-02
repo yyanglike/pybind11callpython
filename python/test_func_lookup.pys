@@ -1,0 +1,14 @@
+# 测试函数查找
+def test_func(x):
+    return x * x
+
+# 直接调用
+result = test_func(5)
+print(f"result = {result}")
+
+# 在循环中定义和调用
+for i in range(2):
+    def loop_func(x):
+        return x + i
+    result2 = loop_func(10)
+    print(f"i={i}, result2={result2}")

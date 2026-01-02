@@ -1,0 +1,9 @@
+# 测试函数同步
+for i in range(2):
+    def test_func(x):
+        return x * x + i
+    # 检查函数是否已定义
+    print(f"i={i}, test_func defined")
+    # 立即调用
+    result = test_func(5)
+    print(f"i={i}, result={result}")

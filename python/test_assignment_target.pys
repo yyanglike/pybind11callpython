@@ -1,0 +1,80 @@
+# 测试 assignmentTarget 规则（属性赋值和下标赋值）
+
+print("=== 测试 assignmentTarget ===")
+
+# 测试1: 属性赋值
+class Counter:
+    def __init__(self):
+        self.count = 0
+    
+    def increment(self):
+        self.count += 1
+
+counter = Counter()
+print("counter.count =", counter.count)
+
+counter.count = 10
+print("counter.count = 10, result =", counter.count)
+
+counter.count += 5
+print("counter.count += 5, result =", counter.count)
+
+counter.count -= 2
+print("counter.count -= 2, result =", counter.count)
+
+counter.count *= 3
+print("counter.count *= 3, result =", counter.count)
+
+# 测试2: 下标赋值（列表）
+arr = [1, 2, 3, 4, 5]
+print("arr =", arr)
+
+arr[0] = 10
+print("arr[0] = 10, arr =", arr)
+
+arr[1] += 5
+print("arr[1] += 5, arr =", arr)
+
+arr[2] -= 1
+print("arr[2] -= 1, arr =", arr)
+
+arr[3] *= 2
+print("arr[3] *= 2, arr =", arr)
+
+arr[4] //= 2
+print("arr[4] //= 2, arr =", arr)
+
+# 测试3: 下标赋值（字典）
+d = {"a": 1, "b": 2, "c": 3}
+print("d =", d)
+
+d["a"] = 10
+print('d["a"] = 10, d =', d)
+
+d["b"] += 5
+print('d["b"] += 5, d =', d)
+
+# 测试4: 嵌套属性赋值
+class Nested:
+    def __init__(self):
+        self.obj = Counter()
+
+nested = Nested()
+nested.obj.count = 100
+print("nested.obj.count = 100, result =", nested.obj.count)
+
+nested.obj.count += 50
+print("nested.obj.count += 50, result =", nested.obj.count)
+
+# 测试5: 嵌套下标赋值
+matrix = [[1, 2], [3, 4]]
+print("matrix =", matrix)
+
+matrix[0][0] = 10
+print("matrix[0][0] = 10, matrix =", matrix)
+
+matrix[0][1] += 5
+print("matrix[0][1] += 5, matrix =", matrix)
+
+print("\n=== assignmentTarget 测试完成 ===")
+

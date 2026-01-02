@@ -104,6 +104,9 @@ public:
   virtual void enterAssignment(PyScriptParser::AssignmentContext *ctx) = 0;
   virtual void exitAssignment(PyScriptParser::AssignmentContext *ctx) = 0;
 
+  virtual void enterAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) = 0;
+  virtual void exitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) = 0;
+
   virtual void enterExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
   virtual void exitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) = 0;
 
@@ -152,8 +155,11 @@ public:
   virtual void enterPrimary(PyScriptParser::PrimaryContext *ctx) = 0;
   virtual void exitPrimary(PyScriptParser::PrimaryContext *ctx) = 0;
 
-  virtual void enterTuple(PyScriptParser::TupleContext *ctx) = 0;
-  virtual void exitTuple(PyScriptParser::TupleContext *ctx) = 0;
+  virtual void enterMultiElementTuple(PyScriptParser::MultiElementTupleContext *ctx) = 0;
+  virtual void exitMultiElementTuple(PyScriptParser::MultiElementTupleContext *ctx) = 0;
+
+  virtual void enterSingleElementTuple(PyScriptParser::SingleElementTupleContext *ctx) = 0;
+  virtual void exitSingleElementTuple(PyScriptParser::SingleElementTupleContext *ctx) = 0;
 
   virtual void enterNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
   virtual void exitNewExpression(PyScriptParser::NewExpressionContext *ctx) = 0;
@@ -170,17 +176,8 @@ public:
   virtual void enterFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) = 0;
   virtual void exitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) = 0;
 
-  virtual void enterAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) = 0;
-  virtual void exitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) = 0;
-
-  virtual void enterSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) = 0;
-  virtual void exitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) = 0;
-
   virtual void enterSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) = 0;
   virtual void exitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) = 0;
-
-  virtual void enterFunctionCall(PyScriptParser::FunctionCallContext *ctx) = 0;
-  virtual void exitFunctionCall(PyScriptParser::FunctionCallContext *ctx) = 0;
 
   virtual void enterArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;
   virtual void exitArgumentList(PyScriptParser::ArgumentListContext *ctx) = 0;

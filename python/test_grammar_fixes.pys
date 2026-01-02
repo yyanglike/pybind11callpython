@@ -1,0 +1,95 @@
+# 测试语法修复后的新功能
+
+print("=== 测试1: tupleLiteral 优先级修复 ===")
+# 测试元组优先于括号表达式
+t1 = (1, 2)
+print("t1 =", t1)
+print("type(t1) =", type(t1))
+
+t2 = (1,)
+print("t2 =", t2)
+print("type(t2) =", type(t2))
+
+# 单个元素的括号表达式（不是元组）
+e1 = (1)
+print("e1 =", e1)
+print("type(e1) =", type(e1))
+
+print("\n=== 测试2: assignmentTarget 规则 ===")
+# 测试属性赋值
+class TestObj:
+    def __init__(self):
+        self.value = 10
+
+obj = TestObj()
+obj.value = 20
+print("obj.value =", obj.value)
+
+obj.value += 5
+print("obj.value += 5, result =", obj.value)
+
+# 测试下标赋值
+arr = [1, 2, 3]
+arr[0] = 10
+print("arr[0] = 10, arr =", arr)
+
+arr[1] += 5
+print("arr[1] += 5, arr =", arr)
+
+print("\n=== 测试3: 原始字符串 ===")
+# 测试原始字符串
+raw1 = r"hello\nworld"
+print("raw1 =", raw1)
+
+raw2 = r'path\to\file'
+print("raw2 =", raw2)
+
+raw3 = R"""multi
+line
+raw"""
+print("raw3 =", raw3)
+
+print("\n=== 测试4: 字节字符串 ===")
+# 测试字节字符串
+bytes1 = b"hello"
+print("bytes1 =", bytes1)
+print("type(bytes1) =", type(bytes1))
+
+bytes2 = b'world'
+print("bytes2 =", bytes2)
+
+bytes3 = B"""multi
+line
+bytes"""
+print("bytes3 =", bytes3)
+print("type(bytes3) =", type(bytes3))
+
+print("\n=== 测试5: 元组在推导式中的使用 ===")
+# 测试元组字面量
+tuples = [(1, 2), (3, 4), (5, 6)]
+print("tuples =", tuples)
+
+# 测试 compFor 中的 IDENTIFIER（现有功能）
+squares = [x * x for x in range(5)]
+print("squares =", squares)
+
+print("\n=== 测试6: 复杂赋值操作 ===")
+# 测试各种赋值运算符
+x = 10
+x += 5
+print("x += 5, x =", x)
+
+x -= 3
+print("x -= 3, x =", x)
+
+x *= 2
+print("x *= 2, x =", x)
+
+x //= 3
+print("x //= 3, x =", x)
+
+x %= 5
+print("x %= 5, x =", x)
+
+print("\n=== 所有测试完成 ===")
+

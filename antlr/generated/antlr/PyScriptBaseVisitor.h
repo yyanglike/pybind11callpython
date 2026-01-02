@@ -135,6 +135,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -199,7 +203,11 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitTuple(PyScriptParser::TupleContext *ctx) override {
+  virtual std::any visitMultiElementTuple(PyScriptParser::MultiElementTupleContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitSingleElementTuple(PyScriptParser::SingleElementTupleContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -223,19 +231,7 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
   virtual std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual std::any visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) override {
     return visitChildren(ctx);
   }
 

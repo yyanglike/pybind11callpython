@@ -434,6 +434,10 @@ any ScriptInterpreter::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     return ast_visitor_.visitAssignment(ctx);
 }
 
+any ScriptInterpreter::visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) {
+    // 委托给AstVisitor处理
+    return ast_visitor_.visitAssignmentTarget(ctx);
+}
 
 any ScriptInterpreter::visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) {
     // 委托给AstVisitor处理
@@ -469,8 +473,12 @@ any ScriptInterpreter::visitShiftExpr(PyScriptParser::ShiftExprContext *ctx){
     return ast_visitor_.visitShiftExpr(ctx);
 }
 
-any ScriptInterpreter::visitTuple(PyScriptParser::TupleContext *ctx){
-    return ast_visitor_.visitTuple(ctx);
+any ScriptInterpreter::visitMultiElementTuple(PyScriptParser::MultiElementTupleContext *ctx){
+    return ast_visitor_.visitMultiElementTuple(ctx);
+}
+
+any ScriptInterpreter::visitSingleElementTuple(PyScriptParser::SingleElementTupleContext *ctx){
+    return ast_visitor_.visitSingleElementTuple(ctx);
 }
 
 any ScriptInterpreter::visitComprehension(PyScriptParser::ComprehensionContext *ctx){
@@ -481,20 +489,6 @@ any ScriptInterpreter::visitCompFor(PyScriptParser::CompForContext *ctx){
     return ast_visitor_.visitCompFor(ctx);
 }
 
-any ScriptInterpreter::visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitFunctionCall(ctx);
-}
-
-any ScriptInterpreter::visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitAttributeAccess(ctx);
-}
-
-any ScriptInterpreter::visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) {
-    // 委托给AstVisitor处理
-    return ast_visitor_.visitSubscriptAccess(ctx);
-}
 
 any ScriptInterpreter::visitNewExpression(PyScriptParser::NewExpressionContext *ctx) {
     // 委托给AstVisitor处理

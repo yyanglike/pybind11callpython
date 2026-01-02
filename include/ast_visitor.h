@@ -80,6 +80,7 @@ public:
     std::any visitFromImport(PyScriptParser::FromImportContext *ctx) override;
     std::any visitImportItem(PyScriptParser::ImportItemContext *ctx) override;
     std::any visitAssignment(PyScriptParser::AssignmentContext *ctx) override;
+    std::any visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) override;
     std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *ctx) override;
     std::any visitExpression(PyScriptParser::ExpressionContext *ctx);
     std::any visitConditionalExpr(PyScriptParser::ConditionalExprContext *ctx) override;
@@ -97,15 +98,13 @@ public:
     std::any visitPower(PyScriptParser::PowerContext *ctx) override;
     std::any visitUnary(PyScriptParser::UnaryContext *ctx) override;
     std::any visitPrimary(PyScriptParser::PrimaryContext *ctx) override;
-    std::any visitTuple(PyScriptParser::TupleContext *ctx) override;
+    std::any visitMultiElementTuple(PyScriptParser::MultiElementTupleContext *ctx) override;
+    std::any visitSingleElementTuple(PyScriptParser::SingleElementTupleContext *ctx) override;
     std::any visitNewExpression(PyScriptParser::NewExpressionContext *ctx) override;
     std::any visitAtom(PyScriptParser::AtomContext *ctx) override;
     std::any visitAttributeAccessOp(PyScriptParser::AttributeAccessOpContext *ctx) override;
     std::any visitSubscriptAccessOp(PyScriptParser::SubscriptAccessOpContext *ctx) override;
     std::any visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *ctx) override;
-    std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *ctx) override;
-    std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *ctx) override;
-    std::any visitFunctionCall(PyScriptParser::FunctionCallContext *ctx) override;
     std::any visitArgumentList(PyScriptParser::ArgumentListContext *ctx) override;
     std::any visitArgument(PyScriptParser::ArgumentContext *ctx) override;
     std::any visitListLiteral(PyScriptParser::ListLiteralContext *ctx) override;

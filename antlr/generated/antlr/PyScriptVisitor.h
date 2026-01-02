@@ -79,6 +79,8 @@ public:
 
     virtual std::any visitAssignment(PyScriptParser::AssignmentContext *context) = 0;
 
+    virtual std::any visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *context) = 0;
+
     virtual std::any visitExpressionStatement(PyScriptParser::ExpressionStatementContext *context) = 0;
 
     virtual std::any visitConditionalExpr(PyScriptParser::ConditionalExprContext *context) = 0;
@@ -111,7 +113,9 @@ public:
 
     virtual std::any visitPrimary(PyScriptParser::PrimaryContext *context) = 0;
 
-    virtual std::any visitTuple(PyScriptParser::TupleContext *context) = 0;
+    virtual std::any visitMultiElementTuple(PyScriptParser::MultiElementTupleContext *context) = 0;
+
+    virtual std::any visitSingleElementTuple(PyScriptParser::SingleElementTupleContext *context) = 0;
 
     virtual std::any visitNewExpression(PyScriptParser::NewExpressionContext *context) = 0;
 
@@ -123,13 +127,7 @@ public:
 
     virtual std::any visitFunctionCallOp(PyScriptParser::FunctionCallOpContext *context) = 0;
 
-    virtual std::any visitAttributeAccess(PyScriptParser::AttributeAccessContext *context) = 0;
-
-    virtual std::any visitSubscriptAccess(PyScriptParser::SubscriptAccessContext *context) = 0;
-
     virtual std::any visitSubscriptArg(PyScriptParser::SubscriptArgContext *context) = 0;
-
-    virtual std::any visitFunctionCall(PyScriptParser::FunctionCallContext *context) = 0;
 
     virtual std::any visitArgumentList(PyScriptParser::ArgumentListContext *context) = 0;
 
