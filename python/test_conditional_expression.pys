@@ -1,0 +1,27 @@
+# 测试条件表达式（三元运算符）
+
+# 基本用法
+x = 10
+result1 = "positive" if x > 0 else "non-positive"
+print("x =", x, ", result1 =", result1)
+
+# 嵌套条件表达式
+y = -5
+result2 = "positive" if y > 0 else ("zero" if y == 0 else "negative")
+print("y =", y, ", result2 =", result2)
+
+# 在表达式中使用
+z = 7
+result3 = z * 2 if z > 5 else z + 5
+print("z =", z, ", result3 =", result3)
+
+# 多个条件
+score = 85
+grade = "A" if score >= 90 else ("B" if score >= 80 else ("C" if score >= 70 else "D"))
+print("score =", score, ", grade =", grade)
+
+# 与赋值运算符结合
+a = 10
+a = a + 1 if a < 10 else a - 1
+print("a =", a)
+

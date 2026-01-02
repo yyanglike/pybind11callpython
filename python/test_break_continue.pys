@@ -1,0 +1,40 @@
+# 测试 break 和 continue 语句
+
+# 测试 break
+print("Testing break:")
+sum1 = 0
+for i in range(10):
+    if i == 5:
+        break
+    sum1 += i
+print("sum1 =", sum1)
+
+# 测试 continue
+print("Testing continue:")
+sum2 = 0
+for i in range(10):
+    if i % 2 == 0:
+        continue
+    sum2 += i
+print("sum2 =", sum2)
+
+# 测试 while break
+print("Testing while break:")
+count = 0
+while True:
+    count += 1
+    if count > 5:
+        break
+print("count =", count)
+
+# 测试 while continue
+print("Testing while continue:")
+sum3 = 0
+i = 0
+while i < 10:
+    i += 1
+    if i % 2 == 0:
+        continue
+    sum3 += i
+print("sum3 =", sum3)
+

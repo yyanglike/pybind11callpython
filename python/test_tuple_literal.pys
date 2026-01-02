@@ -1,0 +1,35 @@
+# 测试元组字面量
+
+# 基本元组
+tuple1 = (1, 2, 3)
+print("tuple1:", tuple1)
+
+# 空元组
+tuple2 = ()
+print("tuple2 (empty):", tuple2)
+
+# 单元素元组
+tuple3 = (42,)
+print("tuple3 (single):", tuple3)
+
+# 多元素元组
+tuple4 = (1, 2, 3, 4, 5)
+print("tuple4:", tuple4)
+
+# 混合类型元组
+tuple5 = (1, "hello", 3.14, True)
+print("tuple5:", tuple5)
+
+# 嵌套元组
+tuple6 = ((1, 2), (3, 4), (5, 6))
+print("tuple6 (nested):", tuple6)
+
+# 元组解包
+a, b, c = (10, 20, 30)
+print("a =", a, ", b =", b, ", c =", c)
+
+# 元组索引
+tuple7 = (100, 200, 300)
+print("tuple7[0] =", tuple7[0])
+print("tuple7[1] =", tuple7[1])
+

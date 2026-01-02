@@ -1,0 +1,27 @@
+# 测试嵌套推导式
+
+# 测试嵌套列表推导式
+result1 = [x * y for x in range(3) for y in range(2)]
+print("nested list comprehension:", result1)
+
+# 测试带条件的嵌套推导式
+result2 = [x * y for x in range(5) for y in range(3) if x > y]
+print("nested with condition:", result2)
+
+# 测试嵌套字典推导式
+result3 = {x: y for x in range(3) for y in range(2)}
+print("nested dict comprehension:", result3)
+
+# 测试嵌套集合推导式
+result4 = {x + y for x in range(3) for y in range(2)}
+print("nested set comprehension:", result4)
+
+# 测试嵌套生成器表达式
+gen = (x * y for x in range(3) for y in range(2))
+result5 = list(gen)
+print("nested generator expression:", result5)
+
+# 测试多层嵌套
+result6 = [(x, y, z) for x in range(2) for y in range(2) for z in range(2)]
+print("triple nested:", result6)
+

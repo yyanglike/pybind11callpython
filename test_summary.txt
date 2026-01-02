@@ -1,0 +1,15 @@
+Test Summary - Fri Jan  2 10:28:05 CST 2026
+=========================================
+Total tests: 117
+Passed: 110
+Failed: 7
+Success rate: 94%
+
+Failed tests:
+  1. debug_huge.pys
+  2. test_huge_simple.pys
+  3. test_numpy_pandas_import.pys
+  4. test_partial_huge.pys
+  5. test_step4.pys
+  6. test_step4_global_import.pys
+  7. test_step4_local_import.pys

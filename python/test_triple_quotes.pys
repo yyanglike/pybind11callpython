@@ -1,0 +1,30 @@
+# 测试三引号字符串
+
+# 测试双引号三引号
+str1 = """This is a
+multi-line string
+with three double quotes"""
+
+print("str1:")
+print(str1)
+
+# 测试单引号三引号
+str2 = '''This is another
+multi-line string
+with three single quotes'''
+
+print("\nstr2:")
+print(str2)
+
+# 测试包含引号的字符串
+str3 = """He said "Hello" and she said 'Hi'"""
+print("\nstr3:", str3)
+
+str4 = '''She said "It's a beautiful day"'''
+print("str4:", str4)
+
+# 测试空字符串
+str5 = """
+"""
+print("\nstr5 (empty):", repr(str5))
+

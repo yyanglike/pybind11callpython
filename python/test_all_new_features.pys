@@ -1,0 +1,91 @@
+# 综合测试所有新功能
+
+print("=== Testing all new features ===\n")
+
+# 1. 位运算符和//
+print("1. Bitwise operators and //:")
+a = 10 // 3
+b = 5 & 3
+c = 5 | 3
+d = 5 ^ 3
+e = 5 << 2
+f = 20 >> 2
+g = ~5
+print("  10 // 3 =", a)
+print("  5 & 3 =", b)
+print("  5 | 3 =", c)
+print("  5 ^ 3 =", d)
+print("  5 << 2 =", e)
+print("  20 >> 2 =", f)
+print("  ~5 =", g)
+
+# 2. is/is not/not in
+print("\n2. is/is not/not in:")
+x = 10
+y = 10
+list1 = [1, 2, 3]
+print("  x is y =", x is y)
+print("  x is not y =", x is not y)
+print("  4 not in list1 =", 4 not in list1)
+print("  2 not in list1 =", 2 not in list1)
+
+# 3. elif
+print("\n3. elif:")
+score = 85
+if score >= 90:
+    grade = "A"
+elif score >= 80:
+    grade = "B"
+elif score >= 70:
+    grade = "C"
+else:
+    grade = "D"
+print("  score =", score, ", grade =", grade)
+
+# 4. break/continue
+print("\n4. break/continue:")
+sum1 = 0
+for i in range(10):
+    if i == 5:
+        break
+    sum1 += i
+print("  sum (break at 5) =", sum1)
+
+sum2 = 0
+for i in range(10):
+    if i % 2 == 0:
+        continue
+    sum2 += i
+print("  sum (skip even) =", sum2)
+
+# 5. 赋值运算符
+print("\n5. Assignment operators:")
+z = 10
+z += 5
+z *= 2
+z //= 3
+print("  z (after +=, *=, //=) =", z)
+
+# 6. 三引号字符串
+print("\n6. Triple-quoted strings:")
+str1 = """Multi-line
+string"""
+print("  str1:", str1)
+
+# 7. 嵌套推导式
+print("\n7. Nested comprehensions:")
+result = [x * y for x in range(3) for y in range(2)]
+print("  nested list comp:", result)
+
+# 8. 条件表达式
+print("\n8. Conditional expression:")
+result = "positive" if 10 > 0 else "negative"
+print("  conditional result:", result)
+
+# 9. 元组字面量
+print("\n9. Tuple literal:")
+tup = (1, 2, 3)
+print("  tuple:", tup)
+
+print("\n=== All tests completed ===")
+

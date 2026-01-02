@@ -1,0 +1,44 @@
+# 测试 is/is not/not in 运算符
+
+# 测试 is
+x = 10
+y = 10
+z = x
+
+result1 = x is y
+print("x is y =", result1)
+
+result2 = x is z
+print("x is z =", result2)
+
+# 测试 is not
+result3 = x is not y
+print("x is not y =", result3)
+
+result4 = x is not z
+print("x is not z =", result4)
+
+# 测试 not in
+list1 = [1, 2, 3, 4, 5]
+result5 = 6 not in list1
+print("6 not in list1 =", result5)
+
+result6 = 3 not in list1
+print("3 not in list1 =", result6)
+
+# 测试字符串
+str1 = "hello"
+result7 = "x" not in str1
+print("'x' not in 'hello' =", result7)
+
+result8 = "l" not in str1
+print("'l' not in 'hello' =", result8)
+
+# 测试字典
+dict1 = {"a": 1, "b": 2}
+result9 = "c" not in dict1
+print("'c' not in dict1 =", result9)
+
+result10 = "a" not in dict1
+print("'a' not in dict1 =", result10)
+
