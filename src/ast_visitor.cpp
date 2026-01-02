@@ -3376,8 +3376,9 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                         }
                         
                         if (!currentValue || !currentValue->isPythonObject()) {
-                            // 尝试从Python globals查找
+                            // 尝试从Python globals查找，确保持有 GIL
                             try {
+                                py::gil_scoped_acquire acquire;
                                 py::dict globals = py::globals();
                                 bool hasInGlobals = globals.contains(funcName.c_str());
                                 logger_.warn("Function '" + funcName + "' exists in Python globals: " + std::string(hasInGlobals ? "true" : "false"));
@@ -3411,6 +3412,9 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
             }
             
             try {
+                // 确保在函数调用过程中持有 GIL
+                py::gil_scoped_acquire acquire;
+                
                 py::object pyFunc = currentValue->getPythonObject();
 
                 // len 内联优化：无 kwargs，单参数且目标为内置 len
