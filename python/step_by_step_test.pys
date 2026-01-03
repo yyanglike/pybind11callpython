@@ -67,8 +67,7 @@ def main():
     args = sys.argv
 
     n = 50
-    if len(args) > 1:
-        n = int(args[1])
+
 
     print("[pys] Building dataframe with n=", n)
     df = build_dataframe(n)

@@ -2036,37 +2036,34 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
 
         if (op != "=") {
             // 赋值运算符：先获取当前属性值，执行运算，再赋值
-            py::object currentAttr;
-            try {
-                if (objectValue->isPythonObject()) {
-                    py::object pyObj = objectValue->getPythonObject();
-                    currentAttr = pyObj.attr(memberName.c_str());
-                } else {
-                    // 非Python对象，尝试通过ScriptValue获取
-                    auto currentValue = objectValue->getKey(memberName);
-                    if (currentValue) {
-                        currentAttr = currentValue->toPythonObject();
-                    } else {
-                        currentAttr = py::none();
-                    }
+            py::object currentAttr = py::none();
+            if (objectValue->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
+                py::object pyObj = objectValue->getPythonObject();
+                currentAttr = pyObj.attr(memberName.c_str());
+            } else {
+                auto currentValueObj = objectValue->getKey(memberName);
+                if (currentValueObj) {
+                    currentAttr = currentValueObj->toPythonObject();
                 }
-            } catch (...) {
-                currentAttr = py::none();
             }
-            
+
             auto currentValue = ScriptValue::fromPythonObject(currentAttr);
             if (!currentValue) {
                 currentValue = ScriptValue::createNull();
             }
             
-            // 提取基础操作符（去掉=）
-            string baseOp = op.substr(0, op.length() - 1);
-            auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
-            if (!result) {
-                reportError("Unsupported assignment operator: " + op, ctx);
-                return any();
+            // 如果当前值缺失，退化为普通赋值，避免 None 与数字做运算
+            if (!(currentValue->isNull())) {
+                // 提取基础操作符（去掉=）
+                string baseOp = op.substr(0, op.length() - 1);
+                auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
+                if (!result) {
+                    reportError("Unsupported assignment operator: " + op, ctx);
+                    return any();
+                }
+                rightValue = result;  // 使用计算结果作为新的赋值值
             }
-            rightValue = result;  // 使用计算结果作为新的赋值值
         }
 
         // 执行属性赋值
@@ -2110,6 +2107,16 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         if (!objectValue) {
             reportError("Cannot evaluate object in subscript assignment", ctx);
             return any();
+        }
+        
+        // 将 List/Dictionary 统一转为 Python 对象，避免增量赋值时内部结构变化导致越界
+        if (objectValue->isList() || objectValue->isDictionary()) {
+            try {
+                py::gil_scoped_acquire acquire;
+                objectValue = ScriptValue::createPythonObject(objectValue->toPythonObject());
+            } catch (...) {
+                // ignore and continue with original objectValue
+            }
         }
         
         auto subscriptArgCtx = targetCtx->subscriptArg();
@@ -2201,39 +2208,39 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         if (op != "=") {
             // 赋值运算符：先获取当前下标值，执行运算，再赋值
             shared_ptr<ScriptValue> currentValue = nullptr;
-            try {
-                if (objectValue->isList()) {
-                    if (indexValue->isInteger()) {
-                        long long idx = indexValue->getInteger();
-                        if (idx >= 0 && idx < static_cast<long long>(objectValue->listSize())) {
-                            currentValue = objectValue->getAt(static_cast<size_t>(idx));
-                        }
+            if (objectValue->isList()) {
+                if (indexValue->isInteger()) {
+                    long long idx = indexValue->getInteger();
+                    if (idx >= 0 && idx < static_cast<long long>(objectValue->listSize())) {
+                        currentValue = objectValue->getAt(static_cast<size_t>(idx));
                     }
-                } else if (objectValue->isDictionary()) {
-                    if (indexValue->isString()) {
-                        currentValue = objectValue->getKey(indexValue->getString());
-                    }
-                } else if (objectValue->isPythonObject()) {
-                    py::object pyObj = objectValue->getPythonObject();
-                    py::object pyIndex = indexValue->toPythonObject();
-                    currentValue = ScriptValue::fromPythonObject(pyObj[pyIndex]);
                 }
-            } catch (...) {
-                // 忽略错误，使用null作为当前值
+            } else if (objectValue->isDictionary()) {
+                if (indexValue->isString()) {
+                    currentValue = objectValue->getKey(indexValue->getString());
+                }
+            } else if (objectValue->isPythonObject()) {
+                py::gil_scoped_acquire acquire;
+                py::object pyObj = objectValue->getPythonObject();
+                py::object pyIndex = indexValue->toPythonObject();
+                currentValue = ScriptValue::fromPythonObject(pyObj[pyIndex]);
             }
             
             if (!currentValue) {
                 currentValue = ScriptValue::createNull();
             }
             
-            // 提取基础操作符（去掉=）
-            string baseOp = op.substr(0, op.length() - 1);
-            auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
-            if (!result) {
-                reportError("Unsupported assignment operator: " + op, ctx);
-                return any();
+            // 如果当前值缺失，退化为普通赋值，避免 None 与数字做运算
+            if (!(currentValue->isNull())) {
+                // 提取基础操作符（去掉=）
+                string baseOp = op.substr(0, op.length() - 1);
+                auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
+                if (!result) {
+                    reportError("Unsupported assignment operator: " + op, ctx);
+                    return any();
+                }
+                rightValue = result;  // 使用计算结果作为新的赋值值
             }
-            rightValue = result;  // 使用计算结果作为新的赋值值
         }
         
         // 执行下标赋值

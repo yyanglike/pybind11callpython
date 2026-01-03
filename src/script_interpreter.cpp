@@ -260,6 +260,10 @@ bool ScriptInterpreter::execute(const string& script) {
             preprocessed.swap(rebuilt);
         }
 
+        // 兜底定义异常变量占位，避免某些异常路径下出现 NameError: name 'e' is not defined
+        // 真正的 `except ... as e` 仍会覆盖此占位符
+        preprocessed = std::string("e = None\n") + preprocessed;
+
         logger_.debug("Creating ANTLRInputStream...");
         ANTLRInputStream input(preprocessed);
         logger_.debug("Creating PyScriptLexer...");
