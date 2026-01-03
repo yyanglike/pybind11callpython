@@ -3002,10 +3002,17 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
             return any(ScriptValue::createList());
         }
         
-        // 非函数定义阶段，返回null
-        logger_.debug("Variable '" + name + "' not found, returning null");
-        // 注意：这里返回 null 会导致后续的 any_cast 失败，所以应该返回 ScriptValue::createNull()
-        return any(ScriptValue::createNull());
+        // 非函数定义阶段：变量未找到，抛出 NameError 以符合 Python 语义
+        logger_.debug("Variable '" + name + "' not found, raising NameError");
+        try {
+            py::gil_scoped_acquire acquire;
+            std::string errMsg = "name '" + name + "' is not defined";
+            PyErr_SetString(PyExc_NameError, errMsg.c_str());
+            throw py::error_already_set();
+        } catch (const py::error_already_set& e) {
+            // 将 Python 异常传递给上层 try/except 处理
+            throw;
+        }
     } else if (ctx->LPAREN()) {
         // 括号表达式: LPAREN (tupleLiteral | expression) RPAREN
         // 优先检查 tupleLiteral（因为语法文件中 tupleLiteral 在 expression 之前）
@@ -3817,15 +3824,8 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 }
                 currentValue = resultValue;
             } catch (const py::error_already_set& e) {
-                // 提取更详细的错误信息
-                string errorMsg = string(e.what());
-                // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
-                {
-                    py::gil_scoped_acquire acquire;
-                    PyErr_Clear();
-                }
-                reportError("Python function call error: " + errorMsg, callOp);
-                return any();
+                // 将 Python 异常直接抛出，让上层的 try/except 捕获（例如 NameError）
+                throw;
             }
         }
     }
@@ -6058,6 +6058,17 @@ any AstVisitor::visitDelVariable(PyScriptParser::DelVariableContext *ctx) {
     string varName = ctx->IDENTIFIER()->getText();
     logger_.info("Deleting variable: " + varName + " at line " + std::to_string(line));
     variable_manager_.removeVariable(varName);
+    // 同步删除 Python 全局中的同名变量，避免 fallback 返回 None
+    try {
+        py::gil_scoped_acquire acquire;
+        py::dict globals = py::globals();
+        if (globals.contains(varName.c_str())) {
+            globals.attr("pop")(varName.c_str(), py::none());
+            logger_.debug("Removed variable from Python globals: " + varName);
+        }
+    } catch (const py::error_already_set& e) {
+        logger_.warn("Failed to remove variable from Python globals: " + std::string(e.what()));
+    }
     logger_.info("Variable deleted: " + varName);
     return any();
 }

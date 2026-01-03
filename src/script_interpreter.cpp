@@ -32,6 +32,9 @@ py::object ScriptInterpreter::evalInlineExpression(const std::string& expr_text)
                 // ignore
             }
         }
+    } catch (const py::error_already_set& e) {
+        // 将 Python 异常（如 NameError）传递给调用方，以便 try/except 捕获
+        throw;
     } catch (...) {
         // ignore and fallthrough
     }
