@@ -1356,11 +1356,8 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                 }
             }
         } catch (const py::error_already_set& e) {
-            {
-                py::gil_scoped_acquire acquire;
-                PyErr_Clear();
-            }
-            reportError("Python iteration error: " + string(e.what()), ctx);
+            // 让循环体中的异常（如用户代码的 ValueError/NameError）冒泡给上层 try/except
+            throw;
         }
     } else if (iterableValue->isList()) {
         // List 类型：转换为 PythonObject 以便迭代
@@ -1391,11 +1388,7 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                 }
             }
         } catch (const py::error_already_set& e) {
-            {
-                py::gil_scoped_acquire acquire;
-                PyErr_Clear();
-            }
-            reportError("Python iteration error: " + string(e.what()), ctx);
+            throw;
         }
     } else {
         // 尝试转换为 PythonObject 并迭代
@@ -3875,43 +3868,39 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
         // 执行下标访问
         if (target->isPythonObject()) {
             py::object pyObj = target->getPythonObject();
+            py::object pyIndex = indexValue->toPythonObject();
             try {
-                py::object pyIndex = indexValue->toPythonObject();
                 py::object result = pyObj[pyIndex];
                 return ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
-                // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
-                string errorMsg = string(e.what());
-                {
-                    py::gil_scoped_acquire acquire;
-                    PyErr_Clear();
-                }
-                reportError("Python subscript error: " + errorMsg, ctx);
-                return nullptr;
+                // 让 Python 异常（IndexError/KeyError 等）冒泡到 try/except
+                throw;
             }
         } else if (target->isList()) {
             if (!indexValue->isInteger()) {
-                reportError("List index must be an integer", ctx);
-                return nullptr;
+                py::gil_scoped_acquire acquire;
+                PyErr_SetString(PyExc_TypeError, "list indices must be integers");
+                throw py::error_already_set();
             }
             long long index = indexValue->getInteger();
             auto& list = target->getList();
             if (index < 0 || index >= static_cast<long long>(list.size())) {
-                reportError("List index out of bounds: " + to_string(index) + 
-                           " (list size: " + to_string(list.size()) + ")", ctx);
-                return nullptr;
+                py::gil_scoped_acquire acquire;
+                PyErr_SetString(PyExc_IndexError, "list index out of range");
+                throw py::error_already_set();
             }
             return list[index];
         } else if (target->isDictionary()) {
             if (indexValue->isString()) {
-            string key = indexValue->getString();
-            auto& dict = target->getDictionary();
-            auto it = dict.find(key);
-            if (it == dict.end()) {
-                reportError("Dictionary key not found: " + key, ctx);
-                return nullptr;
-            }
-            return it->second;
+                string key = indexValue->getString();
+                auto& dict = target->getDictionary();
+                auto it = dict.find(key);
+                if (it == dict.end()) {
+                    py::gil_scoped_acquire acquire;
+                    PyErr_SetString(PyExc_KeyError, key.c_str());
+                    throw py::error_already_set();
+                }
+                return it->second;
             }
             // 升级为 Python dict 以支持任意可哈希键
             py::dict pyDict;
@@ -3925,14 +3914,22 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
                 target->setPythonObject(pyObj);
                 return ScriptValue::fromPythonObject(result);
             } catch (const py::error_already_set& e) {
-                // 清除 Python 错误状态，避免影响后续操作，确保持有 GIL
-                string errorMsg = string(e.what());
-                {
-                    py::gil_scoped_acquire acquire;
-                    PyErr_Clear();
-                }
-                reportError("Python subscript error: " + errorMsg, ctx);
-                return nullptr;
+                throw;
+            }
+        } else if (target->isString()) {
+            if (!indexValue->isInteger()) {
+                py::gil_scoped_acquire acquire;
+                PyErr_SetString(PyExc_TypeError, "string indices must be integers");
+                throw py::error_already_set();
+            }
+            long long index = indexValue->getInteger();
+            py::gil_scoped_acquire acquire;
+            py::str pyStr(target->getString());
+            try {
+                py::object result = pyStr[py::int_(index)];
+                return ScriptValue::fromPythonObject(result);
+            } catch (const py::error_already_set& e) {
+                throw;
             }
         } else {
             reportError("Subscript not supported for this type", ctx);
@@ -5983,23 +5980,35 @@ any AstVisitor::visitRaiseStatement(PyScriptParser::RaiseStatementContext *ctx) 
         if (!expressions.empty()) {
             // 计算异常表达式
             auto exceptionValue = evaluateExpression(expressions[0]);
+            py::object exceptionObj;
             if (exceptionValue && exceptionValue->isPythonObject()) {
-                py::object exceptionObj = exceptionValue->toPythonObject();
-                globals["__exception__"] = exceptionObj;
-                raiseStmt = "raise __exception__";
-                
-                // 如果有 FROM 子句
-                if (ctx->FROM() && expressions.size() > 1) {
-                    auto fromValue = evaluateExpression(expressions[1]);
-                    if (fromValue && fromValue->isPythonObject()) {
-                        py::object fromObj = fromValue->toPythonObject();
-                        globals["__from_exception__"] = fromObj;
-                        raiseStmt += " from __from_exception__";
-                    }
-                }
+                exceptionObj = exceptionValue->toPythonObject();
             } else {
-                reportError("Cannot evaluate exception expression in raise statement", ctx);
-                return any();
+                // 回退：使用 Python eval 在 globals/locals 中解析异常表达式（覆盖 ValueError 等内建异常未解析场景）
+                try {
+                    py::gil_scoped_acquire acquire;
+                    std::string exprText = expressions[0]->getText();
+                    exceptionObj = py::eval(py::str(exprText), py::globals(), py::globals());
+                } catch (const py::error_already_set& e) {
+                    // 让 Python 原生异常冒泡
+                    throw;
+                } catch (const std::exception& e) {
+                    reportError("Cannot evaluate exception expression in raise statement: " + std::string(e.what()), ctx);
+                    return any();
+                }
+            }
+
+            globals["__exception__"] = exceptionObj;
+            raiseStmt = "raise __exception__";
+            
+            // 如果有 FROM 子句
+            if (ctx->FROM() && expressions.size() > 1) {
+                auto fromValue = evaluateExpression(expressions[1]);
+                if (fromValue && fromValue->isPythonObject()) {
+                    py::object fromObj = fromValue->toPythonObject();
+                    globals["__from_exception__"] = fromObj;
+                    raiseStmt += " from __from_exception__";
+                }
             }
         }
         

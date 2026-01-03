@@ -152,8 +152,8 @@ bool ScriptInterpreter::execute(const string& script) {
                             ++j;
                         }
                         std::string raw = in.substr(i, j - i); // f"...", f'''...''' 或 f"""..."""
-                        // 选择包裹引号：若原串用单引号（含三引号），则用双引号作为包裹，反之亦然
-                        char wrapper = (quote == '\'') ? '"' : '\'';
+                        // 选择与原始字符串相同的引号作为包裹，避免在表达式中引入额外转义
+                        char wrapper = quote;
                         // 对包裹引号、反斜线以及换行/回车做转义（换行转为 \n，避免单行字符串解析失败）
                         std::string escaped;
                         escaped.reserve(raw.size() * 2);
@@ -298,7 +298,48 @@ bool ScriptInterpreter::execute(const string& script) {
                 result.reserve(content.size());
                 size_t i = 0;
                 auto eval_expr = [this](const std::string& expr) -> py::object {
-                    return evalInlineExpression(expr);
+                    py::gil_scoped_acquire acquire;
+                    // 优先使用 Python 当前栈帧的 globals/locals（涵盖纯 Python 函数体中的局部变量，如 for 循环的 i）
+                    auto get_locals_dict = []() -> py::dict {
+                        PyObject* locals_obj = PyEval_GetLocals();
+                        if (locals_obj) {
+                            return py::reinterpret_borrow<py::dict>(locals_obj);
+                        }
+                        // 如果当前没有 Python frame，会返回 nullptr 并设置错误，这里清理后返回空 dict
+                        PyErr_Clear();
+                        return py::dict();
+                    };
+
+                    try {
+                        return py::eval(expr, py::globals(), get_locals_dict());
+                    } catch (const py::error_already_set& e) {
+                        if (!e.matches(PyExc_NameError)) {
+                            throw;
+                        }
+                    }
+
+                    // 回退到解释器内部求值（支持 PyScript 变量）
+                    try {
+                        return evalInlineExpression(expr);
+                    } catch (const py::error_already_set& e) {
+                        // 如果仍是 NameError，再尝试将解释器变量注入 locals 后用 Python eval
+                        if (e.matches(PyExc_NameError)) {
+                            py::dict g = py::globals();
+                            py::dict l = get_locals_dict();
+                            for (const auto& name : variable_manager_.getAllVariableNames()) {
+                                auto sv = variable_manager_.getVariable(name);
+                                if (sv) {
+                                    try {
+                                        l[name.c_str()] = sv->toPythonObject();
+                                    } catch (...) {
+                                        // 如果转换失败，跳过该变量
+                                    }
+                                }
+                            }
+                            return py::eval(expr, g, l);
+                        }
+                        throw;
+                    }
                 };
                 while (i < content.size()) {
                     char c = content[i];
