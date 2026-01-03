@@ -1165,4 +1165,5 @@ CMakeFiles/test_simple.dir/src/script_interpreter.cpp.o: \
   /Users/yangyi/company/python/pybind11callpython/include/ast_visitor.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/embed.h \
   /Users/yangyi/company/python/pybind11callpython/pybind11/include/pybind11/eval.h \
-  /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptLexer.h
+  /Users/yangyi/company/python/pybind11callpython/antlr/generated/antlr/PyScriptLexer.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/regex

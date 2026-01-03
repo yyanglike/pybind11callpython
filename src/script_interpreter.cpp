@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <algorithm>
+#include <regex>
 
 using namespace antlr4;
 using namespace std;
@@ -236,6 +237,29 @@ bool ScriptInterpreter::execute(const string& script) {
         };
         std::string preprocessed = transform_fstrings(script);
 
+        // 预处理：变量类型注解赋值（例如 value: int = 10）转换为普通赋值，忽略类型注解
+        {
+            static const std::regex ann_assign_re(R"(^([ \t]*)([A-Za-z_][A-Za-z0-9_]*)[ \t]*:[^=\n]+=[ \t]*(.*)$)");
+            std::stringstream ss(preprocessed);
+            std::string line;
+            std::string rebuilt;
+            bool first = true;
+            while (std::getline(ss, line)) {
+                std::smatch m;
+                if (std::regex_match(line, m, ann_assign_re)) {
+                    line = m[1].str() + m[2].str() + " = " + m[3].str();
+                }
+                if (!first) rebuilt.push_back('\n');
+                rebuilt += line;
+                first = false;
+            }
+            // 如果原始脚本以换行结尾，保持换行
+            if (!preprocessed.empty() && preprocessed.back() == '\n') {
+                rebuilt.push_back('\n');
+            }
+            preprocessed.swap(rebuilt);
+        }
+
         logger_.debug("Creating ANTLRInputStream...");
         ANTLRInputStream input(preprocessed);
         logger_.debug("Creating PyScriptLexer...");
@@ -313,7 +337,7 @@ bool ScriptInterpreter::execute(const string& script) {
                     try {
                         return py::eval(expr, py::globals(), get_locals_dict());
                     } catch (const py::error_already_set& e) {
-                        if (!e.matches(PyExc_NameError)) {
+                        if (!e.matches(PyExc_NameError) && !e.matches(PyExc_SyntaxError)) {
                             throw;
                         }
                     }
@@ -322,8 +346,8 @@ bool ScriptInterpreter::execute(const string& script) {
                     try {
                         return evalInlineExpression(expr);
                     } catch (const py::error_already_set& e) {
-                        // 如果仍是 NameError，再尝试将解释器变量注入 locals 后用 Python eval
-                        if (e.matches(PyExc_NameError)) {
+                        // 如果仍是 NameError/SyntaxError，再尝试将解释器变量注入 locals 后用 Python eval
+                        if (e.matches(PyExc_NameError) || e.matches(PyExc_SyntaxError)) {
                             py::dict g = py::globals();
                             py::dict l = get_locals_dict();
                             for (const auto& name : variable_manager_.getAllVariableNames()) {
@@ -364,11 +388,18 @@ bool ScriptInterpreter::execute(const string& script) {
                         std::string conv_part;
                         // 找到顶层的 '!' 或 ':' 分隔
                         int brace_depth = 0;
+                        int paren_depth = 0;
+                        int bracket_depth = 0;
                         for (size_t k = 0; k < expr_raw.size(); ++k) {
                             char ek = expr_raw[k];
                             if (ek == '{') brace_depth++;
                             else if (ek == '}') brace_depth--;
-                            if (brace_depth == 0 && (ek == '!' || ek == ':')) {
+                            else if (ek == '(') paren_depth++;
+                            else if (ek == ')') paren_depth--;
+                            else if (ek == '[') bracket_depth++;
+                            else if (ek == ']') bracket_depth--;
+
+                            if (brace_depth == 0 && paren_depth == 0 && bracket_depth == 0 && (ek == '!' || ek == ':')) {
                                 expr_part = expr_raw.substr(0, k);
                                 if (ek == '!') {
                                     if (k + 1 < expr_raw.size()) {

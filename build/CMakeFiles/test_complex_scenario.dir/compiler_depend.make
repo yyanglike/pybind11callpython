@@ -11687,6 +11687,7 @@ CMakeFiles/test_complex_scenario.dir/src/script_interpreter.cpp.o: /Users/yangyi
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/print \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/queue \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/ratio \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/regex \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/set \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/shared_mutex \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/sstream \
@@ -15311,6 +15312,8 @@ CMakeFiles/test_complex_scenario.dir/test_complex_scenario.cpp.o: /Users/yangyi/
 /Users/yangyi/company/python/pybind11callpython/test_complex_scenario.cpp:
 
 /Users/yangyi/company/python/pybind11callpython/include/script_interpreter.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/regex:
 
 /Users/yangyi/company/python/pybind11callpython/src/python_bridge.cpp:
 
