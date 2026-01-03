@@ -35,7 +35,37 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
     shared_ptr<ScriptValue> right) {
     
     try {
-        if (op == "+") {
+        // 规整运算符字符串（去除空白，防止 “> ” 之类的运算符无法匹配）
+        string opClean = op;
+        // opClean.erase(std::remove_if(opClean.begin(), opClean.end(), [](unsigned char c){ return std::isspace(c); }), opClean.end());
+
+        // 如果任一操作数为 Null，按 Python 语义处理比较：==/!= 基于是否同为 None，其余比较直接返回 False
+        if ((left && left->isNull()) || (right && right->isNull())) {
+            if (opClean == "==" || opClean == "is") {
+                bool bothNull = left && right && left->isNull() && right->isNull();
+                return ScriptValue::createBoolean(bothNull);
+            }
+            if (opClean == "!=" || opClean == "is not") {
+                bool bothNull = left && right && left->isNull() && right->isNull();
+                return ScriptValue::createBoolean(!bothNull);
+            }
+            if (opClean == "&&" || opClean == "||" || opClean == "and" || opClean == "or") {
+                // 逻辑运算：Null 视为 False
+                bool l = left && !left->isNull() && isTruthy(left);
+                bool r = right && !right->isNull() && isTruthy(right);
+                if (opClean == "&&" || opClean == "and") {
+                    return ScriptValue::createBoolean(l && r);
+                } else {
+                    return ScriptValue::createBoolean(l || r);
+                }
+            }
+            if (opClean == "<" || opClean == ">" || opClean == "<=" || opClean == ">=") {
+                // Python 对 None 的大小比较会 TypeError，这里直接返回 False 避免崩溃
+                return ScriptValue::createBoolean(false);
+            }
+        }
+
+        if (opClean == "+") {
             // 数字相加或字符串连接
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() + right->getInteger());
@@ -57,7 +87,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() + right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "//") {
+        } else if (opClean == "//") {
             if (left->isNumber() && right->isNumber()) {
                 double divisor = right->toDouble();
                 if (abs(divisor) < 1e-10) {
@@ -74,7 +104,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = py::module_::import("operator").attr("floordiv")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "&") {
+        } else if (opClean == "&") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() & right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -84,7 +114,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = lhs.attr("__and__")(rhs);
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "|") {
+        } else if (opClean == "|") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() | right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -94,7 +124,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = lhs.attr("__or__")(rhs);
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "^") {
+        } else if (opClean == "^") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() ^ right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -104,7 +134,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = lhs.attr("__xor__")(rhs);
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "<<") {
+        } else if (opClean == "<<") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() << right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -112,7 +142,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = py::module_::import("operator").attr("lshift")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == ">>") {
+        } else if (opClean == ">>") {
             if (left->isInteger() && right->isInteger()) {
                 return ScriptValue::createInteger(left->getInteger() >> right->getInteger());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -120,7 +150,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = py::module_::import("operator").attr("rshift")(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "-") {
+        } else if (opClean == "-") {
             if (left->isNumber() && right->isNumber()) {
                 if (left->isInteger() && right->isInteger()) {
                     return ScriptValue::createInteger(left->getInteger() - right->getInteger());
@@ -132,7 +162,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() - right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "*") {
+        } else if (opClean == "*") {
             if (left->isNumber() && right->isNumber()) {
                 if (left->isInteger() && right->isInteger()) {
                     return ScriptValue::createInteger(left->getInteger() * right->getInteger());
@@ -144,7 +174,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() * right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "**") {
+        } else if (opClean == "**") {
             if (left->isNumber() && right->isNumber()) {
                 // Try to compute integer power if both are integers and exponent non-negative
                 if (left->isInteger() && right->isInteger() && right->getInteger() >= 0) {
@@ -168,7 +198,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = pow_func(left->toPythonObject(), right->toPythonObject());
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "/") {
+        } else if (opClean == "/") {
             if (left->isNumber() && right->isNumber()) {
                 double divisor = right->toDouble();
                 if (abs(divisor) < 1e-10) {
@@ -180,7 +210,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 py::object result = left->toPythonObject() / right->toPythonObject();
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "%") {
+        } else if (opClean == "%") {
             // If either operand is null, return null (this can happen during function definition)
             if (left->isNull() || right->isNull()) {
                 return ScriptValue::createNull();
@@ -211,7 +241,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                     throw runtime_error("Modulo operation requires integer operands or Python objects");
                 }
             }
-        } else if (op == "==") {
+        } else if (opClean == "==") {
             // 如果一个是 PythonObject，另一个是 List/Dictionary，转换为 PythonObject 再比较
             if ((left->isPythonObject() && (right->isList() || right->isDictionary())) ||
                 (right->isPythonObject() && (left->isList() || left->isDictionary()))) {
@@ -237,7 +267,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             }
             bool equal = (*left == *right);
             return ScriptValue::createBoolean(equal);
-        } else if (op == "!=") {
+        } else if (opClean == "!=") {
             // 如果一个是 PythonObject，另一个是 List/Dictionary，转换为 PythonObject 再比较
             if ((left->isPythonObject() && (right->isList() || right->isDictionary())) ||
                 (right->isPythonObject() && (left->isList() || left->isDictionary()))) {
@@ -263,7 +293,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             }
             bool notEqual = !(*left == *right);
             return ScriptValue::createBoolean(notEqual);
-        } else if (op == "<") {
+        } else if (opClean == "<") {
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() < right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -276,7 +306,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == ">") {
+        } else if (opClean == ">") {
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() > right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -289,7 +319,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "<=") {
+        } else if (opClean == "<=") {
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() <= right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -302,7 +332,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == ">=") {
+        } else if (opClean == ">=") {
             if (left->isNumber() && right->isNumber()) {
                 return ScriptValue::createBoolean(left->toDouble() >= right->toDouble());
             } else if (left->isPythonObject() || right->isPythonObject()) {
@@ -315,15 +345,15 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 }
                 return ScriptValue::fromPythonObject(result);
             }
-        } else if (op == "in") {
+        } else if (opClean == "in") {
             return contains(right, left);
-        } else if (op == "not in") {
+        } else if (opClean == "not in") {
             auto result = contains(right, left);
             if (!result) {
                 return ScriptValue::createBoolean(true);
             }
             return ScriptValue::createBoolean(!result->toBoolean());
-        } else if (op == "is") {
+        } else if (opClean == "is") {
             // is运算符：检查对象身份（id）
             if (left->isPythonObject() && right->isPythonObject()) {
                 py::gil_scoped_acquire acquire;
@@ -335,7 +365,7 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 // 对于非Python对象，使用==比较
                 return evaluateBinaryOperation("==", left, right);
             }
-        } else if (op == "is not") {
+        } else if (opClean == "is not") {
             // is not运算符：检查对象身份不相等
             if (left->isPythonObject() && right->isPythonObject()) {
                 py::gil_scoped_acquire acquire;
@@ -347,13 +377,13 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
                 // 对于非Python对象，使用!=比较
                 return evaluateBinaryOperation("!=", left, right);
             }
-        } else if (op == "&&") {
+        } else if (opClean == "&&") {
             // 逻辑与，短路
             if (!isTruthy(left)) {
                 return ScriptValue::createBoolean(false);
             }
             return ScriptValue::createBoolean(isTruthy(right));
-        } else if (op == "||") {
+        } else if (opClean == "||") {
             // 逻辑或，短路
             if (isTruthy(left)) {
                 return ScriptValue::createBoolean(true);
@@ -367,41 +397,41 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
             py::object lhs = left ? left->toPythonObject() : py::none();
             py::object rhs = right ? right->toPythonObject() : py::none();
             py::object result;
-            if (op == "+") {
+            if (opClean == "+") {
                 result = py::module_::import("operator").attr("add")(lhs, rhs);
-            } else if (op == "-") {
+            } else if (opClean == "-") {
                 result = py::module_::import("operator").attr("sub")(lhs, rhs);
-            } else if (op == "*") {
+            } else if (opClean == "*") {
                 result = py::module_::import("operator").attr("mul")(lhs, rhs);
-            } else if (op == "/") {
+            } else if (opClean == "/") {
                 result = py::module_::import("operator").attr("truediv")(lhs, rhs);
-            } else if (op == "//") {
+            } else if (opClean == "//") {
                 result = py::module_::import("operator").attr("floordiv")(lhs, rhs);
-            } else if (op == "%") {
+            } else if (opClean == "%") {
                 result = py::module_::import("operator").attr("mod")(lhs, rhs);
-            } else if (op == "**") {
+            } else if (opClean == "**") {
                 result = py::module_::import("operator").attr("pow")(lhs, rhs);
-            } else if (op == "<") {
+            } else if (opClean == "<") {
                 result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LT));
-            } else if (op == ">") {
+            } else if (opClean == ">") {
                 result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GT));
-            } else if (op == "<=") {
+            } else if (opClean == "<=") {
                 result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_LE));
-            } else if (op == ">=") {
+            } else if (opClean == ">=") {
                 result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_GE));
-            } else if (op == "==") {
+            } else if (opClean == "==") {
                 result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_EQ));
-            } else if (op == "!=") {
+            } else if (opClean == "!=") {
                 result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), Py_NE));
-            } else if (op == "&") {
+            } else if (opClean == "&") {
                 result = lhs.attr("__and__")(rhs);
-            } else if (op == "|") {
+            } else if (opClean == "|") {
                 result = lhs.attr("__or__")(rhs);
-            } else if (op == "^") {
+            } else if (opClean == "^") {
                 result = lhs.attr("__xor__")(rhs);
-            } else if (op == "<<") {
+            } else if (opClean == "<<") {
                 result = lhs.attr("__lshift__")(rhs);
-            } else if (op == ">>") {
+            } else if (opClean == ">>") {
                 result = lhs.attr("__rshift__")(rhs);
             }
             if (result && !result.is_none()) {
@@ -412,8 +442,35 @@ shared_ptr<ScriptValue> ExpressionEvaluator::evaluateBinaryOperation(
         } catch (const exception& e) {
             throw runtime_error("Binary operation error: " + string(e.what()));
         }
+
+        // 最后一次兜底：对比较运算符直接调用 PyObject_RichCompare
+        try {
+            py::gil_scoped_acquire acquire;
+            py::object lhs = left ? left->toPythonObject() : py::none();
+            py::object rhs = right ? right->toPythonObject() : py::none();
+            int cmpOp = -1;
+            if (opClean == "<") cmpOp = Py_LT;
+            else if (opClean == ">") cmpOp = Py_GT;
+            else if (opClean == "<=") cmpOp = Py_LE;
+            else if (opClean == ">=") cmpOp = Py_GE;
+            else if (opClean == "==") cmpOp = Py_EQ;
+            else if (opClean == "!=") cmpOp = Py_NE;
+            if (cmpOp != -1) {
+                py::object result = py::reinterpret_steal<py::object>(PyObject_RichCompare(lhs.ptr(), rhs.ptr(), cmpOp));
+                if (result && !result.is_none()) {
+                    return ScriptValue::fromPythonObject(result);
+                }
+            }
+        } catch (const py::error_already_set& e) {
+            throw runtime_error("Binary operation error: " + string(e.what()));
+        } catch (const exception& e) {
+            throw runtime_error("Binary operation error: " + string(e.what()));
+        }
         
-        throw runtime_error("Unsupported binary operator: " + op);
+        std::string leftStr = left ? left->toDebugString() : "<null>";
+        std::string rightStr = right ? right->toDebugString() : "<null>";
+        logger_.error("Unsupported binary operator: " + opClean + " | left=" + leftStr + " | right=" + rightStr);
+        throw runtime_error("Unsupported binary operator: " + opClean);
         
     } catch (const py::error_already_set& e) {
         throw runtime_error("Binary operation error: " + string(e.what()));

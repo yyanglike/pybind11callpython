@@ -13,6 +13,7 @@ print("✓ Assertion 2 passed: x == 10")
 
 # 3. 测试失败的断言（带消息）
 try:
+    x=-1
     assert x < 0, "x should be negative"
     print("✗ This should not be printed")
 except AssertionError as e:

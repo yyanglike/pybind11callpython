@@ -670,7 +670,7 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
                      ", stopOffset=" + to_string(stopOffset));
         
         // 提取函数名
-        string funcName = ctx->IDENTIFIER()->getText();
+    string funcName = ctx->IDENTIFIER()->getText();
         
         // 记录函数的行号范围（用于后续检测节点是否在函数体内）
         int start_line = static_cast<int>(startToken->getLine());
@@ -1016,7 +1016,7 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             // 确保函数对象有效
             if (func.is_none()) {
                 reportError("Function definition returned None for: " + funcName, ctx);
-                return any();
+    return any();
             }
             
             // 立即设置到变量管理器，确保后续调用能找到
@@ -1369,9 +1369,9 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                 if (!setLoopVariables(pyItem)) {
                     break;
                 }
-                
-                // 执行循环体
-                visit(suiteCtx);
+            
+            // 执行循环体
+            visit(suiteCtx);
                 
                 if (break_flag_) {
                     break_flag_ = false;
@@ -1383,9 +1383,9 @@ any AstVisitor::visitForStatement(PyScriptParser::ForStatementContext *ctx) {
                     continue;
                 }
                 
-                if (error_handler_.hasError()) {
-                    break;
-                }
+            if (error_handler_.hasError()) {
+                break;
+            }
             }
         } catch (const py::error_already_set& e) {
             throw;
@@ -1508,8 +1508,8 @@ any AstVisitor::visitSimpleImport(PyScriptParser::SimpleImportContext *ctx) {
         
         // 存储模块引用到变量（如果变量不存在或需要更新）
         if (!variable_manager_.hasVariable(varName)) {
-            variable_manager_.setVariable(varName, ScriptValue::createPythonObject(module));
-            logger_.debug(std::string("Module stored in variables as: ") + varName);
+        variable_manager_.setVariable(varName, ScriptValue::createPythonObject(module));
+        logger_.debug(std::string("Module stored in variables as: ") + varName);
         } else {
             logger_.debug(std::string("Variable ") + varName + " already exists, skipping variable assignment");
         }
@@ -1562,10 +1562,10 @@ any AstVisitor::visitFromImport(PyScriptParser::FromImportContext *ctx) {
         } else {
             // 模块未导入，执行导入
             module = py::module_::import(moduleName.c_str());
-            logger_.info(std::string("Module imported successfully: ") + moduleName);
-            
+        logger_.info(std::string("Module imported successfully: ") + moduleName);
+        
             // 存储模块到VariableManager（缓存）
-            variable_manager_.importModule(moduleName, module);
+        variable_manager_.importModule(moduleName, module);
         }
         
         // 设置当前from-import的模块，以便visitImportItem使用
@@ -1585,7 +1585,7 @@ any AstVisitor::visitFromImport(PyScriptParser::FromImportContext *ctx) {
         // 确保重置当前模块，确保持有 GIL
         {
             py::gil_scoped_acquire acquire;
-            current_from_module_ = py::none();
+        current_from_module_ = py::none();
         }
         logger_.error(std::string("Python import error: ") + e.what());
         reportError("Failed to import module: " + string(e.what()), ctx);
@@ -1672,9 +1672,9 @@ bool AstVisitor::isNodeInsideFunctionDef(antlr4::ParserRuleContext* ctx) const {
 any AstVisitor::visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) {
     // assignmentTarget 规则仅用于语法解析，实际处理在 visitAssignment 中
     // 这里返回空值，避免影响赋值操作
-    return any(ScriptValue::createNull());
-}
-
+        return any(ScriptValue::createNull());
+    }
+    
 any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     // 如果在函数定义阶段，跳过赋值求值，返回null
     if (defining_function_) {
@@ -1915,14 +1915,14 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             }
             variable_manager_.setVariable(varName, result);
         } else {
-            // 简单赋值
+        // 简单赋值
             // 在脚本级别，将 List 和 Dictionary 转换为 PythonObject 以便后续方法调用
             // 这样可以支持 list.append(), dict.update() 等操作
             if (rightValue && (rightValue->isList() || rightValue->isDictionary())) {
                 py::object pyObj = rightValue->toPythonObject();
                 rightValue = ScriptValue::createPythonObject(pyObj);
             }
-            variable_manager_.setVariable(varName, rightValue);
+        variable_manager_.setVariable(varName, rightValue);
             // 调试：检查赋值是否成功
             if (!rightValue) {
                 logger_.debug("Warning: Assigning null to variable '" + varName + "'");
@@ -3021,7 +3021,7 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
             return visit(tupleCtx);
         } else if (ctx->expression()) {
             // 普通括号表达式
-            return visit(ctx->expression());
+        return visit(ctx->expression());
         }
         // 空括号，可能是空元组
         return any(ScriptValue::createList());
@@ -3316,8 +3316,8 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 
                 if (!currentValue) {
                     logger_.error("Function call: failed to recover function, currentValue still null");
-                    reportError("Cannot evaluate primary expression", ctx);
-                    return any();
+        reportError("Cannot evaluate primary expression", ctx);
+        return any();
                 }
             } else {
                 reportError("Cannot evaluate primary expression", ctx);
@@ -3583,13 +3583,13 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
             }
 
             try {
-                auto member = python_bridge_.getMember(currentValue, memberName);
-                if (!member) {
-                    // 如果成员不存在，返回null而不是报错，以允许脚本继续执行
-                    logger_.debug("Object has no member: " + memberName + ", returning null");
-                    return any(ScriptValue::createNull());
-                }
-                currentValue = member;
+            auto member = python_bridge_.getMember(currentValue, memberName);
+            if (!member) {
+                // 如果成员不存在，返回null而不是报错，以允许脚本继续执行
+                logger_.debug("Object has no member: " + memberName + ", returning null");
+                return any(ScriptValue::createNull());
+            }
+            currentValue = member;
             } catch (const std::exception& e) {
                 logger_.error("Error getting member " + memberName + ": " + string(e.what()));
                 reportError("Error accessing member: " + memberName, attrOp);
@@ -3768,7 +3768,7 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 
                 if (!currentValue || !currentValue->isPythonObject()) {
                     reportError("Cannot call non-function type: " + errorMsg, callOp);
-                    return any();
+                return any();
                 }
             }
             
@@ -3875,7 +3875,7 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
         // 执行下标访问
         if (target->isPythonObject()) {
             py::object pyObj = target->getPythonObject();
-            py::object pyIndex = indexValue->toPythonObject();
+                py::object pyIndex = indexValue->toPythonObject();
             try {
                 py::object result = pyObj[pyIndex];
                 return ScriptValue::fromPythonObject(result);
@@ -3899,15 +3899,15 @@ shared_ptr<ScriptValue> AstVisitor::visitSubscriptArg(PyScriptParser::SubscriptA
             return list[index];
         } else if (target->isDictionary()) {
             if (indexValue->isString()) {
-                string key = indexValue->getString();
-                auto& dict = target->getDictionary();
-                auto it = dict.find(key);
-                if (it == dict.end()) {
+            string key = indexValue->getString();
+            auto& dict = target->getDictionary();
+            auto it = dict.find(key);
+            if (it == dict.end()) {
                     py::gil_scoped_acquire acquire;
                     PyErr_SetString(PyExc_KeyError, key.c_str());
                     throw py::error_already_set();
-                }
-                return it->second;
+            }
+            return it->second;
             }
             // 升级为 Python dict 以支持任意可哈希键
             py::dict pyDict;
@@ -4833,7 +4833,7 @@ any AstVisitor::visitListElements(PyScriptParser::ListElementsContext *ctx) {
             reportError("Invalid list comprehension syntax", ctx);
             return any();
         }
-
+        
         struct CompClause {
             std::string var;
             PyScriptParser::ExpressionContext* iter;
@@ -5876,10 +5876,10 @@ any AstVisitor::visitTryStatement(PyScriptParser::TryStatementContext *ctx) {
             auto exceptSuite = exceptClause->suite();
             if (exceptSuite) {
                 try {
-                    visit(exceptSuite);
+                visit(exceptSuite);
                     handled = true;
                     exception_matched = true;
-                    break;
+                break;
                 } catch (const py::error_already_set& ex) {
                     // 如果 except 块执行时出错，清除错误状态，确保持有 GIL
                     {
@@ -6405,22 +6405,12 @@ any AstVisitor::visitAssertStatement(PyScriptParser::AssertStatementContext *ctx
             }
         }
         
-        // 使用 Python 的 assert 机制抛出异常
-        try {
-            py::gil_scoped_acquire acquire;
-            py::object assertionError = py::module_::import("builtins").attr("AssertionError");
-            py::object errorMsg = py::str(errorMessage);
-            PyErr_SetObject(assertionError.ptr(), errorMsg.ptr());
-            throw py::error_already_set();
-        } catch (const py::error_already_set& e) {
-            {
-                py::gil_scoped_acquire acquire;
-                string errorStr = e.what();
-                PyErr_Clear();
-                reportError("AssertionError: " + errorMessage, ctx);
-            }
-        }
-        return any();
+        // 使用 Python 的 assert 机制抛出异常，让外层 try/except 捕获
+        py::gil_scoped_acquire acquire;
+        py::object assertionError = py::module_::import("builtins").attr("AssertionError");
+        py::object errorMsg = py::str(errorMessage);
+        PyErr_SetObject(assertionError.ptr(), errorMsg.ptr());
+        throw py::error_already_set();
     }
     
     // 断言通过，什么都不做

@@ -209,6 +209,7 @@ private:
     // 执行状态
     std::shared_ptr<ScriptValue> result_; ///< 执行结果
     bool defining_function_;               ///< 是否正在定义函数
+    bool executed_once_ = false;           ///< 防止重入执行
     
     // 辅助方法
     void reportError(const std::string& message,
