@@ -369,6 +369,7 @@ primary
     | IDENTIFIER
     | LPAREN tupleLiteral RPAREN
     | LPAREN expression RPAREN
+    | LPAREN RPAREN  // 空元组
     | listLiteral
     | dictLiteral
     | setLiteral

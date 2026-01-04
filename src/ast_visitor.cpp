@@ -1956,18 +1956,6 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         return any(ScriptValue::createNull());
     }
 
-    // 获取右侧表达式并求值
-    auto rightExpr = ctx->expression();
-    if (!rightExpr) {
-        reportError("Missing right-hand side expression", ctx);
-        return any();
-    }
-    auto rightValue = evaluateExpression(rightExpr);
-    if (!rightValue) {
-        reportError("Cannot evaluate right-hand side", ctx);
-        return any();
-    }
-
     // 获取赋值操作符
     string op = "=";
     for (auto child : ctx->children) {
@@ -2017,15 +2005,8 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         }
     }
 
-    // 获取赋值目标
-    auto targetCtx = ctx->assignmentTarget();
-    if (!targetCtx) {
-        reportError("Missing assignment target", ctx);
-        return any();
-    }
-    logger_.info("visitAssignment: Evaluating assignment (defining_function_=false), target: " + targetCtx->getText());
-    
     // 检查是否是元组解包赋值：tupleLiteral ASSIGN (expression | tupleLiteral)
+    // 注意：元组解包赋值可能没有 assignmentTarget()，而是有 tupleLiteral()
     auto tupleLiterals = ctx->tupleLiteral();
     if (!tupleLiterals.empty()) {
         // 检查是否有 ASSIGN token，如果没有，说明这不是赋值语句（可能是 assert 语句等）
@@ -2157,6 +2138,27 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         return any(rightValue);
     }
 
+    // 普通赋值：获取赋值目标
+    auto targetCtx = ctx->assignmentTarget();
+    if (!targetCtx) {
+        reportError("Missing assignment target", ctx);
+        return any();
+    }
+    // 注意：getText() 可能触发表达式求值，避免在日志中使用它
+    string targetText = targetCtx->IDENTIFIER() ? targetCtx->IDENTIFIER()->getText() : "<complex target>";
+    logger_.info("visitAssignment: Evaluating assignment (defining_function_=false), target: " + targetText);
+    
+    // 获取右侧表达式并求值
+    auto rightExpr = ctx->expression();
+    if (!rightExpr) {
+        reportError("Missing right-hand side expression", ctx);
+        return any();
+    }
+    auto rightValue = evaluateExpression(rightExpr);
+    if (!rightValue) {
+        reportError("Cannot evaluate right-hand side", ctx);
+        return any();
+    }
     
     // 有三种赋值形式：标识符赋值、属性赋值、下标赋值
     if (targetCtx->DOT()) {
@@ -3114,10 +3116,47 @@ any AstVisitor::visitPrimary(PyScriptParser::PrimaryContext *ctx) {
             return visit(tupleCtx);
         } else if (ctx->expression()) {
             // 普通括号表达式
-        return visit(ctx->expression());
+            return visit(ctx->expression());
         }
-        // 空括号，可能是空元组
-        return any(ScriptValue::createList());
+        // 空括号 ()，应该是空元组
+        // 检查 children：如果只有 LPAREN 和 RPAREN 两个 token，就是空元组
+        int childCount = 0;
+        bool hasLParen = false;
+        bool hasRParen = false;
+        for (auto child : ctx->children) {
+            childCount++;
+            if (auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child)) {
+                int tokenType = terminal->getSymbol()->getType();
+                if (tokenType == PyScriptParser::LPAREN) {
+                    hasLParen = true;
+                } else if (tokenType == PyScriptParser::RPAREN) {
+                    hasRParen = true;
+                }
+            }
+        }
+        // 如果只有 LPAREN 和 RPAREN 两个 token，就是空元组
+        if (hasLParen && hasRParen && childCount == 2) {
+            try {
+                py::gil_scoped_acquire acquire;
+                py::tuple emptyTuple;
+                return any(ScriptValue::fromPythonObject(emptyTuple));
+            } catch (const std::exception& e) {
+                logger_.warn("Failed to create empty tuple: " + string(e.what()));
+                return any(ScriptValue::createList());
+            } catch (...) {
+                return any(ScriptValue::createList());
+            }
+        }
+        // 如果没有匹配到任何规则，可能是语法解析问题
+        // 尝试直接返回空元组（作为最后的尝试）
+        logger_.warn("Empty parentheses detected but not matched to tupleLiteral or expression, treating as empty tuple");
+        try {
+            py::gil_scoped_acquire acquire;
+            py::tuple emptyTuple;
+            return any(ScriptValue::fromPythonObject(emptyTuple));
+        } catch (...) {
+            return any(ScriptValue::createList());
+        }
     } else if (ctx->listLiteral()) {
         return visit(ctx->listLiteral());
     } else if (ctx->dictLiteral()) {
@@ -3901,6 +3940,7 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 py_call_count_++;
                 py::object result = DynamicPythonCaller::callFunction(pyFunc, py::args(pyArgs), py::kwargs(pyKwargs));
                 py_to_sv_count_++;
+                
                 auto resultValue = ScriptValue::fromPythonObject(result);
                 // 检查返回值是否为 None 或 null
                 if (!resultValue || resultValue->isNull()) {
