@@ -1907,7 +1907,10 @@ shared_ptr<ScriptValue> AstVisitor::getObjectReferenceForAssignment(PyScriptPars
             py::object pyObj = leftObjValue->toPythonObject();
             py::object pyKey = keyValue->toPythonObject();
             py::object subscriptObj = pyObj[pyKey];
-            return ScriptValue::fromPythonObject(subscriptObj);
+            // 重要：对于嵌套下标赋值，必须返回 Python 对象的直接引用，而不是通过 fromPythonObject
+            // 因为 fromPythonObject 可能会创建列表/字典的副本（当长度 <= 64 时）
+            // 我们需要的是原始对象的引用，这样修改才会反映到原始对象上
+            return ScriptValue::createPythonObject(subscriptObj);
         } catch (const py::error_already_set& e) {
             {
                 py::gil_scoped_acquire acquire;
