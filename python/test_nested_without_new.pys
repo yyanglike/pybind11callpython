@@ -1,0 +1,28 @@
+print("=== 嵌套属性测试（不使用 new）===")
+
+class Counter:
+    def __init__(self):
+        self.count = 0
+
+counter = Counter()
+print("counter 类型:", type(counter))
+print("counter.count =", counter.count)
+
+# 简单属性赋值
+counter.count = 10
+print("counter.count = 10, result =", counter.count)
+
+class Nested:
+    def __init__(self):
+        self.obj = Counter()
+
+nested = Nested()
+print("nested 类型:", type(nested))
+print("nested.obj 类型:", type(nested.obj))
+print("nested.obj.count =", nested.obj.count)
+
+# 嵌套属性赋值
+nested.obj.count = 100
+print("nested.obj.count = 100, result =", nested.obj.count)
+
+print("=== 测试完成 ===")

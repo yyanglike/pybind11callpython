@@ -1,0 +1,14 @@
+class Counter:
+    def __init__(self):
+        self.count = 0
+
+counter = Counter()
+print("type(counter):", type(counter))
+print("hasattr(counter, 'count'):", hasattr(counter, 'count'))
+print("counter.count:", counter.count)
+counter.count = 10
+print("after assignment, counter.count:", counter.count)
+
+# Also test increment assignment
+counter.count += 5
+print("after +=5, counter.count:", counter.count)

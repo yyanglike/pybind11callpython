@@ -320,7 +320,7 @@ test_script_interpreter: CMakeFiles/test_script_interpreter.dir/antlr/generated/
 test_script_interpreter: CMakeFiles/test_script_interpreter.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 test_script_interpreter: CMakeFiles/test_script_interpreter.dir/build.make
 test_script_interpreter: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
-test_script_interpreter: /Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.a
+test_script_interpreter: _deps/antlr4-build/runtime/Cpp/runtime/libantlr4-runtime.a
 test_script_interpreter: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 test_script_interpreter: CMakeFiles/test_script_interpreter.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX executable test_script_interpreter"

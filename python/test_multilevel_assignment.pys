@@ -1,0 +1,77 @@
+print("=== 测试多级嵌套赋值 ===")
+
+# 测试1: 4级属性赋值 a.b.c.d = 0
+class A:
+    def __init__(self):
+        self.b = B()
+
+class B:
+    def __init__(self):
+        self.c = C()
+
+class C:
+    def __init__(self):
+        self.d = 0
+
+a = A()
+print("a.b.c.d =", a.b.c.d)
+
+a.b.c.d = 100
+print("a.b.c.d = 100, result =", a.b.c.d)
+
+a.b.c.d += 50
+print("a.b.c.d += 50, result =", a.b.c.d)
+
+# 测试2: 5级属性赋值 a.b.c.d.e = 0
+class D:
+    def __init__(self):
+        self.e = 0
+
+class C2:
+    def __init__(self):
+        self.d = D()
+
+class B2:
+    def __init__(self):
+        self.c = C2()
+
+class A2:
+    def __init__(self):
+        self.b = B2()
+
+a2 = A2()
+print("a2.b.c.d.e =", a2.b.c.d.e)
+
+a2.b.c.d.e = 200
+print("a2.b.c.d.e = 200, result =", a2.b.c.d.e)
+
+a2.b.c.d.e += 100
+print("a2.b.c.d.e += 100, result =", a2.b.c.d.e)
+
+# 测试3: 3级下标赋值 matrix[0][1][2] = 0
+matrix3d = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
+print("matrix3d =", matrix3d)
+print("matrix3d[0][1][2] =", matrix3d[0][1][2])
+
+matrix3d[0][1][2] = 999
+print("matrix3d[0][1][2] = 999, matrix3d =", matrix3d)
+
+matrix3d[0][1][2] += 1
+print("matrix3d[0][1][2] += 1, matrix3d =", matrix3d)
+
+# 测试4: 混合嵌套 a.b[0].c = 0
+class Container:
+    def __init__(self):
+        self.items = [C()]
+
+container = Container()
+print("container.items[0].d =", container.items[0].d)
+
+container.items[0].d = 300
+print("container.items[0].d = 300, result =", container.items[0].d)
+
+container.items[0].d += 50
+print("container.items[0].d += 50, result =", container.items[0].d)
+
+print("\n=== 多级嵌套赋值测试完成 ===")
+

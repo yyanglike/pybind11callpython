@@ -210,20 +210,6 @@ antlr4_static/fast:
 .PHONY : antlr4_static/fast
 
 # Convenience name for target.
-_deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/rule:
-	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/rule
-.PHONY : _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/rule
-
-# Convenience name for target.
-make_lib_output_dir: _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/rule
-.PHONY : make_lib_output_dir
-
-# fast build rule for target.
-make_lib_output_dir/fast:
-	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/build
-.PHONY : make_lib_output_dir/fast
-
-# Convenience name for target.
 _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_tests.dir/rule:
 	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_tests.dir/rule
 .PHONY : _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_tests.dir/rule
@@ -2910,6 +2896,33 @@ src/dfa/LexerDFASerializer.cpp.s:
 	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/src/dfa/LexerDFASerializer.cpp.s
 .PHONY : src/dfa/LexerDFASerializer.cpp.s
 
+src/internal/Synchronization.o: src/internal/Synchronization.cpp.o
+.PHONY : src/internal/Synchronization.o
+
+# target to build an object file
+src/internal/Synchronization.cpp.o:
+	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/src/internal/Synchronization.cpp.o
+	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/src/internal/Synchronization.cpp.o
+.PHONY : src/internal/Synchronization.cpp.o
+
+src/internal/Synchronization.i: src/internal/Synchronization.cpp.i
+.PHONY : src/internal/Synchronization.i
+
+# target to preprocess a source file
+src/internal/Synchronization.cpp.i:
+	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/src/internal/Synchronization.cpp.i
+	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/src/internal/Synchronization.cpp.i
+.PHONY : src/internal/Synchronization.cpp.i
+
+src/internal/Synchronization.s: src/internal/Synchronization.cpp.s
+.PHONY : src/internal/Synchronization.s
+
+# target to generate assembly for a file
+src/internal/Synchronization.cpp.s:
+	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_shared.dir/src/internal/Synchronization.cpp.s
+	cd /Users/yangyi/company/python/pybind11callpython/build && $(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_static.dir/src/internal/Synchronization.cpp.s
+.PHONY : src/internal/Synchronization.cpp.s
+
 src/misc/InterpreterDataReader.o: src/misc/InterpreterDataReader.cpp.o
 .PHONY : src/misc/InterpreterDataReader.o
 
@@ -3920,7 +3933,6 @@ help:
 	@echo "... package"
 	@echo "... package_source"
 	@echo "... rebuild_cache"
-	@echo "... make_lib_output_dir"
 	@echo "... antlr4_shared"
 	@echo "... antlr4_static"
 	@echo "... antlr4_tests"
@@ -4221,6 +4233,9 @@ help:
 	@echo "... src/dfa/LexerDFASerializer.o"
 	@echo "... src/dfa/LexerDFASerializer.i"
 	@echo "... src/dfa/LexerDFASerializer.s"
+	@echo "... src/internal/Synchronization.o"
+	@echo "... src/internal/Synchronization.i"
+	@echo "... src/internal/Synchronization.s"
 	@echo "... src/misc/InterpreterDataReader.o"
 	@echo "... src/misc/InterpreterDataReader.i"
 	@echo "... src/misc/InterpreterDataReader.s"

@@ -110,9 +110,16 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
                 py::module_ module = pyObj.cast<py::module_>();
                 py::object member = module.attr(memberName.c_str());
                 return ScriptValue::fromPythonObject(member);
-            } else if (py::hasattr(pyObj, memberName.c_str())) {
-                py::object member = pyObj.attr(memberName.c_str());
-                return ScriptValue::fromPythonObject(member);
+            } else {
+                try {
+                    py::object member = pyObj.attr(memberName.c_str());
+                    return ScriptValue::fromPythonObject(member);
+                } catch (const py::error_already_set&) {
+                    // Attribute doesn't exist
+                    s_logger.debug("[PythonBridge] getMember: Attribute '" + memberName + "' not found in object");
+                    PyErr_Clear();
+                    return nullptr;
+                }
             }
         } catch (const py::error_already_set& e) {
             // 清除 Python 错误状态，避免影响后续操作
@@ -129,6 +136,8 @@ std::shared_ptr<ScriptValue> PythonBridge::getMember(
                     // 方法不存在
                 }
             }
+            s_logger.debug("[PythonBridge] getMember: Exception while getting attribute '" + memberName + "'");
+            return nullptr;
         } catch (const std::exception& e) {
             s_logger.error(std::string("[PythonBridge] getMember exception: ") + e.what());
             return nullptr;
@@ -175,8 +184,13 @@ void PythonBridge::setMember(
     const std::string& memberName,
     std::shared_ptr<ScriptValue> value) {
     
-    if (!object || !object->isPythonObject()) {
-        throw std::runtime_error("Cannot set member on non-object type");
+    if (!object) {
+        s_logger.error("[PythonBridge] setMember: object is null");
+        throw std::runtime_error("Cannot set member on null object");
+    }
+    if (!object->isPythonObject()) {
+        s_logger.error("[PythonBridge] setMember: object is not a Python object, type: " + std::to_string(static_cast<int>(object->getType())));
+        throw std::runtime_error("Cannot set member on non-object type, object type is: " + std::to_string(static_cast<int>(object->getType())));
     }
     
     py::object pyObj = object->getPythonObject();
@@ -185,28 +199,9 @@ void PythonBridge::setMember(
     try {
         pyObj.attr(memberName.c_str()) = pyValue;
     } catch (const py::error_already_set& e) {
-        throw std::runtime_error("Python attribute assignment error: " + std::string(e.what()));
+        s_logger.error("[PythonBridge] setMember: Failed to set attribute '" + memberName + "': " + e.what());
+        throw std::runtime_error("Failed to set attribute '" + memberName + "': " + e.what());
     }
-}
-
-py::module_ PythonBridge::importModule(const std::string& moduleName) {
-    return py::module_::import(moduleName.c_str());
-}
-
-py::object PythonBridge::eval(const std::string& code, 
-                            py::dict globals,
-                            py::dict locals) {
-    return ::pybind11::eval(code, globals, locals);
-}
-
-void PythonBridge::exec(const std::string& code,
-                      py::dict globals,
-                      py::dict locals) {
-    ::pybind11::exec(code, globals, locals);
-}
-
-py::dict PythonBridge::globals() const {
-    return py::globals();
 }
 
 bool PythonBridge::isDict(py::object obj) const {
@@ -257,6 +252,44 @@ py::object PythonBridge::getBuiltin(const std::string& name) const {
         // 忽略错误
     }
     return py::object();
+}
+
+py::module_ PythonBridge::importModule(const std::string& moduleName) {
+    try {
+        py::module_ module = py::module_::import(moduleName.c_str());
+        return module;
+    } catch (const py::error_already_set& e) {
+        throw std::runtime_error("Failed to import module '" + moduleName + "': " + std::string(e.what()));
+    }
+}
+
+py::object PythonBridge::eval(const std::string& code, 
+                              py::dict globals,
+                              py::dict locals) {
+    try {
+        py::object result = py::eval(py::str(code), globals, locals);
+        return result;
+    } catch (const py::error_already_set& e) {
+        throw std::runtime_error("Python eval error: " + std::string(e.what()));
+    }
+}
+
+void PythonBridge::exec(const std::string& code,
+                        py::dict globals,
+                        py::dict locals) {
+    try {
+        py::exec(py::str(code), globals, locals);
+    } catch (const py::error_already_set& e) {
+        throw std::runtime_error("Python exec error: " + std::string(e.what()));
+    }
+}
+
+py::dict PythonBridge::globals() const {
+    try {
+        return py::globals();
+    } catch (const py::error_already_set& e) {
+        throw std::runtime_error("Failed to get Python globals: " + std::string(e.what()));
+    }
 }
 
 } // namespace script_interpreter

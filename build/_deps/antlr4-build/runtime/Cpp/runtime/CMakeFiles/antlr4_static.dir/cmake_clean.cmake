@@ -1,6 +1,4 @@
 file(REMOVE_RECURSE
-  "/Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.a"
-  "/Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.pdb"
   "CMakeFiles/antlr4_static.dir/src/ANTLRErrorListener.cpp.o"
   "CMakeFiles/antlr4_static.dir/src/ANTLRErrorListener.cpp.o.d"
   "CMakeFiles/antlr4_static.dir/src/ANTLRErrorStrategy.cpp.o"
@@ -199,6 +197,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/antlr4_static.dir/src/dfa/DFAState.cpp.o.d"
   "CMakeFiles/antlr4_static.dir/src/dfa/LexerDFASerializer.cpp.o"
   "CMakeFiles/antlr4_static.dir/src/dfa/LexerDFASerializer.cpp.o.d"
+  "CMakeFiles/antlr4_static.dir/src/internal/Synchronization.cpp.o"
+  "CMakeFiles/antlr4_static.dir/src/internal/Synchronization.cpp.o.d"
   "CMakeFiles/antlr4_static.dir/src/misc/InterpreterDataReader.cpp.o"
   "CMakeFiles/antlr4_static.dir/src/misc/InterpreterDataReader.cpp.o.d"
   "CMakeFiles/antlr4_static.dir/src/misc/Interval.cpp.o"
@@ -271,6 +271,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/antlr4_static.dir/src/tree/xpath/XPathWildcardAnywhereElement.cpp.o.d"
   "CMakeFiles/antlr4_static.dir/src/tree/xpath/XPathWildcardElement.cpp.o"
   "CMakeFiles/antlr4_static.dir/src/tree/xpath/XPathWildcardElement.cpp.o.d"
+  "libantlr4-runtime.a"
+  "libantlr4-runtime.pdb"
 )
 
 # Per-language clean rules from dependency scanning.

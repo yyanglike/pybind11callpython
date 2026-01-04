@@ -233,6 +233,14 @@ public:
     void resetPerformanceStats();
     
     /**
+     * @brief 重置访问者状态（用于多次执行之间）
+     * 
+     * 清除所有执行状态标志、缓存和临时数据，确保每次执行都是独立的。
+     * 应该在每次脚本执行前调用。
+     */
+    void resetState();
+    
+    /**
      * @brief 启用/禁用函数/类定义缓存
      * @param enabled 是否启用缓存
      */
@@ -304,6 +312,7 @@ private:
         int end_line;
     };
     std::unordered_map<std::string, FunctionRange> function_ranges_;  ///< 函数名到行号范围的映射
+
     
     /**
      * @brief 处理切片参数
@@ -325,6 +334,13 @@ private:
      * @return 表达式求值引擎引用
      */
     ExpressionEvaluator& getExpressionEvaluator() { return expression_evaluator_; }
+    
+    /**
+     * @brief 递归获取赋值目标的对象引用（用于嵌套赋值，如 a.b.c.d = 0）
+     * @param ctx 赋值目标上下文
+     * @return 对象引用（不是值）
+     */
+    std::shared_ptr<ScriptValue> getObjectReferenceForAssignment(PyScriptParser::AssignmentTargetContext *ctx);
 
 private:
     py::object current_from_module_; ///< 当前from-import正在导入的模块

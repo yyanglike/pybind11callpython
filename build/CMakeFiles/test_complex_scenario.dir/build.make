@@ -320,7 +320,7 @@ test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antl
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/antlr/generated/antlr/PyScriptListener.cpp.o
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/build.make
 test_complex_scenario: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
-test_complex_scenario: /Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.a
+test_complex_scenario: _deps/antlr4-build/runtime/Cpp/runtime/libantlr4-runtime.a
 test_complex_scenario: /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
 test_complex_scenario: CMakeFiles/test_complex_scenario.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX executable test_complex_scenario"

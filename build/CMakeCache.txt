@@ -17,6 +17,12 @@
 //Build C++ tests.
 ANTLR_BUILD_CPP_TESTS:BOOL=ON
 
+//Build the shared library of the ANTLR runtime
+ANTLR_BUILD_SHARED:BOOL=ON
+
+//Build the static library of the ANTLR runtime
+ANTLR_BUILD_STATIC:BOOL=ON
+
 //Builds the googlemock subproject
 BUILD_GMOCK:BOOL=ON
 
@@ -26,9 +32,8 @@ CMAKE_ADDR2LINE:FILEPATH=CMAKE_ADDR2LINE-NOTFOUND
 //Path to a program.
 CMAKE_AR:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar
 
-//Choose the type of build, options are: None Debug Release RelWithDebInfo
-// MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=Debug
+//Choose the type of build, options are: Debug Release.
+CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -339,6 +344,9 @@ CPACK_SOURCE_TZ:BOOL=ON
 //Enable to build ZIP source packages
 CPACK_SOURCE_ZIP:BOOL=OFF
 
+//Suppress compiler warnings for all built ANTLR targets
+DISABLE_WARNINGS:BOOL=OFF
+
 //Directory under which to collect all populated content
 FETCHCONTENT_BASE_DIR:PATH=/Users/yangyi/company/python/pybind11callpython/build/_deps
 
@@ -415,6 +423,9 @@ StockDataCppProject_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 StockDataCppProject_SOURCE_DIR:STATIC=/Users/yangyi/company/python/pybind11callpython
+
+//Trace ATN simulation
+TRACE_ATN:BOOL=OFF
 
 //Chose to build with or without demo executable
 WITH_DEMO:STRING=False

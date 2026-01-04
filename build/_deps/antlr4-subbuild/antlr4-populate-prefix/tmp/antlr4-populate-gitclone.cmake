@@ -52,13 +52,13 @@ endif()
 
 execute_process(
   COMMAND "/usr/bin/git"
-          checkout "4.10.1" --
+          checkout "4.13.2" --
   WORKING_DIRECTORY "/Users/yangyi/company/python/pybind11callpython/build/_deps/antlr4-src"
   RESULT_VARIABLE error_code
   ${maybe_show_command}
 )
 if(error_code)
-  message(FATAL_ERROR "Failed to checkout tag: '4.10.1'")
+  message(FATAL_ERROR "Failed to checkout tag: '4.13.2'")
 endif()
 
 set(init_submodules TRUE)

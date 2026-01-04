@@ -80,6 +80,9 @@ bool ScriptInterpreter::execute(const string& script) {
     error_handler_.clearErrors();
     result_ = nullptr;
     
+    // Reset AstVisitor state before each execution to prevent state contamination
+    ast_visitor_.resetState();
+    
     try {
         // 预处理：将 f-string 转为 __fstr__('f"...' 或三引号形式) 形式，避免语法不支持
         auto transform_fstrings = [](const std::string& in) -> std::string {

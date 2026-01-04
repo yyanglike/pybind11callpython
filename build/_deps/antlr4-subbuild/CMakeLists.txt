@@ -27,7 +27,7 @@ set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
 
 include(ExternalProject)
 ExternalProject_Add(antlr4-populate
-                     "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/antlr/antlr4.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "4.10.1"
+                     "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/antlr/antlr4.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "4.13.2"
                     SOURCE_DIR          "/Users/yangyi/company/python/pybind11callpython/build/_deps/antlr4-src"
                     BINARY_DIR          "/Users/yangyi/company/python/pybind11callpython/build/_deps/antlr4-build"
                     CONFIGURE_COMMAND   ""

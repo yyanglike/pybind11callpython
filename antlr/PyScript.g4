@@ -280,8 +280,8 @@ assignment
 // 赋值目标：标识符、属性访问、下标访问
 assignmentTarget
     : IDENTIFIER
-    | primary DOT IDENTIFIER
-    | primary LBRACK subscriptArg RBRACK
+    | assignmentTarget DOT IDENTIFIER
+    | assignmentTarget LBRACK subscriptArg RBRACK
     ;
 
 expressionStatement

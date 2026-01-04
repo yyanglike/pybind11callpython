@@ -95,9 +95,9 @@ antlr4_tests_EXTERNAL_OBJECTS =
 
 _deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_tests.dir/tests/Utf8Test.cpp.o
 _deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_tests.dir/build.make
-_deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: /Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.a
-_deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: lib/libgtest_maind.a
-_deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: lib/libgtestd.a
+_deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: _deps/antlr4-build/runtime/Cpp/runtime/libantlr4-runtime.a
+_deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: lib/libgtest_main.a
+_deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: lib/libgtest.a
 _deps/antlr4-build/runtime/Cpp/runtime/antlr4_tests: _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/antlr4_tests.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/yangyi/company/python/pybind11callpython/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable antlr4_tests"
 	cd /Users/yangyi/company/python/pybind11callpython/build/_deps/antlr4-build/runtime/Cpp/runtime && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/antlr4_tests.dir/link.txt --verbose=$(VERBOSE)

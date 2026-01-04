@@ -1,5 +1,3 @@
-# 测试 assignmentTarget 规则（属性赋值和下标赋值）
-
 print("=== 测试 assignmentTarget ===")
 
 # 测试1: 属性赋值
@@ -9,6 +7,7 @@ class Counter:
     
     def increment(self):
         self.count += 1
+        
 
 counter = Counter()
 print("counter.count =", counter.count)
@@ -57,9 +56,16 @@ print('d["b"] += 5, d =', d)
 # 测试4: 嵌套属性赋值
 class Nested:
     def __init__(self):
+        print("Nested.__init__ called")
         self.obj = Counter()
+        print("Nested.__init__: self.obj =", self.obj)
 
-nested = Nested()
+
+nested = new Nested()
+print("nested =", nested)
+print("nested.obj =", nested.obj)
+print("nested.obj.count =", nested.obj.count)
+
 nested.obj.count = 100
 print("nested.obj.count = 100, result =", nested.obj.count)
 

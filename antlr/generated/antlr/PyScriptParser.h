@@ -907,7 +907,7 @@ public:
     AssignmentTargetContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *IDENTIFIER();
-    PrimaryContext *primary();
+    AssignmentTargetContext *assignmentTarget();
     antlr4::tree::TerminalNode *DOT();
     antlr4::tree::TerminalNode *LBRACK();
     SubscriptArgContext *subscriptArg();
@@ -921,7 +921,7 @@ public:
   };
 
   AssignmentTargetContext* assignmentTarget();
-
+  AssignmentTargetContext* assignmentTarget(int precedence);
   class  ExpressionStatementContext : public antlr4::ParserRuleContext {
   public:
     ExpressionStatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -1800,6 +1800,10 @@ public:
 
   DottedNameContext* dottedName();
 
+
+  bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+
+  bool assignmentTargetSempred(AssignmentTargetContext *_localctx, size_t predicateIndex);
 
   // By default the static state used to implement the parser is lazily initialized during the first
   // call to the constructor. You can call this function if you wish to initialize the static state

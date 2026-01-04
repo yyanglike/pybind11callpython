@@ -32,6 +32,27 @@ static size_t hashCombine(size_t seed, size_t value) {
     return seed ^ (value + 0x9e3779b9 + (seed << 6) + (seed >> 2));
 }
 
+// Helper function to find the max valid stopIndex in the context subtree
+static int getActualStopIndex(antlr4::ParserRuleContext* ctx) {
+    int maxStop = -1;  // Initialize to invalid
+    for (auto* child : ctx->children) {
+        if (auto* subCtx = dynamic_cast<antlr4::ParserRuleContext*>(child)) {
+            // Recurse into sub-contexts
+            int subStop = getActualStopIndex(subCtx);
+            if (subStop >= 0) {
+                maxStop = std::max(maxStop, subStop);
+            }
+        } else if (auto* term = dynamic_cast<antlr4::tree::TerminalNode*>(child)) {
+            // Check terminal tokens
+            int termStop = term->getSymbol()->getStopIndex();
+            if (termStop >= 0) {
+                maxStop = std::max(maxStop, termStop);
+            }
+        }
+    }
+    return maxStop;
+}
+
 // 计算变量状态的增量哈希（避免字符串拼接）
 // 优化：直接对值进行哈希，避免toString()的字符串创建开销
 // 优化：接受缓存的变量名列表，避免重复创建和排序
@@ -217,6 +238,40 @@ AstVisitor::AstVisitor(VariableManager& variable_manager,
     } catch (...) {
         sys_module_ = py::none();
     }
+}
+
+// 重置访问者状态
+void AstVisitor::resetState() {
+    logger_.debug("Resetting AstVisitor state");
+    
+    // 重置执行状态
+    result_.reset();
+    defining_function_ = false;
+    break_flag_ = false;
+    continue_flag_ = false;
+    
+    // 重置当前导入模块
+    current_from_module_ = py::none();
+    
+    // 重置函数定义计数器
+    func_def_count_.clear();
+    
+    // 重置缓存的变量/模块名列表
+    cached_var_names_.clear();
+    cached_module_names_.clear();
+    cached_var_count_ = 0;
+    cached_module_count_ = 0;
+    
+    // 重置函数行号范围映射
+    function_ranges_.clear();
+    
+    // 注意：不清除缓存（exec_cache_, exec_cache_source_, source_hash_cache_）
+    // 因为这些是性能优化，可以在多次执行间共享
+    
+    // 注意：不重置性能计数器（py_call_count_等），这些是用于统计的
+    // 注意：不重置缓存的模块（builtins_module_, sys_module_），这些是只读的
+    
+    logger_.debug("AstVisitor state reset completed");
 }
 
 // 报告错误
@@ -497,7 +552,7 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     // 注意：必须在访问任何子节点之前设置标志，以阻止ANTLR访问子节点
     bool old_defining_function = defining_function_;
     defining_function_ = true;
-    logger_.debug("Setting defining_function_ = true for function: " + ctx->IDENTIFIER()->getText());
+    logger_.info("Setting defining_function_ = true for function: " + ctx->IDENTIFIER()->getText());
     
     try {
         // 获取开始令牌（函数定义的开始，即'def'关键字）
@@ -543,7 +598,7 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         if (realTokens.empty()) {
             logger_.error("No real tokens found in function definition");
             defining_function_ = old_defining_function;
-    return any();
+           return any();
         }
         
         // 结束位置：取最后一个非 EOF 的 token，确保包含函数体全部内容
@@ -1670,10 +1725,217 @@ bool AstVisitor::isNodeInsideFunctionDef(antlr4::ParserRuleContext* ctx) const {
 }
 
 any AstVisitor::visitAssignmentTarget(PyScriptParser::AssignmentTargetContext *ctx) {
-    // assignmentTarget 规则仅用于语法解析，实际处理在 visitAssignment 中
-    // 这里返回空值，避免影响赋值操作
-        return any(ScriptValue::createNull());
+    // 处理赋值目标，返回其当前值
+    // 有三种情况：标识符、属性访问、下标访问
+    
+    if (ctx->IDENTIFIER()) {
+        // 标识符：返回变量的值
+        string varName = ctx->IDENTIFIER()->getText();
+        
+        // 如果在函数定义阶段，返回null，避免对变量求值
+        if (defining_function_) {
+            logger_.debug("Skipping variable evaluation during function definition in assignment target");
+            return any(ScriptValue::createNull());
+        }
+        
+        auto var = getVariable(varName);
+        if (var) {
+            return any(var);
+        } else {
+            // 变量未定义，抛出 NameError
+            logger_.debug("Variable '" + varName + "' not found, raising NameError");
+            py::gil_scoped_acquire acquire;
+            PyErr_SetString(PyExc_NameError, ("name '" + varName + "' is not defined").c_str());
+            throw py::error_already_set();
+        }
+    } else if (ctx->DOT()) {
+        // 属性访问：返回属性值
+        auto leftTargetCtx = ctx->assignmentTarget();
+        if (!leftTargetCtx) {
+            reportError("Missing object for attribute access", ctx);
+            return any(ScriptValue::createNull());
+        }
+
+        auto objAny = visit(leftTargetCtx);
+        shared_ptr<ScriptValue> objValue;
+        try {
+            objValue = any_cast<shared_ptr<ScriptValue>>(objAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate object for attribute access", ctx);
+            return any(ScriptValue::createNull());
+        }
+
+        if (!objValue) {
+            reportError("Cannot evaluate object for attribute access", ctx);
+            return any(ScriptValue::createNull());
+        }
+
+        string attrName = ctx->IDENTIFIER()->getText();
+        try {
+            auto member = python_bridge_.getMember(objValue, attrName);
+            if (!member) {
+                // 如果成员不存在，返回null
+                logger_.debug("Object has no member: " + attrName + ", returning null");
+                return any(ScriptValue::createNull());
+            }
+            return any(member);
+        } catch (const std::exception& e) {
+            logger_.error("Error getting member " + attrName + ": " + string(e.what()));
+            reportError("Error accessing member: " + attrName, ctx);
+            return any();
+        }
+    } else if (ctx->LBRACK()) {
+        // 下标访问：返回下标对应的值
+        auto leftTargetCtx = ctx->assignmentTarget();
+        if (!leftTargetCtx) {
+            reportError("Missing object for subscript access", ctx);
+            return any(ScriptValue::createNull());
+        }
+        
+        auto objAny = visit(leftTargetCtx);
+        shared_ptr<ScriptValue> objValue;
+        try {
+            objValue = any_cast<shared_ptr<ScriptValue>>(objAny);
+        } catch (const bad_any_cast&) {
+            reportError("Cannot evaluate object for subscript access", ctx);
+            return any(ScriptValue::createNull());
+        }
+        
+        if (!objValue) {
+            reportError("Cannot evaluate object for subscript access", ctx);
+            return any(ScriptValue::createNull());
+        }
+        
+        auto subscriptArgCtx = ctx->subscriptArg();
+        if (!subscriptArgCtx) {
+            reportError("Missing subscript argument", ctx);
+            return any(ScriptValue::createNull());
+        }
+        
+        // 使用现有的visitSubscriptArg函数处理下标
+        auto subscriptValue = visitSubscriptArg(subscriptArgCtx, objValue);
+        if (!subscriptValue) {
+            reportError("Cannot evaluate subscript", ctx);
+            return any(ScriptValue::createNull());
+        }
+        
+        return any(subscriptValue);
     }
+    
+    // 不应该到达这里
+    return any(ScriptValue::createNull());
+}
+
+shared_ptr<ScriptValue> AstVisitor::getObjectReferenceForAssignment(PyScriptParser::AssignmentTargetContext *ctx) {
+    // 递归获取赋值目标的对象引用（用于嵌套赋值，如 a.b.c.d = 0）
+    // 这个函数返回对象引用，而不是值，用于赋值操作
+    // 注意：必须先检查 DOT() 和 LBRACK()，因为 a.b.c 既有 DOT() 也有 IDENTIFIER()
+    
+    if (ctx->DOT()) {
+        // 属性访问：递归获取左侧对象引用，然后获取属性值
+        auto leftTargetCtx = ctx->assignmentTarget();
+        if (!leftTargetCtx) {
+            reportError("Missing object for attribute access in assignment", ctx);
+            return nullptr;
+        }
+        
+        // 递归获取左侧对象引用
+        auto leftObjValue = getObjectReferenceForAssignment(leftTargetCtx);
+        if (!leftObjValue) {
+            return nullptr;
+        }
+        
+        // 获取属性值（作为对象引用）
+        string attrName = ctx->IDENTIFIER()->getText();
+        try {
+            py::gil_scoped_acquire acquire;
+            py::object pyObj = leftObjValue->toPythonObject();
+            if (!py::hasattr(pyObj, attrName.c_str())) {
+                string typeName = py::str(py::type::of(pyObj));
+                PyErr_SetString(PyExc_AttributeError, 
+                    ("'" + typeName + "' object has no attribute '" + attrName + "'").c_str());
+                throw py::error_already_set();
+            }
+            py::object attrObj = pyObj.attr(attrName.c_str());
+            return ScriptValue::fromPythonObject(attrObj);
+        } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
+            reportError("Cannot get attribute '" + attrName + "' for assignment: " + string(e.what()), ctx);
+            return nullptr;
+        } catch (const std::exception& e) {
+            reportError("Cannot get attribute '" + attrName + "' for assignment: " + string(e.what()), ctx);
+            return nullptr;
+        }
+    } else if (ctx->LBRACK()) {
+        // 下标访问：递归获取左侧对象引用，然后获取下标值
+        auto leftTargetCtx = ctx->assignmentTarget();
+        if (!leftTargetCtx) {
+            reportError("Missing object for subscript access in assignment", ctx);
+            return nullptr;
+        }
+        
+        // 递归获取左侧对象引用
+        auto leftObjValue = getObjectReferenceForAssignment(leftTargetCtx);
+        if (!leftObjValue) {
+            return nullptr;
+        }
+        
+        // 获取下标值（作为对象引用）
+        auto subscriptArgCtx = ctx->subscriptArg();
+        if (!subscriptArgCtx) {
+            reportError("Missing subscript argument in assignment", ctx);
+            return nullptr;
+        }
+        
+        auto expressions = subscriptArgCtx->expression();
+        if (expressions.empty() || !subscriptArgCtx->COLON().empty()) {
+            reportError("Subscript assignment only supports single key (no slice)", ctx);
+            return nullptr;
+        }
+        
+        auto keyValue = evaluateExpression(expressions[0]);
+        if (!keyValue) {
+            reportError("Cannot evaluate subscript key in assignment", ctx);
+            return nullptr;
+        }
+        
+        try {
+            py::gil_scoped_acquire acquire;
+            py::object pyObj = leftObjValue->toPythonObject();
+            py::object pyKey = keyValue->toPythonObject();
+            py::object subscriptObj = pyObj[pyKey];
+            return ScriptValue::fromPythonObject(subscriptObj);
+        } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
+            reportError("Cannot get subscript for assignment: " + string(e.what()), ctx);
+            return nullptr;
+        } catch (const std::exception& e) {
+            reportError("Cannot get subscript for assignment: " + string(e.what()), ctx);
+            return nullptr;
+        }
+    } else if (ctx->IDENTIFIER()) {
+        // 标识符：返回变量的值（作为对象引用）
+        // 只有在没有 DOT() 或 LBRACK() 的情况下才处理 IDENTIFIER()
+        string varName = ctx->IDENTIFIER()->getText();
+        auto var = getVariable(varName);
+        if (!var) {
+            py::gil_scoped_acquire acquire;
+            PyErr_SetString(PyExc_NameError, ("name '" + varName + "' is not defined").c_str());
+            throw py::error_already_set();
+        }
+        return var;
+    }
+    
+    // 不应该到达这里
+    reportError("Invalid assignment target", ctx);
+    return nullptr;
+}
     
 any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
     // 如果在函数定义阶段，跳过赋值求值，返回null
@@ -1690,8 +1952,75 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         logger_.debug("visitAssignment: Skipping assignment at line " + std::to_string(line) + " (inside function definition, defining_function_=false)");
         return any(ScriptValue::createNull());
     }
-    
-    logger_.debug("visitAssignment: Evaluating assignment (defining_function_=false)");
+
+    // 获取右侧表达式并求值
+    auto rightExpr = ctx->expression();
+    if (!rightExpr) {
+        reportError("Missing right-hand side expression", ctx);
+        return any();
+    }
+    auto rightValue = evaluateExpression(rightExpr);
+    if (!rightValue) {
+        reportError("Cannot evaluate right-hand side", ctx);
+        return any();
+    }
+
+    // 获取赋值操作符
+    string op = "=";
+    for (auto child : ctx->children) {
+        auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+        if (terminal) {
+            int tokenType = terminal->getSymbol()->getType();
+            if (tokenType == PyScriptParser::PLUS_ASSIGN) {
+                op = "+=";
+                break;
+            } else if (tokenType == PyScriptParser::MINUS_ASSIGN) {
+                op = "-=";
+                break;
+            } else if (tokenType == PyScriptParser::MUL_ASSIGN) {
+                op = "*=";
+                break;
+            } else if (tokenType == PyScriptParser::DIV_ASSIGN) {
+                op = "/=";
+                break;
+            } else if (tokenType == PyScriptParser::FLOOR_DIV_ASSIGN) {
+                op = "//=";
+                break;
+            } else if (tokenType == PyScriptParser::MOD_ASSIGN) {
+                op = "%=";
+                break;
+            } else if (tokenType == PyScriptParser::POW_ASSIGN) {
+                op = "**=";
+                break;
+            } else if (tokenType == PyScriptParser::BITWISE_AND_ASSIGN) {
+                op = "&=";
+                break;
+            } else if (tokenType == PyScriptParser::BITWISE_OR_ASSIGN) {
+                op = "|=";
+                break;
+            } else if (tokenType == PyScriptParser::BITWISE_XOR_ASSIGN) {
+                op = "^=";
+                break;
+            } else if (tokenType == PyScriptParser::LEFT_SHIFT_ASSIGN) {
+                op = "<<=";
+                break;
+            } else if (tokenType == PyScriptParser::RIGHT_SHIFT_ASSIGN) {
+                op = ">>=";
+                break;
+            } else if (tokenType == PyScriptParser::ASSIGN) {
+                op = "=";
+                // 继续查找，可能有其他赋值运算符
+            }
+        }
+    }
+
+    // 获取赋值目标
+    auto targetCtx = ctx->assignmentTarget();
+    if (!targetCtx) {
+        reportError("Missing assignment target", ctx);
+        return any();
+    }
+    logger_.info("visitAssignment: Evaluating assignment (defining_function_=false), target: " + targetCtx->getText());
     
     // 检查是否是元组解包赋值：tupleLiteral ASSIGN (expression | tupleLiteral)
     auto tupleLiterals = ctx->tupleLiteral();
@@ -1824,16 +2153,132 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         
         return any(rightValue);
     }
-    
-    // 获取赋值目标
-    auto targetCtx = ctx->assignmentTarget();
-    if (!targetCtx) {
-        reportError("Missing assignment target", ctx);
-        return any();
-    }
+
     
     // 有三种赋值形式：标识符赋值、属性赋值、下标赋值
-    if (targetCtx->IDENTIFIER()) {
+    if (targetCtx->DOT()) {
+        // 属性赋值: assignmentTarget DOT IDENTIFIER ASSIGN expression
+        // 使用递归函数获取左侧对象引用（支持任意深度嵌套，如 a.b.c.d = 0）
+        auto leftTargetCtx = targetCtx->assignmentTarget();
+        if (!leftTargetCtx) {
+            reportError("Missing object for attribute assignment", ctx);
+            return any();
+        }
+        
+        shared_ptr<ScriptValue> objValue;
+        try {
+            objValue = getObjectReferenceForAssignment(leftTargetCtx);
+        } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
+            reportError("Cannot evaluate object for attribute assignment: " + string(e.what()), ctx);
+            return any();
+        } catch (const std::exception& e) {
+            reportError("Cannot evaluate object for attribute assignment: " + string(e.what()), ctx);
+            return any();
+        }
+        
+        if (!objValue) {
+            reportError("Cannot evaluate object for attribute assignment", ctx);
+            return any();
+        }
+        
+        logger_.info("visitAssignment: Evaluating attribute assignment, object: " + leftTargetCtx->getText());
+        string attrName = targetCtx->IDENTIFIER()->getText();
+        if (op == "=") {
+            // 简单赋值
+            try {
+                python_bridge_.setMember(objValue, attrName, rightValue);
+            } catch (const py::error_already_set& e) {
+                reportError("Failed to set attribute: " + attrName + ": " + string(e.what()), ctx);
+                return any();
+            } catch (const std::exception& e) {
+                reportError("Failed to set attribute: " + attrName + ": " + string(e.what()), ctx);
+                return any();
+            }
+        } else {
+            // 赋值运算符，如 +=, -= 等
+            // 获取当前属性值
+            auto currentValue = python_bridge_.getMember(objValue, attrName);
+            if (!currentValue) {
+                // 如果属性不存在，则当前值视为 null
+                currentValue = ScriptValue::createNull();
+            }
+            // 执行运算
+            string baseOp = op.substr(0, op.length() - 1); // 去掉 '='
+            auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
+            if (!result) {
+                reportError("Unsupported assignment operator: " + op, ctx);
+                return any();
+            }
+            // 设置属性为新值
+            try {
+                python_bridge_.setMember(objValue, attrName, result);
+            } catch (const py::error_already_set& e) {
+                reportError("Failed to set attribute: " + attrName + ": " + string(e.what()), ctx);
+                return any();
+            } catch (const std::exception& e) {
+                reportError("Failed to set attribute: " + attrName + ": " + string(e.what()), ctx);
+                return any();
+            }
+        }
+    } else if (targetCtx->LBRACK()) {
+        // 下标赋值: assignmentTarget LBRACK subscriptArg RBRACK ASSIGN expression
+        // 使用递归函数获取左侧对象引用（支持任意深度嵌套，如 matrix[0][1][2] = 5）
+        auto leftTargetCtx = targetCtx->assignmentTarget();
+        if (!leftTargetCtx) {
+            reportError("Missing object for subscript assignment", ctx);
+            return any();
+        }
+        
+        shared_ptr<ScriptValue> objValue;
+        try {
+            objValue = getObjectReferenceForAssignment(leftTargetCtx);
+        } catch (const py::error_already_set& e) {
+            {
+                py::gil_scoped_acquire acquire;
+                PyErr_Clear();
+            }
+            reportError("Cannot evaluate object for subscript assignment: " + string(e.what()), ctx);
+            return any();
+        } catch (const std::exception& e) {
+            reportError("Cannot evaluate object for subscript assignment: " + string(e.what()), ctx);
+            return any();
+        }
+        
+        if (!objValue) {
+            reportError("Cannot evaluate object for subscript assignment", ctx);
+            return any();
+        }
+        auto subscriptArgCtx = targetCtx->subscriptArg();
+        if (!subscriptArgCtx) {
+            reportError("Missing subscript argument", ctx);
+            return any();
+        }
+        // 计算下标键（只支持单个表达式，不支持slice）
+        auto expressions = subscriptArgCtx->expression();
+        if (expressions.empty() || !subscriptArgCtx->COLON().empty()) {
+            reportError("Subscript assignment only supports single key (no slice)", ctx);
+            return any();
+        }
+        auto keyValue = evaluateExpression(expressions[0]);
+        if (!keyValue) {
+            reportError("Cannot evaluate subscript key", ctx);
+            return any();
+        }
+        // 使用pybind11设置下标
+        try {
+            py::object pyObj = objValue->toPythonObject();
+            py::object pyKey = keyValue->toPythonObject();
+            py::object pyValue = rightValue->toPythonObject();
+            pyObj[pyKey] = pyValue;
+        } catch (const py::error_already_set& e) {
+            reportError("Failed to set subscript: " + string(e.what()), ctx);
+            return any();
+        }
+    } else if (targetCtx->IDENTIFIER()) {
         // 标识符赋值: IDENTIFIER ASSIGN expression
         string varName = targetCtx->IDENTIFIER()->getText();
         
@@ -1922,7 +2367,11 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
                 py::object pyObj = rightValue->toPythonObject();
                 rightValue = ScriptValue::createPythonObject(pyObj);
             }
-        variable_manager_.setVariable(varName, rightValue);
+            logger_.info("Assigning variable '" + varName + "' with value from expression");
+            variable_manager_.setVariable(varName, rightValue);
+            auto varValue = variable_manager_.getVariable(varName);  // 强制刷新缓存
+            logger_.info("Variable '" + varName + "' assigned successfully" +
+                        " with value: " + varValue->toString()) ;
             // 调试：检查赋值是否成功
             if (!rightValue) {
                 logger_.debug("Warning: Assigning null to variable '" + varName + "'");
@@ -1943,365 +2392,6 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
             }
         } catch (...) {
             logger_.debug(std::string("Assigned variable '") + varName + "' (no toString)");
-        }
-    } else if (targetCtx->DOT()) {
-        // 属性赋值: primary DOT IDENTIFIER ASSIGN expression
-        auto primaryCtx = targetCtx->primary();
-        if (!primaryCtx) {
-            reportError("Attribute assignment missing object", ctx);
-            return any();
-        }
-
-        auto objectAny = visit(primaryCtx);
-        shared_ptr<ScriptValue> objectValue;
-        try {
-            objectValue = any_cast<shared_ptr<ScriptValue>>(objectAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate object in attribute assignment", ctx);
-            return any();
-        }
-
-        if (!objectValue) {
-            reportError("Cannot evaluate object in attribute assignment", ctx);
-            return any();
-        }
-
-        // 获取属性名
-        auto identifier = targetCtx->IDENTIFIER();
-        if (!identifier) {
-            reportError("Missing identifier in attribute assignment", ctx);
-            return any();
-        }
-        string memberName = identifier->getText();
-
-        auto rightExpr = ctx->expression();
-        if (!rightExpr) {
-            reportError("Missing right-hand side expression", ctx);
-            return any();
-        }
-
-        auto rightValue = evaluateExpression(rightExpr);
-        if (!rightValue) {
-            reportError("Cannot evaluate right-hand side", ctx);
-            return any();
-        }
-
-        // 检查是否是赋值运算符（属性赋值也支持 +=, -= 等）
-        string op = "=";
-        for (auto child : ctx->children) {
-            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
-            if (terminal) {
-                int tokenType = terminal->getSymbol()->getType();
-                if (tokenType == PyScriptParser::PLUS_ASSIGN) {
-                    op = "+=";
-                    break;
-                } else if (tokenType == PyScriptParser::MINUS_ASSIGN) {
-                    op = "-=";
-                    break;
-                } else if (tokenType == PyScriptParser::MUL_ASSIGN) {
-                    op = "*=";
-                    break;
-                } else if (tokenType == PyScriptParser::DIV_ASSIGN) {
-                    op = "/=";
-                    break;
-                } else if (tokenType == PyScriptParser::FLOOR_DIV_ASSIGN) {
-                    op = "//=";
-                    break;
-                } else if (tokenType == PyScriptParser::MOD_ASSIGN) {
-                    op = "%=";
-                    break;
-                } else if (tokenType == PyScriptParser::POW_ASSIGN) {
-                    op = "**=";
-                    break;
-                } else if (tokenType == PyScriptParser::BITWISE_AND_ASSIGN) {
-                    op = "&=";
-                    break;
-                } else if (tokenType == PyScriptParser::BITWISE_OR_ASSIGN) {
-                    op = "|=";
-                    break;
-                } else if (tokenType == PyScriptParser::BITWISE_XOR_ASSIGN) {
-                    op = "^=";
-                    break;
-                } else if (tokenType == PyScriptParser::LEFT_SHIFT_ASSIGN) {
-                    op = "<<=";
-                    break;
-                } else if (tokenType == PyScriptParser::RIGHT_SHIFT_ASSIGN) {
-                    op = ">>=";
-                    break;
-                } else if (tokenType == PyScriptParser::ASSIGN) {
-                    op = "=";
-                }
-            }
-        }
-
-        if (op != "=") {
-            // 赋值运算符：先获取当前属性值，执行运算，再赋值
-            py::object currentAttr = py::none();
-            if (objectValue->isPythonObject()) {
-                py::gil_scoped_acquire acquire;
-                py::object pyObj = objectValue->getPythonObject();
-                currentAttr = pyObj.attr(memberName.c_str());
-            } else {
-                auto currentValueObj = objectValue->getKey(memberName);
-                if (currentValueObj) {
-                    currentAttr = currentValueObj->toPythonObject();
-                }
-            }
-
-            auto currentValue = ScriptValue::fromPythonObject(currentAttr);
-            if (!currentValue) {
-                currentValue = ScriptValue::createNull();
-            }
-            
-            // 如果当前值缺失，退化为普通赋值，避免 None 与数字做运算
-            if (!(currentValue->isNull())) {
-                // 提取基础操作符（去掉=）
-                string baseOp = op.substr(0, op.length() - 1);
-                auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
-                if (!result) {
-                    reportError("Unsupported assignment operator: " + op, ctx);
-                    return any();
-                }
-                rightValue = result;  // 使用计算结果作为新的赋值值
-            }
-        }
-
-        // 执行属性赋值
-        if (objectValue->isPythonObject()) {
-            py::object pyObj = objectValue->getPythonObject();
-            try {
-                py::object pyVal = rightValue->toPythonObject();
-                pyObj.attr(memberName.c_str()) = pyVal;
-                return any(rightValue);
-            } catch (const py::error_already_set& e) {
-                reportError(string("Python attribute assignment error: ") + e.what(), ctx);
-                return any();
-            }
-        } else {
-            // 非Python对象，尝试通过ScriptValue的setMember方法
-            try {
-                objectValue->setMember(memberName, rightValue);
-                return any(rightValue);
-            } catch (const exception& e) {
-                reportError(string("Attribute assignment error: ") + e.what(), ctx);
-                return any();
-            }
-        }
-    } else if (targetCtx->LBRACK()) {
-        // 下标赋值: primary LBRACK subscriptArg RBRACK ASSIGN expression
-        auto primaryCtx = targetCtx->primary();
-        if (!primaryCtx) {
-            reportError("Subscript assignment missing object", ctx);
-            return any();
-        }
-        
-        auto objectAny = visit(primaryCtx);
-        shared_ptr<ScriptValue> objectValue;
-        try {
-            objectValue = any_cast<shared_ptr<ScriptValue>>(objectAny);
-        } catch (const bad_any_cast&) {
-            reportError("Cannot evaluate object in subscript assignment", ctx);
-            return any();
-        }
-        
-        if (!objectValue) {
-            reportError("Cannot evaluate object in subscript assignment", ctx);
-            return any();
-        }
-        
-        // 将 List/Dictionary 统一转为 Python 对象，避免增量赋值时内部结构变化导致越界
-        if (objectValue->isList() || objectValue->isDictionary()) {
-            try {
-                py::gil_scoped_acquire acquire;
-                objectValue = ScriptValue::createPythonObject(objectValue->toPythonObject());
-            } catch (...) {
-                // ignore and continue with original objectValue
-            }
-        }
-        
-        auto subscriptArgCtx = targetCtx->subscriptArg();
-        if (!subscriptArgCtx) {
-            reportError("Missing subscript argument", ctx);
-            return any();
-        }
-
-        // Check if it's a single index (no colons)
-        auto colons = subscriptArgCtx->COLON();
-        if (!colons.empty()) {
-            // Slice assignment - not supported for now
-            reportError("Slice assignment not supported", ctx);
-            return any();
-        }
-
-        auto expressions = subscriptArgCtx->expression();
-        if (expressions.size() != 1) {
-            reportError("Subscript requires exactly one expression", ctx);
-            return any();
-        }
-        auto indexExpr = expressions[0];
-        auto indexValue = evaluateExpression(indexExpr);
-        if (!indexValue) {
-            reportError("Cannot evaluate subscript index", ctx);
-            return any();
-        }
-        
-        auto rightExpr = ctx->expression(); // 右侧表达式
-        if (!rightExpr) {
-            reportError("Missing right-hand side expression", ctx);
-            return any();
-        }
-        
-        auto rightValue = evaluateExpression(rightExpr);
-        if (!rightValue) {
-            reportError("Cannot evaluate right-hand side", ctx);
-            return any();
-        }
-        
-        // 检查是否是赋值运算符（下标赋值也支持 +=, -= 等）
-        string op = "=";
-        for (auto child : ctx->children) {
-            auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
-            if (terminal) {
-                int tokenType = terminal->getSymbol()->getType();
-                if (tokenType == PyScriptParser::PLUS_ASSIGN) {
-                    op = "+=";
-                    break;
-                } else if (tokenType == PyScriptParser::MINUS_ASSIGN) {
-                    op = "-=";
-                    break;
-                } else if (tokenType == PyScriptParser::MUL_ASSIGN) {
-                    op = "*=";
-                    break;
-                } else if (tokenType == PyScriptParser::DIV_ASSIGN) {
-                    op = "/=";
-                    break;
-                } else if (tokenType == PyScriptParser::FLOOR_DIV_ASSIGN) {
-                    op = "//=";
-                    break;
-                } else if (tokenType == PyScriptParser::MOD_ASSIGN) {
-                    op = "%=";
-                    break;
-                } else if (tokenType == PyScriptParser::POW_ASSIGN) {
-                    op = "**=";
-                    break;
-                } else if (tokenType == PyScriptParser::BITWISE_AND_ASSIGN) {
-                    op = "&=";
-                    break;
-                } else if (tokenType == PyScriptParser::BITWISE_OR_ASSIGN) {
-                    op = "|=";
-                    break;
-                } else if (tokenType == PyScriptParser::BITWISE_XOR_ASSIGN) {
-                    op = "^=";
-                    break;
-                } else if (tokenType == PyScriptParser::LEFT_SHIFT_ASSIGN) {
-                    op = "<<=";
-                    break;
-                } else if (tokenType == PyScriptParser::RIGHT_SHIFT_ASSIGN) {
-                    op = ">>=";
-                    break;
-                } else if (tokenType == PyScriptParser::ASSIGN) {
-                    op = "=";
-                }
-            }
-        }
-        
-        if (op != "=") {
-            // 赋值运算符：先获取当前下标值，执行运算，再赋值
-            shared_ptr<ScriptValue> currentValue = nullptr;
-            if (objectValue->isList()) {
-                if (indexValue->isInteger()) {
-                    long long idx = indexValue->getInteger();
-                    if (idx >= 0 && idx < static_cast<long long>(objectValue->listSize())) {
-                        currentValue = objectValue->getAt(static_cast<size_t>(idx));
-                    }
-                }
-            } else if (objectValue->isDictionary()) {
-                if (indexValue->isString()) {
-                    currentValue = objectValue->getKey(indexValue->getString());
-                }
-            } else if (objectValue->isPythonObject()) {
-                py::gil_scoped_acquire acquire;
-                py::object pyObj = objectValue->getPythonObject();
-                py::object pyIndex = indexValue->toPythonObject();
-                currentValue = ScriptValue::fromPythonObject(pyObj[pyIndex]);
-            }
-            
-            if (!currentValue) {
-                currentValue = ScriptValue::createNull();
-            }
-            
-            // 如果当前值缺失，退化为普通赋值，避免 None 与数字做运算
-            if (!(currentValue->isNull())) {
-                // 提取基础操作符（去掉=）
-                string baseOp = op.substr(0, op.length() - 1);
-                auto result = expression_evaluator_.evaluateBinaryOperation(baseOp, currentValue, rightValue);
-                if (!result) {
-                    reportError("Unsupported assignment operator: " + op, ctx);
-                    return any();
-                }
-                rightValue = result;  // 使用计算结果作为新的赋值值
-            }
-        }
-        
-        // 执行下标赋值
-        if (objectValue->isPythonObject()) {
-            py::object pyObj = objectValue->getPythonObject();
-            try {
-                py::object pyIndex = indexValue->toPythonObject();
-                py::object pyRight = rightValue->toPythonObject();
-                pyObj[pyIndex] = pyRight;
-                // 下标赋值不产生新值，返回右侧值
-                return any(rightValue);
-            } catch (const py::error_already_set& e) {
-                reportError("Python subscript assignment error: " + string(e.what()), ctx);
-                return any();
-            }
-        } else if (objectValue->isList()) {
-            // 列表赋值
-            // 索引必须是整数
-            if (!indexValue->isInteger()) {
-                reportError("List index must be an integer", ctx);
-                return any();
-            }
-            
-            long long index = indexValue->getInteger();
-            
-            if (index < 0 || index >= static_cast<long long>(objectValue->listSize())) {
-                reportError("List index out of bounds: " + to_string(index) + 
-                           " (list size: " + to_string(objectValue->listSize()) + ")", ctx);
-                return any();
-            }
-            
-            // 更新列表元素
-            objectValue->setAt(static_cast<size_t>(index), rightValue);
-            return any(rightValue);
-        } else if (objectValue->isDictionary()) {
-            // 若键为字符串，沿用原始字典存储；否则将字典转为Python dict后再赋值
-            if (indexValue->isString()) {
-            string key = indexValue->getString();
-            objectValue->setKey(key, rightValue);
-                return any(rightValue);
-            }
-            // 转为 Python dict 并升级为 PythonObject
-            py::dict pyDict;
-            for (const auto& kv : objectValue->getDictionary()) {
-                pyDict[py::str(kv.first)] = kv.second->toPythonObject();
-            }
-            py::object pyObj = pyDict;
-            py::object pyIndex = indexValue->toPythonObject();
-            py::object pyRight = rightValue->toPythonObject();
-            pyObj[pyIndex] = pyRight;
-            objectValue->setPythonObject(pyObj);
-            return any(rightValue);
-        } else {
-            // 如果对象是null或空，可能是函数定义阶段，返回null
-            if (!objectValue || objectValue->isNull()) {
-                logger_.debug("Subscript assignment: objectValue is null, returning null");
-                return any(ScriptValue::createNull());
-            }
-            // 其他情况，记录调试信息并返回null，不报错
-            logger_.debug("Subscript assignment not supported for this type, returning null");
-            return any(ScriptValue::createNull());
         }
     }
     
@@ -5103,9 +5193,17 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
     }
     try {
         auto start = ctx->getStart()->getStartIndex();
-        auto stop = ctx->getStop()->getStopIndex();
+        auto stop = getActualStopIndex(ctx);
+        if (stop < 0) {
+            // Fallback or error handling if no valid tokens found (unlikely)
+            stop = ctx->getStart()->getStopIndex();
+        }
+        // auto stop = ctx->getStop()->getStopIndex();
+
         auto input = ctx->getStart()->getTokenSource()->getInputStream();
         std::string text = input->getText(antlr4::misc::Interval(start, stop));
+        
+        logger_.info("Defining class with source:\n" + text);
         // 确保末尾换行，便于 exec
         if (text.empty() || text.back() != '\n') {
             text.push_back('\n');
@@ -5185,7 +5283,8 @@ any AstVisitor::visitClassDef(PyScriptParser::ClassDefContext *ctx) {
                     ScriptErrorType::Runtime, ScriptErrorCode::Unknown, line, col);
         return any();
     }
-    return any();
+    // 返回非空值阻止访问类体内的子节点，避免重复执行
+    return any(true);
 }
 
 any AstVisitor::visitDecorators(PyScriptParser::DecoratorsContext *ctx) {
@@ -5393,9 +5492,9 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
         int col = ctx->getStart()->getCharPositionInLine();
         reportError("Failed to execute decorated definition: " + string(e.what()),
                     ScriptErrorType::Runtime, ScriptErrorCode::Unknown, line, col);
-        return any();
+        return any(true);
     }
-    return any();
+    return any(true);
 }
 
 any AstVisitor::visitAsyncFunctionDef(PyScriptParser::AsyncFunctionDefContext *ctx) {

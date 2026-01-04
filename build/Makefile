@@ -377,19 +377,6 @@ antlr4_static/fast:
 .PHONY : antlr4_static/fast
 
 #=============================================================================
-# Target rules for targets named make_lib_output_dir
-
-# Build rule for target.
-make_lib_output_dir: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 make_lib_output_dir
-.PHONY : make_lib_output_dir
-
-# fast build rule for target.
-make_lib_output_dir/fast:
-	$(MAKE) $(MAKESILENT) -f _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/build.make _deps/antlr4-build/runtime/Cpp/runtime/CMakeFiles/make_lib_output_dir.dir/build
-.PHONY : make_lib_output_dir/fast
-
-#=============================================================================
 # Target rules for targets named antlr4_tests
 
 # Build rule for target.
@@ -1449,7 +1436,6 @@ help:
 	@echo "... package"
 	@echo "... package_source"
 	@echo "... rebuild_cache"
-	@echo "... make_lib_output_dir"
 	@echo "... antlr4_shared"
 	@echo "... antlr4_static"
 	@echo "... antlr4_tests"

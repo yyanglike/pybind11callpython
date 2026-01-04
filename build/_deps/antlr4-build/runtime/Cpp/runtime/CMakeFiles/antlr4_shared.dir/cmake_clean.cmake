@@ -1,8 +1,5 @@
 file(REMOVE_RECURSE
-  "/Users/yangyi/company/python/pybind11callpython/dist/.4.10.1"
-  "/Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.4.10.1.dylib"
-  "/Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.dylib"
-  "/Users/yangyi/company/python/pybind11callpython/dist/libantlr4-runtime.pdb"
+  ".4.13.2"
   "CMakeFiles/antlr4_shared.dir/src/ANTLRErrorListener.cpp.o"
   "CMakeFiles/antlr4_shared.dir/src/ANTLRErrorListener.cpp.o.d"
   "CMakeFiles/antlr4_shared.dir/src/ANTLRErrorStrategy.cpp.o"
@@ -201,6 +198,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/antlr4_shared.dir/src/dfa/DFAState.cpp.o.d"
   "CMakeFiles/antlr4_shared.dir/src/dfa/LexerDFASerializer.cpp.o"
   "CMakeFiles/antlr4_shared.dir/src/dfa/LexerDFASerializer.cpp.o.d"
+  "CMakeFiles/antlr4_shared.dir/src/internal/Synchronization.cpp.o"
+  "CMakeFiles/antlr4_shared.dir/src/internal/Synchronization.cpp.o.d"
   "CMakeFiles/antlr4_shared.dir/src/misc/InterpreterDataReader.cpp.o"
   "CMakeFiles/antlr4_shared.dir/src/misc/InterpreterDataReader.cpp.o.d"
   "CMakeFiles/antlr4_shared.dir/src/misc/Interval.cpp.o"
@@ -273,6 +272,9 @@ file(REMOVE_RECURSE
   "CMakeFiles/antlr4_shared.dir/src/tree/xpath/XPathWildcardAnywhereElement.cpp.o.d"
   "CMakeFiles/antlr4_shared.dir/src/tree/xpath/XPathWildcardElement.cpp.o"
   "CMakeFiles/antlr4_shared.dir/src/tree/xpath/XPathWildcardElement.cpp.o.d"
+  "libantlr4-runtime.4.13.2.dylib"
+  "libantlr4-runtime.dylib"
+  "libantlr4-runtime.pdb"
 )
 
 # Per-language clean rules from dependency scanning.

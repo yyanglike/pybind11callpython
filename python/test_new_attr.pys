@@ -1,0 +1,31 @@
+print("=== 测试 new 表达式和属性 ===")
+
+class Counter:
+    def __init__(self):
+        print("Counter.__init__ called")
+        self.count = 0
+
+class Nested:
+    def __init__(self):
+        print("Nested.__init__ called")
+        self.obj = Counter()
+        print("Nested.__init__: self.obj =", self.obj)
+
+print("Creating Nested instance...")
+# nested = new Nested()
+nested = Nested()
+#print("nested =", nested)
+#print("nested.obj =", nested.obj)
+#print("nested.obj.count =", nested.obj.count)
+
+print("nested 类型:", type(nested))
+print("nested.obj 类型:", type(nested.obj))
+print("nested.obj.count =", nested.obj.count)
+
+# 嵌套属性赋值
+nested.obj.count = 100
+print("nested.obj.count = 100, result =", nested.obj.count)
+
+print("=== 测试完成 ===")
+
+print("=== 测试完成 ===")

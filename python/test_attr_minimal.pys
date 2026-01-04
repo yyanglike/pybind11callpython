@@ -1,0 +1,14 @@
+# 最小测试：属性赋值
+class Counter:
+    def __init__(self):
+        self.count = 0
+
+counter = Counter()
+print("初始 counter.count =", counter.count)
+
+counter.count = 10
+print("赋值后 counter.count =", counter.count)
+
+# 测试增量赋值
+counter.count += 5
+print("增量赋值后 counter.count =", counter.count)
