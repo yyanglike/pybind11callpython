@@ -1,0 +1,7 @@
+def simple_generator(n):
+    """简单的生成器函数"""
+    for i in range(n):
+        yield i * i
+gen1 = simple_generator(5)
+print("Generator object:", gen1)
+print("List:", list(gen1))

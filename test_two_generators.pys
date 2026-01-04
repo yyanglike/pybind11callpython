@@ -1,0 +1,12 @@
+def gen1(n):
+    for i in range(n):
+        yield i
+
+def gen2(n):
+    for i in range(n):
+        yield i * 2
+
+g1 = gen1(5)
+g2 = gen2(5)
+print("list(g1):", list(g1))
+print("list(g2):", list(g2))

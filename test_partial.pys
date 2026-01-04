@@ -1,0 +1,18 @@
+
+print("=" * 60)
+print("测试新语法特性")
+print("=" * 60)
+
+# ============================================================
+# 1. 测试 yield 表达式和生成器函数
+# ============================================================
+print("\n1. 测试 yield 表达式和生成器函数")
+
+def simple_generator(n):
+    """简单的生成器函数"""
+    for i in range(n):
+        yield i * i
+
+
+print("Function defined:", "simple_generator" in locals())
+print("Variable manager check:")

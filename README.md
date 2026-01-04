@@ -228,11 +228,8 @@ pip install --upgrade -r requirements.txt
 - `TECHNICAL_DOCUMENT.md`：架构与设计细节
 
 
+## 批量测试脚本
+cd /Users/yangyi/company/python/pybind11callpython && echo "=== 批量测试所有用例 ===" && echo "" && PASSED=0 && FAILED=0 && TOTAL=0 && for file in $(find python -name "*.pys" -type f | sort); do TOTAL=$((TOTAL + 1)); name=$(basename "$file"); echo -n "[$TOTAL/153] $name... "; if timeout 600 ./build/run_pys_script "$file" >/dev/null 2>&1; then echo "✓"; PASSED=$((PASSED + 1)); else echo "✗"; FAILED=$((FAILED + 1)); fi; if [ $((TOTAL % 20)) -eq 0 ]; then echo "[进度: $TOTAL/153, 通过: $PASSED, 失败: $FAILED]"; fi; done && echo "" && echo "=== 测试总结 ===" && echo "总计: $TOTAL" && echo "通过: $PASSED" && echo "失败: $FAILED"
 
-
-cd /Users/yangyi/company/python/pybind11callpython && echo "=== 批量测试所有用例 ===" && echo "" && PASSED=0 && FAILED=0 && TOTAL=0 && for file in $(find python -name "*.pys" -type f | sort); do TOTAL=$((TOTAL + 1)); name=$(basename "$file"); echo -n "[$TOTAL/147] $name... "; if timeout 600 ./build/run_pys_script "$file" >/dev/null 2>&1; then echo "✓"; PASSED=$((PASSED + 1)); else echo "✗"; FAILED=$((FAILED + 1)); fi; if [ $((TOTAL % 20)) -eq 0 ]; then echo "[进度: $TOTAL/147, 通过: $PASSED, 失败: $FAILED]"; fi; done && echo "" && echo "=== 测试总结 ===" && echo "总计: $TOTAL" && echo "通过: $PASSED" && echo "失败: $FAILED"
-
-
+## 未通过测试的脚本
 test_new_grammar_features.pys
-test_syntax_features.pys
-test_tuple_literal.pys

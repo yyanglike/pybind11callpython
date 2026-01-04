@@ -1,0 +1,16 @@
+def simple_generator(n):
+    for i in range(n):
+        yield i * i
+
+gen1 = simple_generator(5)
+print("gen1 type:", type(gen1))
+print("gen1:", gen1)
+
+# 手动迭代
+print("Manual iteration:")
+for x in gen1:
+    print(x)
+
+# 重新创建生成器，因为上一个已经耗尽
+gen2 = simple_generator(5)
+print("list(gen2):", list(gen2))

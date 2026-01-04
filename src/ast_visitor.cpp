@@ -2287,21 +2287,10 @@ any AstVisitor::visitAssignment(PyScriptParser::AssignmentContext *ctx) {
         // 标识符赋值: IDENTIFIER ASSIGN expression
         string varName = targetCtx->IDENTIFIER()->getText();
         
-        auto rightExpr = ctx->expression(); // 右侧表达式
-        if (!rightExpr) {
-            reportError("Missing right-hand side expression", ctx);
-            return any();
-        }
-        
-        auto rightValue = evaluateExpression(rightExpr);
-        if (!rightValue) {
-            reportError("Cannot evaluate right-hand side", ctx);
-            return any();
-        }
-        
-        // 检查是否是赋值运算符（+=, -=, *=, /=, //=, %=, **=, &=, |=, ^=, <<=, >>=）
-        // 通过检查children中的terminal node来获取操作符token类型
-        string op = "=";
+        // 注意：rightValue 已经在 line 2157 通过 evaluateExpression(rightExpr) 求值过了
+        // 这里不需要再次求值，直接使用已经求值的结果
+        // 如果再次求值，会导致 generator 等对象被消费两次
+        // 注意：op 变量已经在 line 1960 被定义了，这里不需要重新定义
         for (auto child : ctx->children) {
             auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(child);
             if (terminal) {
@@ -3434,7 +3423,8 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                             if (globals.contains(funcName.c_str())) {
                                 py::object pyObj = globals[funcName.c_str()];
                                 if (py::isinstance<py::function>(pyObj) || py::hasattr(pyObj, "__call__")) {
-                                    currentValue = ScriptValue::fromPythonObject(pyObj);
+                                    // currentValue = ScriptValue::fromPythonObject(pyObj);
+                                    currentValue = ScriptValue::createPythonObject(pyObj);
                                     variable_manager_.setVariable(funcName, currentValue);
                                     logger_.info("Successfully recovered function '" + funcName + 
                                                "' from Python globals at line " + std::to_string(line));

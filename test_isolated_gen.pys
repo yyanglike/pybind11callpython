@@ -1,0 +1,14 @@
+def simple_generator(n):
+    """简单的生成器函数"""
+    for i in range(n):
+        yield i * i
+
+def generator_with_yield_from():
+    """使用 yield from 的生成器"""
+    yield from range(5)
+    yield from [10, 20, 30]
+
+gen1 = simple_generator(5)
+results1 = list(gen1)
+print(f"simple_generator(5): {results1}")
+assert results1 == [0, 1, 4, 9, 16], f"Expected [0, 1, 4, 9, 16], got {results1}"
