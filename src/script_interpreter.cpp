@@ -504,6 +504,84 @@ bool ScriptInterpreter::execute(const string& script) {
         logger_.debug("Visit completed");
         // 返回是否执行成功（无错误）
         return !error_handler_.hasError();
+    } catch (const py::error_already_set& e) {
+        // 捕获 Python 异常并打印详细信息
+        {
+            py::gil_scoped_acquire acquire;
+            std::string error_msg = "[DEBUG] Python exception during script execution: ";
+            logger_.warn("[DEBUG] Caught py::error_already_set, checking PyErr_Occurred()");
+            if (PyErr_Occurred()) {
+                logger_.warn("[DEBUG] PyErr_Occurred() is true");
+                py::object type, value, traceback;
+                PyErr_Fetch(&type.ptr(), &value.ptr(), &traceback.ptr());
+                if (value.ptr() && !value.is_none()) {
+                    error_msg += py::str(value).cast<std::string>();
+                    logger_.warn("[DEBUG] Error value: " + error_msg);
+                    // 尝试获取完整的错误信息，包括堆栈跟踪
+                    if (!traceback.is_none()) {
+                        try {
+                            py::module_ traceback_module = py::module_::import("traceback");
+                            py::object format_exception = traceback_module.attr("format_exception");
+                            py::list tb_list = format_exception(type, value, traceback);
+                            std::string full_traceback;
+                            for (auto line : tb_list) {
+                                full_traceback += py::str(line).cast<std::string>();
+                            }
+                            logger_.error("[DEBUG] Full traceback during script execution:\n" + full_traceback);
+                        } catch (const py::error_already_set& e2) {
+                            logger_.warn("[DEBUG] Failed to format traceback: " + string(e2.what()));
+                            PyErr_Clear();
+                        } catch (const std::exception& e2) {
+                            logger_.warn("[DEBUG] Failed to format traceback (std::exception): " + string(e2.what()));
+                        } catch (...) {
+                            logger_.warn("[DEBUG] Failed to format traceback (unknown error)");
+                        }
+                    } else {
+                        logger_.warn("[DEBUG] Traceback is None, cannot format");
+                    }
+                } else {
+                    error_msg += string(e.what());
+                    logger_.warn("[DEBUG] Error value is None or empty, using e.what(): " + error_msg);
+                }
+                PyErr_Restore(type.ptr(), value.ptr(), traceback.ptr());
+            } else {
+                // PyErr_Occurred() 返回 false，说明错误状态已被清除
+                // 尝试从 e.what() 获取错误信息
+                error_msg += string(e.what());
+                logger_.warn("[DEBUG] PyErr_Occurred() is false, using e.what(): " + error_msg);
+                // 尝试使用 sys.exc_info() 获取异常信息
+                try {
+                    py::object sys = py::module_::import("sys");
+                    py::tuple excInfo = sys.attr("exc_info")();
+                    if (excInfo.size() >= 3 && !excInfo[1].is_none()) {
+                        py::object excValue = excInfo[1];
+                        std::string excValueStr = py::str(excValue).cast<std::string>();
+                        logger_.warn("[DEBUG] Exception from sys.exc_info(): " + excValueStr);
+                        // 尝试获取堆栈跟踪
+                        if (!excInfo[2].is_none()) {
+                            py::object traceback = excInfo[2];
+                            try {
+                                py::module_ traceback_module = py::module_::import("traceback");
+                                py::object format_exception = traceback_module.attr("format_exception");
+                                py::list tb_list = format_exception(excInfo[0], excValue, traceback);
+                                std::string full_traceback;
+                                for (auto line : tb_list) {
+                                    full_traceback += py::str(line).cast<std::string>();
+                                }
+                                logger_.error("[DEBUG] Full traceback from sys.exc_info():\n" + full_traceback);
+                            } catch (...) {
+                                logger_.warn("[DEBUG] Failed to format traceback from sys.exc_info()");
+                            }
+                        }
+                    }
+                } catch (...) {
+                    logger_.warn("[DEBUG] Failed to get exception info from sys.exc_info()");
+                }
+            }
+            logger_.error(error_msg);
+            reportError("Script execution error: " + error_msg, ScriptErrorType::Runtime, ScriptErrorCode::Unknown);
+        }
+        return false;
     } catch (const exception& e) {
         logger_.error(std::string("Script execution error: ") + e.what());
         reportError("Script execution error: " + string(e.what()), ScriptErrorType::Runtime, ScriptErrorCode::Unknown);
@@ -526,6 +604,47 @@ any ScriptInterpreter::visitProgram(PyScriptParser::ProgramContext *ctx) {
     // 注意：在新的语法中，表达式语句可能在simpleStatement的smallStatement中
     // 暂时不处理最后一条语句的结果，避免编译错误
     // TODO: 修复获取最后一条表达式语句结果的逻辑
+    
+    // 自动执行 main 函数（如果存在）
+    if (!error_handler_.hasError()) {
+        try {
+            auto main_var = variable_manager_.getVariable("main");
+            if (main_var && main_var->isPythonObject()) {
+                py::object main_func = main_var->getPythonObject();
+                if (py::isinstance<py::function>(main_func) || PyCallable_Check(main_func.ptr())) {
+                    logger_.info("Auto-calling main() function");
+                    py::gil_scoped_acquire acquire;
+                    try {
+                        // 调用 main 函数，传递 sys.argv 作为参数（如果函数接受参数）
+                        py::object result = main_func();
+                        if (!result.is_none()) {
+                            result_ = ScriptValue::fromPythonObject(result);
+                        }
+                        logger_.info("main() function executed successfully");
+                    } catch (const py::error_already_set& e) {
+                        std::string error_msg = "Error calling main(): ";
+                        if (PyErr_Occurred()) {
+                            py::object type, value, traceback;
+                            PyErr_Fetch(&type.ptr(), &value.ptr(), &traceback.ptr());
+                            if (value.ptr() && !value.is_none()) {
+                                error_msg += py::str(value).cast<std::string>();
+                            } else {
+                                error_msg += string(e.what());
+                            }
+                            PyErr_Restore(type.ptr(), value.ptr(), traceback.ptr());
+                        } else {
+                            error_msg += string(e.what());
+                        }
+                        logger_.error(error_msg);
+                        reportError(error_msg, ScriptErrorType::Runtime, ScriptErrorCode::PythonException);
+                    }
+                }
+            }
+        } catch (const std::exception& e) {
+            logger_.warn(std::string("Failed to check/call main function: ") + e.what());
+            // 不报告错误，因为 main 函数可能不存在
+        }
+    }
     
     return any();
 }
@@ -564,6 +683,31 @@ any ScriptInterpreter::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx)
 
 any ScriptInterpreter::visitParameterList(PyScriptParser::ParameterListContext *ctx) {
     // 参数列表已经在函数定义中处理
+    return any();
+}
+
+any ScriptInterpreter::visitPosOnlyParams(PyScriptParser::PosOnlyParamsContext *ctx) {
+    // 位置参数已经在函数定义中处理
+    return any();
+}
+
+any ScriptInterpreter::visitNormalParams(PyScriptParser::NormalParamsContext *ctx) {
+    // 普通参数已经在函数定义中处理
+    return any();
+}
+
+any ScriptInterpreter::visitVarArgs(PyScriptParser::VarArgsContext *ctx) {
+    // 可变位置参数已经在函数定义中处理
+    return any();
+}
+
+any ScriptInterpreter::visitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *ctx) {
+    // 关键字参数已经在函数定义中处理
+    return any();
+}
+
+any ScriptInterpreter::visitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *ctx) {
+    // 可变关键字参数已经在函数定义中处理
     return any();
 }
 

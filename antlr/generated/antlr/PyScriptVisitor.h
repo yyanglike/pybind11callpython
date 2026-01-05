@@ -59,6 +59,16 @@ public:
 
     virtual std::any visitParameterList(PyScriptParser::ParameterListContext *context) = 0;
 
+    virtual std::any visitPosOnlyParams(PyScriptParser::PosOnlyParamsContext *context) = 0;
+
+    virtual std::any visitNormalParams(PyScriptParser::NormalParamsContext *context) = 0;
+
+    virtual std::any visitVarArgs(PyScriptParser::VarArgsContext *context) = 0;
+
+    virtual std::any visitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *context) = 0;
+
+    virtual std::any visitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *context) = 0;
+
     virtual std::any visitParameter(PyScriptParser::ParameterContext *context) = 0;
 
     virtual std::any visitIfStatement(PyScriptParser::IfStatementContext *context) = 0;

@@ -95,6 +95,26 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitPosOnlyParams(PyScriptParser::PosOnlyParamsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitNormalParams(PyScriptParser::NormalParamsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitVarArgs(PyScriptParser::VarArgsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitParameter(PyScriptParser::ParameterContext *ctx) override {
     return visitChildren(ctx);
   }

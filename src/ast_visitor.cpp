@@ -548,6 +548,16 @@ any AstVisitor::visitSuite(PyScriptParser::SuiteContext *ctx) {
 any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
     logger_.debug("visitFunctionDef called");
     
+    // 检查父节点是否是 DecoratedDef，如果是，则跳过处理（visitDecoratedDef 已经处理了）
+    auto parent = ctx->parent;
+    if (parent) {
+        auto decoratedDef = dynamic_cast<PyScriptParser::DecoratedDefContext*>(parent);
+        if (decoratedDef) {
+            logger_.debug("Function definition is inside DecoratedDef, skipping (already handled by visitDecoratedDef)");
+            return any(true);  // 返回非空值阻止访问子节点
+        }
+    }
+    
     // 设置标志，表明正在定义函数，跳过函数体内的求值
     // 注意：必须在访问任何子节点之前设置标志，以阻止ANTLR访问子节点
     bool old_defining_function = defining_function_;
@@ -566,7 +576,18 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
         // 获取suite上下文（函数体）
         auto suiteCtx = ctx->suite();
         if (!suiteCtx) {
-            logger_.error("Function definition has no suite");
+            // 添加详细的调试信息
+            std::string funcName = ctx->IDENTIFIER() ? ctx->IDENTIFIER()->getText() : "<unknown>";
+            int line = startToken ? startToken->getLine() : -1;
+            logger_.error("Function definition '" + funcName + "' at line " + std::to_string(line) + " has no suite");
+            
+            // 检查是否有子节点
+            logger_.debug("Function definition children count: " + std::to_string(ctx->children.size()));
+            for (size_t i = 0; i < ctx->children.size(); ++i) {
+                auto child = ctx->children[i];
+                logger_.debug("Child " + std::to_string(i) + " type: " + std::string(typeid(*child).name()));
+            }
+            
             defining_function_ = old_defining_function;
             return any();
         }
@@ -1115,6 +1136,31 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
 
 any AstVisitor::visitParameterList(PyScriptParser::ParameterListContext *ctx) {
     // 参数列表已经在函数定义中处理
+    return any();
+}
+
+any AstVisitor::visitPosOnlyParams(PyScriptParser::PosOnlyParamsContext *ctx) {
+    // 位置参数已经在函数定义中处理
+    return any();
+}
+
+any AstVisitor::visitNormalParams(PyScriptParser::NormalParamsContext *ctx) {
+    // 普通参数已经在函数定义中处理
+    return any();
+}
+
+any AstVisitor::visitVarArgs(PyScriptParser::VarArgsContext *ctx) {
+    // 可变位置参数已经在函数定义中处理
+    return any();
+}
+
+any AstVisitor::visitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *ctx) {
+    // 关键字参数已经在函数定义中处理
+    return any();
+}
+
+any AstVisitor::visitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *ctx) {
+    // 可变关键字参数已经在函数定义中处理
     return any();
 }
 
@@ -3928,27 +3974,88 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 
                 // 调用函数
                 py_call_count_++;
-                py::object result = DynamicPythonCaller::callFunction(pyFunc, py::args(pyArgs), py::kwargs(pyKwargs));
-                py_to_sv_count_++;
-                
-                auto resultValue = ScriptValue::fromPythonObject(result);
-                // 检查返回值是否为 None 或 null
-                if (!resultValue || resultValue->isNull()) {
-                    logger_.debug("Function call returned null/None");
-                } else if (resultValue->isPythonObject()) {
-                    py::object pyObj = resultValue->toPythonObject();
-                    if (py::isinstance<py::none>(pyObj)) {
-                        logger_.debug("Function call returned None (Python None)");
+                // 调试：打印函数调用信息
+                try {
+                    if (py::hasattr(pyFunc, "__name__")) {
+                        std::string funcName = py::str(pyFunc.attr("__name__")).cast<std::string>();
+                        if (funcName == "combine_and_transform") {
+                            logger_.warn("[DEBUG] Calling combine_and_transform with " + std::to_string(pyArgs.size()) + " args and " + std::to_string(pyKwargs.size()) + " kwargs");
+                        }
                     }
-                } else if (resultValue->isDictionary() || resultValue->isList()) {
-                    // 将 Dictionary 和 List 转换为 PythonObject，以确保后续操作可以调用 Python 方法
-                    py::object pyObj = resultValue->toPythonObject();
-                    resultValue = ScriptValue::createPythonObject(pyObj);
+                } catch (...) {
+                    // 忽略
                 }
-                currentValue = resultValue;
+                try {
+                    py::object result = DynamicPythonCaller::callFunction(pyFunc, py::args(pyArgs), py::kwargs(pyKwargs));
+                    py_to_sv_count_++;
+                    
+                    auto resultValue = ScriptValue::fromPythonObject(result);
+                    // 检查返回值是否为 None 或 null
+                    if (!resultValue || resultValue->isNull()) {
+                        logger_.debug("Function call returned null/None");
+                    } else if (resultValue->isPythonObject()) {
+                        py::object pyObj = resultValue->toPythonObject();
+                        if (py::isinstance<py::none>(pyObj)) {
+                            logger_.debug("Function call returned None (Python None)");
+                        }
+                    } else if (resultValue->isDictionary() || resultValue->isList()) {
+                        // 将 Dictionary 和 List 转换为 PythonObject，以确保后续操作可以调用 Python 方法
+                        py::object pyObj = resultValue->toPythonObject();
+                        resultValue = ScriptValue::createPythonObject(pyObj);
+                    }
+                    currentValue = resultValue;
+                } catch (const py::error_already_set& e) {
+                    // 捕获并打印详细的错误信息，包括完整的 Python 错误和堆栈跟踪
+                    {
+                        py::gil_scoped_acquire acquire;
+                        std::string error_msg = "[DEBUG] Error calling function: ";
+                        logger_.warn("[DEBUG] Caught py::error_already_set in function call");
+                        // 打印函数名以便调试
+                        try {
+                            if (py::hasattr(pyFunc, "__name__")) {
+                                std::string funcName = py::str(pyFunc.attr("__name__")).cast<std::string>();
+                                logger_.warn("[DEBUG] Function name: " + funcName);
+                            }
+                        } catch (...) {
+                            // 忽略
+                        }
+                        if (PyErr_Occurred()) {
+                            logger_.warn("[DEBUG] PyErr_Occurred() is true");
+                            py::object type, value, traceback;
+                            PyErr_Fetch(&type.ptr(), &value.ptr(), &traceback.ptr());
+                            if (value.ptr() && !value.is_none()) {
+                                error_msg += py::str(value).cast<std::string>();
+                                // 尝试获取完整的错误信息，包括堆栈跟踪
+                                try {
+                                    py::module_ traceback_module = py::module_::import("traceback");
+                                    py::object format_exception = traceback_module.attr("format_exception");
+                                    py::list tb_list = format_exception(type, value, traceback);
+                                    std::string full_traceback;
+                                    for (auto line : tb_list) {
+                                        full_traceback += py::str(line).cast<std::string>();
+                                    }
+                                    logger_.error("[DEBUG] Full traceback during function call:\n" + full_traceback);
+                                } catch (...) {
+                                    // 忽略 traceback 格式化失败
+                                }
+                            } else {
+                                error_msg += string(e.what());
+                            }
+                            PyErr_Restore(type.ptr(), value.ptr(), traceback.ptr());
+                        } else {
+                            error_msg += string(e.what());
+                        }
+                        logger_.error("[DEBUG] " + error_msg);
+                    }
+                    // 将 Python 异常直接抛出，让上层的 try/except 捕获（例如 NameError）
+                    throw;
+                }
             } catch (const py::error_already_set& e) {
-                // 将 Python 异常直接抛出，让上层的 try/except 捕获（例如 NameError）
+                // 外层 catch：捕获函数调用过程中的其他 Python 异常
                 throw;
+            } catch (const std::exception& e) {
+                reportError("Function call error: " + string(e.what()), callOp);
+                return any();
             }
         }
     }
@@ -5420,6 +5527,13 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
         }
         
         logger_.debug("Decorated definition text (length=" + std::to_string(text.length()) + "):\n" + text);
+        // 临时调试：如果是 combine_and_transform 函数，打印详细信息
+        if (ctx->functionDef() && ctx->functionDef()->IDENTIFIER()) {
+            std::string funcName = ctx->functionDef()->IDENTIFIER()->getText();
+            if (funcName == "combine_and_transform") {
+                logger_.warn("[DEBUG] combine_and_transform function definition text:\n" + text);
+            }
+        }
         
         // 两级缓存策略：使用增量哈希
         // 优化：缓存源代码哈希
@@ -5445,6 +5559,7 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
         
         bool cached = false;
         py::object cached_cls;
+        py::dict globals_dict;  // 在函数作用域中定义，确保后续代码可以访问
         
         // 先检查快速路径（仅源代码匹配，且无 PythonObject）
         if (cache_enabled_ && !has_python_objects) {
@@ -5465,11 +5580,127 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
                 cached = true;
                 cached_cls = cache_it->second;
                 logger_.debug("Decorated definition cache hit (full)");
+                // 缓存命中，使用 py::globals() 作为后备
+                globals_dict = py::globals();
             } else {
                 // 缓存未命中或缓存禁用：执行 exec 并缓存结果（如果启用）
                 exec_cache_misses_++;
-                py::exec(py::str(text), py::globals(), py::globals());
+                // 构建包含脚本变量的 globals 字典，确保装饰器可以访问导入的变量（如 contextmanager）
+                globals_dict = py::globals();
+                // 确保globals包含__builtins__
+                if (!globals_dict.contains("__builtins__")) {
+                    if (!builtins_module_.is_none()) {
+                        globals_dict["__builtins__"] = builtins_module_;
+                    } else {
+                        try {
+                            py::object builtins = py::module_::import("builtins");
+                            globals_dict["__builtins__"] = builtins;
+                        } catch (...) {
+                            // 忽略失败
+                        }
+                    }
+                }
+                // 注入脚本变量到 globals，确保装饰器可以访问外部变量（如 contextmanager）
+                for (const auto& varName : variable_manager_.getAllVariableNames()) {
+                    auto val = variable_manager_.getVariable(varName);
+                    if (val) {
+                        try {
+                            globals_dict[varName.c_str()] = val->toPythonObject();
+                        } catch (...) {
+                            // 忽略转换失败
+                        }
+                    }
+                }
+                // 注入模块到 globals
+                for (const auto& modName : variable_manager_.getAllModuleNames()) {
+                    try {
+                        py::module_ m = variable_manager_.getModule(modName);
+                        if (m) globals_dict[modName.c_str()] = m;
+                        // 对于 functools 模块，也注入 wraps 到 globals
+                        if (modName == "functools") {
+                            try {
+                                if (!globals_dict.contains("wraps")) {
+                                    globals_dict["wraps"] = m.attr("wraps");
+                                }
+                            } catch (...) {
+                                // 忽略失败
+                            }
+                        }
+                    } catch (...) {
+                        // 忽略失败
+                    }
+                }
+                // 确保 typing 模块的类型（如 Iterable, Dict）在 globals 中可用，用于类型注解
+                if (variable_manager_.hasModule("typing")) {
+                    try {
+                        py::module_ typing_module = variable_manager_.getModule("typing");
+                        if (typing_module && !globals_dict.contains("typing")) {
+                            globals_dict["typing"] = typing_module;
+                        }
+                        // 注入 typing 模块的常用类型到 globals，确保类型注解可以解析
+                        if (typing_module) {
+                            try {
+                                if (!globals_dict.contains("Iterable")) {
+                                    globals_dict["Iterable"] = typing_module.attr("Iterable");
+                                }
+                                if (!globals_dict.contains("Dict")) {
+                                    globals_dict["Dict"] = typing_module.attr("Dict");
+                                }
+                            } catch (...) {
+                                // 忽略失败，类型注解可能不需要这些
+                            }
+                        }
+                    } catch (...) {
+                        // 忽略失败
+                    }
+                }
+                try {
+                    py::exec(py::str(text), globals_dict, globals_dict);
+                } catch (const py::error_already_set& e) {
+                    // 捕获并打印详细的错误信息，包括完整的 Python 错误和堆栈跟踪
+                    {
+                        py::gil_scoped_acquire acquire;
+                        std::string error_msg = "[DEBUG] Error executing decorated definition: ";
+                        logger_.warn("[DEBUG] Caught py::error_already_set during function definition exec");
+                        if (PyErr_Occurred()) {
+                            logger_.warn("[DEBUG] PyErr_Occurred() is true during exec");
+                            py::object type, value, traceback;
+                            PyErr_Fetch(&type.ptr(), &value.ptr(), &traceback.ptr());
+                            if (value.ptr() && !value.is_none()) {
+                                error_msg += py::str(value).cast<std::string>();
+                                // 尝试获取完整的错误信息，包括堆栈跟踪
+                                try {
+                                    py::module_ traceback_module = py::module_::import("traceback");
+                                    py::object format_exception = traceback_module.attr("format_exception");
+                                    py::list tb_list = format_exception(type, value, traceback);
+                                    std::string full_traceback;
+                                    for (auto line : tb_list) {
+                                        full_traceback += py::str(line).cast<std::string>();
+                                    }
+                                    logger_.error("[DEBUG] Full traceback during exec:\n" + full_traceback);
+                                } catch (...) {
+                                    // 忽略 traceback 格式化失败
+                                }
+                            } else {
+                                error_msg += string(e.what());
+                            }
+                            PyErr_Restore(type.ptr(), value.ptr(), traceback.ptr());
+                        } else {
+                            error_msg += string(e.what());
+                        }
+                        logger_.error(error_msg);
+                        // 打印函数定义文本以便调试
+                        if (ctx->functionDef() && ctx->functionDef()->IDENTIFIER()) {
+                            std::string funcName = ctx->functionDef()->IDENTIFIER()->getText();
+                            logger_.error("[DEBUG] Function definition text for " + funcName + ":\n" + text);
+                        }
+                    }
+                    throw;
+                }
             }
+        } else {
+            // 快速路径缓存命中，使用 py::globals() 作为后备
+            globals_dict = py::globals();
         }
         
         // 若为 class 定义，写回变量表
@@ -5479,8 +5710,9 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             if (cached) {
                 cls = cached_cls;
             } else {
-                if (py::globals().contains(name.c_str())) {
-                    cls = py::globals()[name.c_str()];
+                // 从构建的 globals 字典中获取
+                if (globals_dict.contains(name.c_str())) {
+                    cls = globals_dict[name.c_str()];
                     // 缓存结果（如果缓存启用）
                     if (cache_enabled_) {
                         if (!has_python_objects) {
@@ -5502,8 +5734,35 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
             if (cached) {
                 func = cached_cls;  // 复用 cached_cls 变量名
             } else {
-                if (py::globals().contains(name.c_str())) {
-                    func = py::globals()[name.c_str()];
+                // 从构建的 globals 字典中获取
+                if (globals_dict.contains(name.c_str())) {
+                    func = globals_dict[name.c_str()];
+                    // 调试：检查函数对象
+                    if (name == "combine_and_transform") {
+                        try {
+                            py::gil_scoped_acquire acquire;
+                            py::module_ inspect = py::module_::import("inspect");
+                            py::object signature = inspect.attr("signature")(func);
+                            std::string sig_str = py::str(signature).cast<std::string>();
+                            logger_.warn("[DEBUG] combine_and_transform signature: " + sig_str);
+                            // 检查函数参数
+                            py::object parameters = signature.attr("parameters");
+                            for (auto item : parameters) {
+                                py::object param_name = py::reinterpret_borrow<py::object>(item);
+                                py::object param_obj = parameters[param_name];
+                                std::string param_name_str = param_name.cast<std::string>();
+                                py::object kind = param_obj.attr("kind");
+                                int kind_int = py::int_(kind).cast<int>();
+                                // 0=POSITIONAL_ONLY, 1=POSITIONAL_OR_KEYWORD, 2=VAR_POSITIONAL, 3=KEYWORD_ONLY, 4=VAR_KEYWORD
+                                logger_.warn("[DEBUG] Parameter: " + param_name_str + ", kind: " + std::to_string(kind_int));
+                            }
+                        } catch (const py::error_already_set& e) {
+                            logger_.warn("[DEBUG] Failed to get signature for combine_and_transform: " + string(e.what()));
+                            PyErr_Clear();
+                        } catch (...) {
+                            logger_.warn("[DEBUG] Failed to get signature for combine_and_transform (unknown error)");
+                        }
+                    }
                     // 缓存结果（如果缓存启用）
                     if (cache_enabled_) {
                         if (!has_python_objects) {
@@ -5513,11 +5772,15 @@ any AstVisitor::visitDecoratedDef(PyScriptParser::DecoratedDefContext *ctx) {
                         exec_cache_[full_hash] = func;
                         logger_.debug("Decorated function definition cached (full) for: " + name);
                     }
+                } else {
+                    logger_.warn("[DEBUG] Function '" + name + "' not found in globals_dict after exec");
                 }
             }
             if (func) {
                 variable_manager_.setVariable(name, ScriptValue::fromPythonObject(func));
                 logger_.info("Function defined: " + name);
+            } else {
+                logger_.warn("[DEBUG] Function '" + name + "' is null after exec");
             }
         }
     } catch (const std::exception& e) {

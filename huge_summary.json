@@ -1,0 +1,51 @@
+{
+  "original_args": {
+    "nums": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "more": [],
+    "factor": 2,
+    "out": "huge_summary.json",
+    "flag": false
+  },
+  "processed_len": 4,
+  "processed_sample": [
+    4,
+    16,
+    36,
+    64
+  ],
+  "sliding_windows": [
+    [
+      4,
+      16,
+      36
+    ],
+    [
+      16,
+      36,
+      64
+    ]
+  ],
+  "dynamic_repr": "DynamicClass({'runtime_sum': 60, 'windows': [(4, 16, 36), (16, 36, 64)]})",
+  "callable_result": {
+    "required": "REQ",
+    "args": [
+      4,
+      16
+    ],
+    "flag": false,
+    "merged": {
+      "alpha": 1,
+      "beta": 2,
+      "gamma": 9
+    }
+  },
+  "pow": 8,
+  "resource": {
+    "name": "main-temp"
+  }
+}

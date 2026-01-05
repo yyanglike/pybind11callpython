@@ -68,6 +68,11 @@ public:
     std::any visitSuite(PyScriptParser::SuiteContext *ctx) override;
     std::any visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) override;
     std::any visitParameterList(PyScriptParser::ParameterListContext *ctx) override;
+    std::any visitPosOnlyParams(PyScriptParser::PosOnlyParamsContext *ctx) override;
+    std::any visitNormalParams(PyScriptParser::NormalParamsContext *ctx) override;
+    std::any visitVarArgs(PyScriptParser::VarArgsContext *ctx) override;
+    std::any visitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *ctx) override;
+    std::any visitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *ctx) override;
     std::any visitParameter(PyScriptParser::ParameterContext *ctx) override;
     std::any visitTryStatement(PyScriptParser::TryStatementContext *ctx) override;
     std::any visitExceptClause(PyScriptParser::ExceptClauseContext *ctx) override;

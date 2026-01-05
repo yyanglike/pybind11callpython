@@ -74,6 +74,21 @@ public:
   virtual void enterParameterList(PyScriptParser::ParameterListContext *ctx) = 0;
   virtual void exitParameterList(PyScriptParser::ParameterListContext *ctx) = 0;
 
+  virtual void enterPosOnlyParams(PyScriptParser::PosOnlyParamsContext *ctx) = 0;
+  virtual void exitPosOnlyParams(PyScriptParser::PosOnlyParamsContext *ctx) = 0;
+
+  virtual void enterNormalParams(PyScriptParser::NormalParamsContext *ctx) = 0;
+  virtual void exitNormalParams(PyScriptParser::NormalParamsContext *ctx) = 0;
+
+  virtual void enterVarArgs(PyScriptParser::VarArgsContext *ctx) = 0;
+  virtual void exitVarArgs(PyScriptParser::VarArgsContext *ctx) = 0;
+
+  virtual void enterKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *ctx) = 0;
+  virtual void exitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext *ctx) = 0;
+
+  virtual void enterKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *ctx) = 0;
+  virtual void exitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext *ctx) = 0;
+
   virtual void enterParameter(PyScriptParser::ParameterContext *ctx) = 0;
   virtual void exitParameter(PyScriptParser::ParameterContext *ctx) = 0;
 

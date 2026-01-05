@@ -76,6 +76,21 @@ public:
   virtual void enterParameterList(PyScriptParser::ParameterListContext * /*ctx*/) override { }
   virtual void exitParameterList(PyScriptParser::ParameterListContext * /*ctx*/) override { }
 
+  virtual void enterPosOnlyParams(PyScriptParser::PosOnlyParamsContext * /*ctx*/) override { }
+  virtual void exitPosOnlyParams(PyScriptParser::PosOnlyParamsContext * /*ctx*/) override { }
+
+  virtual void enterNormalParams(PyScriptParser::NormalParamsContext * /*ctx*/) override { }
+  virtual void exitNormalParams(PyScriptParser::NormalParamsContext * /*ctx*/) override { }
+
+  virtual void enterVarArgs(PyScriptParser::VarArgsContext * /*ctx*/) override { }
+  virtual void exitVarArgs(PyScriptParser::VarArgsContext * /*ctx*/) override { }
+
+  virtual void enterKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext * /*ctx*/) override { }
+  virtual void exitKeywordOnlyParams(PyScriptParser::KeywordOnlyParamsContext * /*ctx*/) override { }
+
+  virtual void enterKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext * /*ctx*/) override { }
+  virtual void exitKeywordOnlyArgs(PyScriptParser::KeywordOnlyArgsContext * /*ctx*/) override { }
+
   virtual void enterParameter(PyScriptParser::ParameterContext * /*ctx*/) override { }
   virtual void exitParameter(PyScriptParser::ParameterContext * /*ctx*/) override { }
 

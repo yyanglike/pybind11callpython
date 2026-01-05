@@ -37,22 +37,24 @@ public:
     RuleWithStatement = 7, RuleWithItem = 8, RuleAsyncFunctionDef = 9, RuleAsyncForStatement = 10, 
     RuleAsyncWithStatement = 11, RuleAwaitExpr = 12, RuleClassDef = 13, 
     RuleDecoratedDef = 14, RuleDecorators = 15, RuleDecorator = 16, RuleSuite = 17, 
-    RuleFunctionDef = 18, RuleParameterList = 19, RuleParameter = 20, RuleIfStatement = 21, 
-    RuleWhileStatement = 22, RuleForStatement = 23, RulePassStatement = 24, 
-    RuleReturnStatement = 25, RuleRaiseStatement = 26, RuleDelStatement = 27, 
-    RuleDelTargets = 28, RuleDelTarget = 29, RuleGlobalStatement = 30, RuleNonlocalStatement = 31, 
-    RuleAssertStatement = 32, RuleImportStatement = 33, RuleImportItem = 34, 
-    RuleAssignment = 35, RuleAssignmentTarget = 36, RuleExpressionStatement = 37, 
-    RuleExpression = 38, RuleAssignmentExpression = 39, RuleConditionalExpression = 40, 
-    RuleYieldExpression = 41, RuleLogicalOr = 42, RuleLogicalAnd = 43, RuleBitwiseOr = 44, 
-    RuleBitwiseXor = 45, RuleBitwiseAnd = 46, RuleEquality = 47, RuleComparison = 48, 
-    RuleShift = 49, RuleAdditive = 50, RuleMultiplicative = 51, RulePower = 52, 
-    RuleUnary = 53, RulePrimary = 54, RuleTupleLiteral = 55, RuleNewExpression = 56, 
-    RuleAtom = 57, RulePostfixOp = 58, RuleSubscriptArg = 59, RuleArgumentList = 60, 
-    RuleArgument = 61, RuleListLiteral = 62, RuleListElements = 63, RuleComprehension = 64, 
-    RuleCompFor = 65, RuleDictLiteral = 66, RuleDictComprehension = 67, 
-    RuleDictItem = 68, RuleSetLiteral = 69, RuleSetElements = 70, RuleGeneratorExpression = 71, 
-    RuleLiteral = 72, RuleLambdaExpression = 73, RuleDottedName = 74
+    RuleFunctionDef = 18, RuleParameterList = 19, RulePosOnlyParams = 20, 
+    RuleNormalParams = 21, RuleVarArgs = 22, RuleKeywordOnlyParams = 23, 
+    RuleKeywordOnlyArgs = 24, RuleParameter = 25, RuleIfStatement = 26, 
+    RuleWhileStatement = 27, RuleForStatement = 28, RulePassStatement = 29, 
+    RuleReturnStatement = 30, RuleRaiseStatement = 31, RuleDelStatement = 32, 
+    RuleDelTargets = 33, RuleDelTarget = 34, RuleGlobalStatement = 35, RuleNonlocalStatement = 36, 
+    RuleAssertStatement = 37, RuleImportStatement = 38, RuleImportItem = 39, 
+    RuleAssignment = 40, RuleAssignmentTarget = 41, RuleExpressionStatement = 42, 
+    RuleExpression = 43, RuleAssignmentExpression = 44, RuleConditionalExpression = 45, 
+    RuleYieldExpression = 46, RuleLogicalOr = 47, RuleLogicalAnd = 48, RuleBitwiseOr = 49, 
+    RuleBitwiseXor = 50, RuleBitwiseAnd = 51, RuleEquality = 52, RuleComparison = 53, 
+    RuleShift = 54, RuleAdditive = 55, RuleMultiplicative = 56, RulePower = 57, 
+    RuleUnary = 58, RulePrimary = 59, RuleTupleLiteral = 60, RuleNewExpression = 61, 
+    RuleAtom = 62, RulePostfixOp = 63, RuleSubscriptArg = 64, RuleArgumentList = 65, 
+    RuleArgument = 66, RuleListLiteral = 67, RuleListElements = 68, RuleComprehension = 69, 
+    RuleCompFor = 70, RuleDictLiteral = 71, RuleDictComprehension = 72, 
+    RuleDictItem = 73, RuleSetLiteral = 74, RuleSetElements = 75, RuleGeneratorExpression = 76, 
+    RuleLiteral = 77, RuleLambdaExpression = 78, RuleDottedName = 79
   };
 
   explicit PyScriptParser(antlr4::TokenStream *input);
@@ -92,6 +94,11 @@ public:
   class SuiteContext;
   class FunctionDefContext;
   class ParameterListContext;
+  class PosOnlyParamsContext;
+  class NormalParamsContext;
+  class VarArgsContext;
+  class KeywordOnlyParamsContext;
+  class KeywordOnlyArgsContext;
   class ParameterContext;
   class IfStatementContext;
   class WhileStatementContext;
@@ -518,6 +525,30 @@ public:
   public:
     ParameterListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
+    PosOnlyParamsContext *posOnlyParams();
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+    antlr4::tree::TerminalNode *DIV();
+    NormalParamsContext *normalParams();
+    VarArgsContext *varArgs();
+    KeywordOnlyParamsContext *keywordOnlyParams();
+    KeywordOnlyArgsContext *keywordOnlyArgs();
+    std::vector<ParameterContext *> parameter();
+    ParameterContext* parameter(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  ParameterListContext* parameterList();
+
+  class  PosOnlyParamsContext : public antlr4::ParserRuleContext {
+  public:
+    PosOnlyParamsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
     std::vector<ParameterContext *> parameter();
     ParameterContext* parameter(size_t i);
     std::vector<antlr4::tree::TerminalNode *> COMMA();
@@ -530,7 +561,79 @@ public:
    
   };
 
-  ParameterListContext* parameterList();
+  PosOnlyParamsContext* posOnlyParams();
+
+  class  NormalParamsContext : public antlr4::ParserRuleContext {
+  public:
+    NormalParamsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<ParameterContext *> parameter();
+    ParameterContext* parameter(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  NormalParamsContext* normalParams();
+
+  class  VarArgsContext : public antlr4::ParserRuleContext {
+  public:
+    VarArgsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *MUL();
+    antlr4::tree::TerminalNode *COMMA();
+    antlr4::tree::TerminalNode *IDENTIFIER();
+    antlr4::tree::TerminalNode *COLON();
+    ExpressionContext *expression();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  VarArgsContext* varArgs();
+
+  class  KeywordOnlyParamsContext : public antlr4::ParserRuleContext {
+  public:
+    KeywordOnlyParamsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+    std::vector<ParameterContext *> parameter();
+    ParameterContext* parameter(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  KeywordOnlyParamsContext* keywordOnlyParams();
+
+  class  KeywordOnlyArgsContext : public antlr4::ParserRuleContext {
+  public:
+    KeywordOnlyArgsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *COMMA();
+    antlr4::tree::TerminalNode *DOUBLE_STAR();
+    antlr4::tree::TerminalNode *IDENTIFIER();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  KeywordOnlyArgsContext* keywordOnlyArgs();
 
   class  ParameterContext : public antlr4::ParserRuleContext {
   public:
@@ -1512,6 +1615,8 @@ public:
     ExpressionContext* expression(size_t i);
     std::vector<antlr4::tree::TerminalNode *> COLON();
     antlr4::tree::TerminalNode* COLON(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

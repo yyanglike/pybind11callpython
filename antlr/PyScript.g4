@@ -193,12 +193,42 @@ functionDef
     ;
 
 parameterList
-    : parameter (COMMA parameter)* COMMA?
+    : posOnlyParams COMMA DIV COMMA normalParams? varArgs? keywordOnlyParams? keywordOnlyArgs?
+    | posOnlyParams COMMA DIV COMMA varArgs? keywordOnlyParams? keywordOnlyArgs?
+    | posOnlyParams COMMA DIV COMMA keywordOnlyParams? keywordOnlyArgs?
+    | posOnlyParams COMMA DIV COMMA keywordOnlyArgs?
+    | posOnlyParams COMMA DIV COMMA
+    | normalParams varArgs? keywordOnlyParams? keywordOnlyArgs?
+    | varArgs keywordOnlyParams? keywordOnlyArgs?
+    | keywordOnlyParams? keywordOnlyArgs?
+    | keywordOnlyArgs
+    | parameter (COMMA parameter)*
+    | /* empty */
+    ;
+
+posOnlyParams
+    : parameter (COMMA parameter)*
+    ;
+
+normalParams
+    : parameter (COMMA parameter)*
+    ;
+
+varArgs
+    : (COMMA)? MUL IDENTIFIER? (COLON expression)?  // 支持 *args: Type 类型注解
+    ;
+
+keywordOnlyParams
+    : COMMA parameter (COMMA parameter)*
+    ;
+
+keywordOnlyArgs
+    : COMMA DOUBLE_STAR IDENTIFIER
     ;
 
 parameter
     : IDENTIFIER (COLON expression)? (ASSIGN expression)?  // 支持类型注解：n: int = 0
-    | MUL IDENTIFIER?
+    | MUL IDENTIFIER? (COLON expression)?  // 支持 *args: Type 类型注解
     | DOUBLE_STAR IDENTIFIER
     ;
 
@@ -399,7 +429,8 @@ postfixOp
     ;
 
 subscriptArg
-    : expression? (COLON expression? (COLON expression?)?)?
+    : expression? (COLON expression? (COLON expression?)?)?  // 切片语法
+    | expression (COMMA expression)+                         // 类型注解多个参数：Dict[str, int]
     ;
 
 argumentList
