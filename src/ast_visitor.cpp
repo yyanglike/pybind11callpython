@@ -5238,15 +5238,49 @@ any AstVisitor::visitLambdaExpression(PyScriptParser::LambdaExpressionContext *c
     // 构建参数列表
     vector<string> paramNames;
     if (ctx->parameterList()) {
-        for (auto* p : ctx->parameterList()->parameter()) {
-            if (p->IDENTIFIER() && !p->MUL() && !p->DOUBLE_STAR()) {
-                paramNames.push_back(p->IDENTIFIER()->getText());
-            } else {
-                // 不支持 *args 或 **kwargs 在lambda中
+        auto paramListCtx = ctx->parameterList();
+        
+        // Lambda 表达式只支持简单的参数列表
+        // 尝试从不同的分支提取参数
+        
+        // 1. 检查直接的 parameter() 方法（对应 parameter (COMMA parameter)* 分支）
+        auto parameters = paramListCtx->parameter();
+        if (!parameters.empty()) {
+            for (auto* p : parameters) {
+                if (p->IDENTIFIER() && !p->MUL() && !p->DOUBLE_STAR()) {
+                    paramNames.push_back(p->IDENTIFIER()->getText());
+                } else {
+                    // 不支持 *args 或 **kwargs 在lambda中
+                    reportError("Lambda expressions don't support *args or **kwargs", ctx);
+                    return any();
+                }
+            }
+        } 
+        // 2. 检查 normalParams（对应 normalParams varArgs? keywordOnlyParams? keywordOnlyArgs? 分支）
+        else if (paramListCtx->normalParams()) {
+            auto normalParams = paramListCtx->normalParams();
+            auto normalParamsList = normalParams->parameter();
+            for (auto* p : normalParamsList) {
+                if (p->IDENTIFIER() && !p->MUL() && !p->DOUBLE_STAR()) {
+                    paramNames.push_back(p->IDENTIFIER()->getText());
+                } else {
+                    reportError("Lambda expressions don't support *args or **kwargs", ctx);
+                    return any();
+                }
+            }
+            // Lambda 不支持 varArgs、keywordOnlyParams、keywordOnlyArgs
+            if (paramListCtx->varArgs() || paramListCtx->keywordOnlyParams() || paramListCtx->keywordOnlyArgs()) {
                 reportError("Lambda expressions don't support *args or **kwargs", ctx);
                 return any();
             }
         }
+        // 3. 检查 posOnlyParams（不支持，lambda 不支持 positional-only 参数）
+        else if (paramListCtx->posOnlyParams() || paramListCtx->varArgs() || 
+                 paramListCtx->keywordOnlyParams() || paramListCtx->keywordOnlyArgs()) {
+            reportError("Lambda expressions only support simple parameter lists", ctx);
+            return any();
+        }
+        // 4. 如果 parameterList 为空或只匹配空规则，则 lambda 无参数（paramNames 保持为空）
     }
     
     // 获取表达式体
