@@ -1092,7 +1092,7 @@ any AstVisitor::visitFunctionDef(PyScriptParser::FunctionDefContext *ctx) {
             // 确保函数对象有效
             if (func.is_none()) {
                 reportError("Function definition returned None for: " + funcName, ctx);
-    return any();
+                return any();
             }
             
             // 立即设置到变量管理器，确保后续调用能找到
@@ -3484,8 +3484,8 @@ any AstVisitor::visitAtom(PyScriptParser::AtomContext *ctx) {
                 
                 if (!currentValue) {
                     logger_.error("Function call: failed to recover function, currentValue still null");
-        reportError("Cannot evaluate primary expression", ctx);
-        return any();
+                    reportError("Cannot evaluate primary expression", ctx);
+                    return any();
                 }
             } else {
                 reportError("Cannot evaluate primary expression", ctx);
